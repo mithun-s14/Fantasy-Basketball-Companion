@@ -17,3 +17,10 @@ export interface GameCountsResponse {
     end: string;
   };
 }
+
+export interface Tweet {
+  id: string;
+  text: string;
+  created_at: string;
+  url: string;
+}
