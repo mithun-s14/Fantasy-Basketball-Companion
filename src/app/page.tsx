@@ -1,7 +1,15 @@
 import Link from "next/link";
-import { Activity, ArrowRight, CalendarDays, Bot, Sparkles, Newspaper } from "lucide-react";
+import { Activity, ArrowRight, CalendarDays, Bot, Users } from "lucide-react";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { AuthButton } from "@/components/AuthButton";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userEmail = user?.email ?? null;
+
   return (
     <div className="min-h-screen bg-white">
       {/* Nav */}
@@ -24,6 +32,15 @@ export default function Home() {
             >
               AI Coach
             </Link>
+            {userEmail && (
+              <Link
+                href="/roster"
+                className="text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 font-medium"
+              >
+                Roster
+              </Link>
+            )}
+            <AuthButton userEmail={userEmail} />
           </div>
         </div>
       </nav>
@@ -61,7 +78,6 @@ export default function Home() {
               href="/chat"
               className="inline-flex items-center gap-2 bg-white text-gray-900 border border-gray-200 px-7 py-3.5 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition-colors duration-150"
             >
-              <Sparkles className="w-4 h-4 text-orange-500" />
               Chat with AI Coach
             </Link>
           </div>
@@ -70,7 +86,7 @@ export default function Home() {
 
       {/* Feature cards */}
       <section className="max-w-6xl mx-auto px-6 pb-24">
-        <div className="grid md:grid-cols-2 gap-5">
+        <div className={`grid gap-5 ${userEmail ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
           {/* Schedule Analyzer */}
           <Link
             href="/analyzer"
@@ -116,10 +132,32 @@ export default function Home() {
               </div>
             </div>
           </Link>
-        </div>
 
-        {/* Injury Reports — full-width card */}
-        
+          {/* Roster — only shown when logged in */}
+          {userEmail && (
+            <Link
+              href="/roster"
+              className="group relative bg-gray-50 rounded-3xl p-9 hover:bg-gray-100/80 transition-colors duration-200 overflow-hidden"
+            >
+              <div className="absolute -top-12 -right-12 w-56 h-56 bg-orange-100/60 rounded-full blur-3xl pointer-events-none" />
+              <div className="relative">
+                <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-7">
+                  <Users className="w-6 h-6 text-orange-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-3">
+                  My Roster
+                </h2>
+                <p className="text-gray-500 leading-relaxed mb-8 text-[15px]">
+                  Track the NBA players on your fantasy team. Add and remove players
+                  as the season evolves.
+                </p>
+                <div className="flex items-center gap-1.5 text-orange-600 font-semibold text-sm group-hover:gap-2.5 transition-all duration-150">
+                  View roster <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
+            </Link>
+          )}
+        </div>
       </section>
     </div>
   );

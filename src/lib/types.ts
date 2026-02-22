@@ -24,3 +24,11 @@ export interface Tweet {
   created_at: string;
   url: string;
 }
+
+export interface RosterPlayer {
+  id: string;          // UUID
+  player_name: string;
+  nba_team: string;
+  created_at: string;  // ISO 8601
+  // user_id intentionally omitted — not needed client-side
+}
