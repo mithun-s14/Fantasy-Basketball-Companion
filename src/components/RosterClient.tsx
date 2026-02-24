@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useEffect } from "react";
+import { useActionState, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Activity, Users, Trash2 } from "lucide-react";
@@ -19,16 +19,30 @@ import { addPlayer, removePlayer } from "@/app/roster/actions";
 import { NBA_TEAMS } from "@/lib/constants";
 import type { RosterPlayer } from "@/lib/types";
 
+interface PlayerSuggestion {
+  name: string;
+  team: string;
+}
+
 // Syncs a shadcn Select's value into a hidden input inside the form boundary.
 // Radix UI portals the dropdown outside the form, so native FormData misses it.
+// Accepts an optional externalValue to programmatically set the selection (e.g. from autocomplete).
 function SelectWithHidden({
   name,
   placeholder,
+  externalValue,
 }: {
   name: string;
   placeholder: string;
+  externalValue?: string;
 }) {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(externalValue ?? "");
+
+  useEffect(() => {
+    if (externalValue !== undefined) {
+      setValue(externalValue);
+    }
+  }, [externalValue]);
 
   return (
     <>
@@ -49,14 +63,172 @@ function SelectWithHidden({
   );
 }
 
+// Autocomplete input that searches active NBA players via /api/players.
+// Exposes a hidden <input name="player_name"> for FormData, and calls onSelect
+// so the parent can auto-fill the team dropdown.
+function PlayerAutocomplete({
+  onSelect,
+  resetKey,
+}: {
+  onSelect: (player: PlayerSuggestion) => void;
+  resetKey: number;
+}) {
+  const [inputValue, setInputValue] = useState("");
+  const [suggestions, setSuggestions] = useState<PlayerSuggestion[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Reset when the parent form resets (successful submit)
+  useEffect(() => {
+    setInputValue("");
+    setSuggestions([]);
+    setIsOpen(false);
+    setActiveIndex(-1);
+  }, [resetKey]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function triggerSearch(val: string) {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (val.trim().length < 2) {
+      setSuggestions([]);
+      setIsOpen(false);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `/api/players?search=${encodeURIComponent(val)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          const list: PlayerSuggestion[] = Array.isArray(data) ? data : [];
+          setSuggestions(list);
+          setIsOpen(list.length > 0);
+          setActiveIndex(-1);
+        }
+      } catch {
+        // silently ignore network errors during search
+      } finally {
+        setLoading(false);
+      }
+    }, 250);
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    setInputValue(val);
+    triggerSearch(val);
+  }
+
+  function handleSelect(player: PlayerSuggestion) {
+    setInputValue(player.name);
+    setSuggestions([]);
+    setIsOpen(false);
+    setActiveIndex(-1);
+    onSelect(player);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (!isOpen) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, -1));
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault();
+      handleSelect(suggestions[activeIndex]);
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
+    }
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      {/* This input drives FormData — its value is the typed/selected player name */}
+      <Input
+        name="player_name"
+        placeholder="e.g. LeBron James"
+        value={inputValue}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        onFocus={() => suggestions.length > 0 && setIsOpen(true)}
+        autoComplete="off"
+        required
+        aria-autocomplete="list"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+      />
+
+      {/* Spinner */}
+      {loading && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          <div className="w-3.5 h-3.5 border-2 border-gray-200 border-t-orange-500 rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* Dropdown */}
+      {isOpen && suggestions.length > 0 && (
+        <ul
+          role="listbox"
+          className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
+        >
+          {suggestions.map((player, i) => (
+            <li
+              key={player.name}
+              role="option"
+              aria-selected={i === activeIndex}
+              onMouseDown={(e) => {
+                // Prevent input blur before the click registers
+                e.preventDefault();
+                handleSelect(player);
+              }}
+              className={`flex items-center justify-between px-4 py-2.5 cursor-pointer gap-4 ${
+                i === activeIndex ? "bg-orange-50" : "hover:bg-gray-50"
+              }`}
+            >
+              <span className="text-sm font-medium text-gray-900">
+                {player.name}
+              </span>
+              <span className="text-xs text-gray-400 shrink-0">
+                {player.team}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function AddPlayerForm({ onSuccess }: { onSuccess: () => void }) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(addPlayer, null);
   const [resetKey, setResetKey] = useState(0);
+  const [selectedTeam, setSelectedTeam] = useState("");
 
   useEffect(() => {
     if (state && "success" in state) {
       setResetKey((k) => k + 1);
+      setSelectedTeam("");
       onSuccess();
       router.refresh();
     }
@@ -66,17 +238,19 @@ function AddPlayerForm({ onSuccess }: { onSuccess: () => void }) {
     <form action={formAction} className="space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
         <div className="space-y-1.5">
-          <Label htmlFor="player-name">Player name</Label>
-          <Input
-            id="player-name"
-            name="player_name"
-            placeholder="e.g. LeBron James"
-            required
+          <Label>Player name</Label>
+          <PlayerAutocomplete
+            onSelect={(player) => setSelectedTeam(player.team)}
+            resetKey={resetKey}
           />
         </div>
         <div className="space-y-1.5" key={resetKey}>
           <Label>NBA team</Label>
-          <SelectWithHidden name="nba_team" placeholder="Select team" />
+          <SelectWithHidden
+            name="nba_team"
+            placeholder="Select team"
+            externalValue={selectedTeam}
+          />
         </div>
         <Button type="submit" disabled={isPending} className="whitespace-nowrap">
           {isPending ? "Adding…" : "Add player"}

@@ -2,6 +2,7 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { NBA_TEAMS } from "@/lib/constants";
+import { getActivePlayers } from "@/lib/nba-players";
 
 const PLAYER_NAME_REGEX = /^[A-Za-z][A-Za-z\s\-''.]{1,59}$/;
 const UUID_REGEX =
@@ -28,14 +29,34 @@ export async function addPlayer(
     };
   }
 
-  if (!NBA_TEAMS.includes(nbaTeam)) {
-    return { error: "Please select a valid NBA team." };
+  // Validate against active NBA player roster and resolve canonical team name
+  let resolvedTeam = nbaTeam;
+  try {
+    const activePlayers = await getActivePlayers();
+    const match = activePlayers.find(
+      (p) => p.name.toLowerCase() === playerName.toLowerCase()
+    );
+    if (!match) {
+      return {
+        error:
+          "Player not found on an active NBA roster. Please select a player from the suggestions.",
+      };
+    }
+    resolvedTeam = match.team; // canonical team name from NBA API
+    if (!NBA_TEAMS.includes(resolvedTeam)) {
+      return { error: "Could not determine a valid team for this player." };
+    }
+  } catch {
+    // NBA API unavailable — fall back to submitted team name
+    if (!NBA_TEAMS.includes(nbaTeam)) {
+      return { error: "Please select a valid NBA team." };
+    }
   }
 
   const { error } = await supabase.from("roster_players").insert({
     user_id: user.id,
     player_name: playerName,
-    nba_team: nbaTeam,
+    nba_team: resolvedTeam,
   });
 
   if (error) {
