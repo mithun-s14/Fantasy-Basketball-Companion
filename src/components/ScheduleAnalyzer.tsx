@@ -5,7 +5,7 @@ import { DateRangeSelector } from "@/components/DateRangeSelector";
 import { TeamFilter } from "@/components/TeamFilter";
 import { TeamScheduleTable } from "@/components/TeamScheduleTable";
 import { NBA_TEAMS } from "@/lib/constants";
-import { Activity, Loader2 } from "lucide-react";
+import { Activity, Calendar, CalendarCheck2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ScheduleAnalyzer() {
@@ -62,8 +62,8 @@ export default function ScheduleAnalyzer() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <Activity className="w-8 h-8 text-orange-600" />
-            <h1 className="text-3xl font-bold">Fantasy Basketball Schedule Analyzer</h1>
+            <CalendarCheck2 className="w-8 h-8 text-orange-600" />
+            <h1 className="text-3xl font-bold">Schedule Analyzer</h1>
           </div>
           <p className="text-gray-600">
             Select a date range to see how many times an NBA team plays during that period, helping you optimize your fantasy lineup and free agency pick ups.
