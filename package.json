@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "scrape": "npx tsx src/scripts/scrape.ts"
+    "scrape": "npx tsx src/scripts/scrape.ts",
+    "seed-players": "npx tsx src/scripts/seed-players.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
