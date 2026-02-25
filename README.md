@@ -74,3 +74,7 @@ npm run seed-players  # Seed active NBA player roster into Supabase
 - **Roster context**: when a signed-in user chats with the AI, their roster players are injected into the Gemini system prompt automatically.
 - **Unicode names**: player names with diacritics (e.g. Jokić, Vučević) are handled via NFC normalization at both the search and validation layers.
 - **shadcn/ui**: use the shadcn CLI to add or update components — do not edit files in `src/components/ui/` directly.
+
+## To-do
+- [ ] Add trade analyzer. Help compare player's sent and recieved statistics
+- [ ] Implement strength of schedule indicators in Schedule Analyzer page
