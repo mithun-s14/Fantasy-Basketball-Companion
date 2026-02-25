@@ -81,7 +81,7 @@ export async function getActivePlayers(): Promise<NBAPlayer[]> {
         (row[abbrevIdx] as string).length > 0
     )
     .map((row) => ({
-      name: row[nameIdx] as string,
+      name: (row[nameIdx] as string).normalize("NFC"),
       team:
         TEAM_ABBR_TO_NAME[row[abbrevIdx] as string] ??
         (row[abbrevIdx] as string),
@@ -98,6 +98,6 @@ export function searchPlayers(
   query: string,
   limit = 8
 ): NBAPlayer[] {
-  const q = query.toLowerCase();
+  const q = query.normalize("NFC").toLowerCase();
   return players.filter((p) => p.name.toLowerCase().startsWith(q)).slice(0, limit);
 }
