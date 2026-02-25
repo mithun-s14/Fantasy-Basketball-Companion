@@ -99,5 +99,9 @@ export function searchPlayers(
   limit = 8
 ): NBAPlayer[] {
   const q = query.normalize("NFC").toLowerCase();
-  return players.filter((p) => p.name.toLowerCase().startsWith(q)).slice(0, limit);
+  return players
+    .filter((p) =>
+      p.name.toLowerCase().split(" ").some((part) => part.startsWith(q))
+    )
+    .slice(0, limit);
 }
