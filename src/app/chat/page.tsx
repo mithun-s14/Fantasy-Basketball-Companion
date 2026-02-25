@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { Activity, ArrowLeft, Bot, Send } from "lucide-react";
+import { Bot, Send } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -80,28 +79,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
-      {/* Nav */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-black/[0.06] px-6 py-4 shrink-0">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors duration-150 text-sm font-medium"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Home
-          </Link>
-          <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-orange-600" />
-            <span className="font-semibold text-gray-900 text-sm tracking-tight">
-              AI Coach
-            </span>
-          </div>
-          {/* Spacer to keep title centered */}
-          <div className="w-16" />
-        </div>
-      </nav>
-
+    <div className="flex-1 bg-gray-50 flex flex-col overflow-hidden">
       {/* Chat */}
       <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full px-4 pt-6 pb-4 min-h-0">
         {/* Messages */}

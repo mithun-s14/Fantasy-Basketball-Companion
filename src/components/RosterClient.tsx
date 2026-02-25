@@ -1,9 +1,8 @@
 "use client";
 
 import { useActionState, useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Activity, Users, Trash2 } from "lucide-react";
+import { Users, Trash2, Activity, PersonStanding } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AuthButton } from "@/components/AuthButton";
 import { addPlayer, removePlayer } from "@/app/roster/actions";
 import { NBA_TEAMS } from "@/lib/constants";
 import type { RosterPlayer } from "@/lib/types";
@@ -297,10 +295,9 @@ function RemoveButton({
 
 interface Props {
   initialPlayers: RosterPlayer[];
-  userEmail: string;
 }
 
-export function RosterClient({ initialPlayers, userEmail }: Props) {
+export function RosterClient({ initialPlayers }: Props) {
   const router = useRouter();
   const [players, setPlayers] = useState<RosterPlayer[]>(initialPlayers);
 
@@ -316,39 +313,16 @@ export function RosterClient({ initialPlayers, userEmail }: Props) {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Nav */}
-      <nav className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-black/6 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Activity className="w-5 h-5 text-orange-600" />
-            <span className="font-semibold text-gray-900 tracking-tight">
-              Fantasy Basketball Companion
-            </span>
-          </Link>
-          <div className="flex items-center gap-6">
-            <Link
-              href="/analyzer"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 font-medium"
-            >
-              Schedule
-            </Link>
-            <Link
-              href="/chat"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 font-medium"
-            >
-              AI Coach
-            </Link>
-            <AuthButton userEmail={userEmail} />
-          </div>
-        </div>
-      </nav>
 
       <div className="max-w-3xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
+          <div className="flex items-center gap-3 mb-2">
+            <Users className="w-8 h-8 text-orange-600" />
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
             My Roster
-          </h1>
+          </h1></div>
+          
           <p className="text-gray-500">
             Track the NBA players on your fantasy team.
           </p>

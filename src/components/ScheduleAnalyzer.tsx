@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { DateRangeSelector } from "@/components/DateRangeSelector";
 import { TeamFilter } from "@/components/TeamFilter";
 import { TeamScheduleTable } from "@/components/TeamScheduleTable";
 import { NBA_TEAMS } from "@/lib/constants";
-import { Activity, ArrowLeft, Loader2 } from "lucide-react";
+import { Activity, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ScheduleAnalyzer() {
@@ -59,21 +58,6 @@ export default function ScheduleAnalyzer() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Nav */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-black/[0.06] px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center gap-3">
-          <Link
-            href="/"
-            className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors duration-150 text-sm font-medium"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Home
-          </Link>
-          <span className="text-gray-300 text-sm">/</span>
-          <span className="text-sm font-medium text-gray-900">Schedule Analyzer</span>
-        </div>
-      </nav>
-
       <div className="p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">

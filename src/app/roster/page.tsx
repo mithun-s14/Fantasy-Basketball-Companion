@@ -20,9 +20,6 @@ export default async function RosterPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <RosterClient
-      initialPlayers={(players as RosterPlayer[]) ?? []}
-      userEmail={user.email ?? ""}
-    />
+    <RosterClient initialPlayers={(players as RosterPlayer[]) ?? []} />
   );
 }
