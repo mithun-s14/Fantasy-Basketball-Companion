@@ -5,7 +5,7 @@ import { DateRangeSelector } from "@/components/DateRangeSelector";
 import { TeamFilter } from "@/components/TeamFilter";
 import { TeamScheduleTable } from "@/components/TeamScheduleTable";
 import { NBA_TEAMS } from "@/lib/constants";
-import { Activity, Calendar, CalendarCheck2, Loader2 } from "lucide-react";
+import { CalendarCheck2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ScheduleAnalyzer() {
