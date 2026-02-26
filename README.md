@@ -76,5 +76,6 @@ npm run seed-players  # Seed active NBA player roster into Supabase
 - **shadcn/ui**: use the shadcn CLI to add or update components — do not edit files in `src/components/ui/` directly.
 
 ## To-do
+- [ ] Matchup estimator. Compare user's roster vs opponents and attempt to determine who will win the matchup
 - [ ] Add trade analyzer. Help compare player's sent and recieved statistics
 - [ ] Implement strength of schedule indicators in Schedule Analyzer page
