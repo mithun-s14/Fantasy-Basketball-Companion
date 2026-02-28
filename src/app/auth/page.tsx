@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import { Activity } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -103,10 +104,13 @@ function SignupForm() {
 }
 
 export default function AuthPage() {
+  const searchParams = useSearchParams();
+  const defaultTab = searchParams.get("tab") === "signup" ? "signup" : "login";
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Nav */}
-      <nav className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-black/6 px-6 py-4">
+      {/* <nav className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-black/6 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <Activity className="w-5 h-5 text-orange-600" />
@@ -115,7 +119,7 @@ export default function AuthPage() {
             </span>
           </Link>
         </div>
-      </nav>
+      </nav> */}
 
       {/* Auth card */}
       <div className="flex-1 flex items-center justify-center px-6 py-16">
@@ -130,7 +134,7 @@ export default function AuthPage() {
           </div>
 
           <div className="bg-gray-50 rounded-3xl p-8">
-            <Tabs defaultValue="login">
+            <Tabs defaultValue={defaultTab}>
               <TabsList className="w-full mb-6">
                 <TabsTrigger value="login" className="flex-1">
                   Sign in

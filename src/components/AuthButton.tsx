@@ -12,12 +12,20 @@ interface Props {
 export function AuthButton({ userEmail }: Props) {
   if (!userEmail) {
     return (
-      <Link
-        href="/auth"
-        className="text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 font-medium"
-      >
-        Log in
-      </Link>
+      <div className="flex items-center gap-2">
+        <Link
+          href="/auth"
+          className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-150 font-medium px-3 py-1.5 rounded-md hover:bg-gray-100"
+        >
+          Log In
+        </Link>
+        <Link
+          href="/auth?tab=signup"
+          className="text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors duration-150 font-medium px-3 py-1.5 rounded-md"
+        >
+          Sign Up
+        </Link>
+      </div>
     );
   }
 
