@@ -4,8 +4,8 @@ import Navbar from "@/components/Navbar";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
-  title: "Fantasy Basketball Schedule Analyzer",
-  description: "Analyze NBA team schedules to optimize your fantasy basketball lineup",
+  title: "Fantasy Basketball Companion",
+  description: "",
 };
 
 export default function RootLayout({
