@@ -1,9 +1,7 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useActionState, useTransition, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Activity } from "lucide-react";
-import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -103,24 +101,33 @@ function SignupForm() {
   );
 }
 
-export default function AuthPage() {
+function AuthTabs() {
   const searchParams = useSearchParams();
   const defaultTab = searchParams.get("tab") === "signup" ? "signup" : "login";
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Nav */}
-      {/* <nav className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-black/6 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Activity className="w-5 h-5 text-orange-600" />
-            <span className="font-semibold text-gray-900 tracking-tight">
-              Fantasy Basketball Companion
-            </span>
-          </Link>
-        </div>
-      </nav> */}
+    <Tabs defaultValue={defaultTab}>
+      <TabsList className="w-full mb-6">
+        <TabsTrigger value="login" className="flex-1">
+          Sign in
+        </TabsTrigger>
+        <TabsTrigger value="signup" className="flex-1">
+          Sign up
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="login">
+        <LoginForm />
+      </TabsContent>
+      <TabsContent value="signup">
+        <SignupForm />
+      </TabsContent>
+    </Tabs>
+  );
+}
 
+export default function AuthPage() {
+  return (
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Auth card */}
       <div className="flex-1 flex items-center justify-center px-6 py-16">
         <div className="w-full max-w-sm">
@@ -134,22 +141,9 @@ export default function AuthPage() {
           </div>
 
           <div className="bg-gray-50 rounded-3xl p-8">
-            <Tabs defaultValue={defaultTab}>
-              <TabsList className="w-full mb-6">
-                <TabsTrigger value="login" className="flex-1">
-                  Sign in
-                </TabsTrigger>
-                <TabsTrigger value="signup" className="flex-1">
-                  Sign up
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="login">
-                <LoginForm />
-              </TabsContent>
-              <TabsContent value="signup">
-                <SignupForm />
-              </TabsContent>
-            </Tabs>
+            <Suspense fallback={<div className="h-48" />}>
+              <AuthTabs />
+            </Suspense>
           </div>
         </div>
       </div>
