@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { addPlayer, removePlayer } from "@/app/roster/actions";
+import { addPlayer, removePlayer } from "@/app/(main)/roster/actions";
 import { NBA_TEAMS } from "@/lib/constants";
 import type { RosterPlayer } from "@/lib/types";
 

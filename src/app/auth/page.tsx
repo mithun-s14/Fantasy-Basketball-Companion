@@ -1,150 +1,158 @@
 "use client";
 
-import { useActionState, useTransition, Suspense } from "react";
+import { useActionState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { login, signup } from "./actions";
+import Balatro from "@/components/Balatro";
 
 function LoginForm() {
-  const [state, formAction] = useActionState(login, null);
-  const [isPending, startTransition] = useTransition();
+  const [state, formAction, isPending] = useActionState(login, null);
 
   return (
-    <form
-      action={(formData) => startTransition(() => formAction(formData))}
-      className="space-y-4"
-    >
-      <div className="space-y-1.5">
-        <Label htmlFor="login-email">Email</Label>
-        <Input
-          id="login-email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          placeholder="you@example.com"
-        />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Welcome back</h1>
+        <p className="text-gray-500 text-sm mt-1">Sign in to your account to continue.</p>
       </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="login-password">Password</Label>
-        <Input
-          id="login-password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          placeholder="••••••••"
-        />
-      </div>
-      {state?.error && (
-        <p className="text-sm text-red-600">{state.error}</p>
-      )}
-      <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "Signing in…" : "Sign in"}
-      </Button>
-    </form>
+      <form action={formAction} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="login-email">Email</Label>
+          <Input
+            id="login-email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            placeholder="you@example.com"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="login-password">Password</Label>
+          <Input
+            id="login-password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            placeholder="••••••••"
+          />
+        </div>
+        {state?.error && (
+          <p className="text-sm text-red-600">{state.error}</p>
+        )}
+        <Button type="submit" className="w-full" disabled={isPending}>
+          {isPending ? "Signing in…" : "Sign in"}
+        </Button>
+        <p className="text-center text-sm text-gray-500">
+          New user?{" "}
+          <Link
+            href="/auth?tab=signup"
+            className="text-gray-900 font-semibold hover:underline"
+          >
+            Create an account
+          </Link>
+        </p>
+      </form>
+    </div>
   );
 }
 
 function SignupForm() {
-  const [state, formAction] = useActionState(signup, null);
-  const [isPending, startTransition] = useTransition();
+  const [state, formAction, isPending] = useActionState(signup, null);
 
   return (
-    <form
-      action={(formData) => startTransition(() => formAction(formData))}
-      className="space-y-4"
-    >
-      <div className="space-y-1.5">
-        <Label htmlFor="signup-email">Email</Label>
-        <Input
-          id="signup-email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          placeholder="you@example.com"
-        />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Create account</h1>
+        <p className="text-gray-500 text-sm mt-1">Sign up to manage your fantasy roster.</p>
       </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="signup-password">Password</Label>
-        <Input
-          id="signup-password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          required
-          placeholder="At least 8 characters"
-        />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="signup-confirm">Confirm password</Label>
-        <Input
-          id="signup-confirm"
-          name="confirm"
-          type="password"
-          autoComplete="new-password"
-          required
-          placeholder="••••••••"
-        />
-      </div>
-      {state?.error && (
-        <p className="text-sm text-red-600">{state.error}</p>
-      )}
-      <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "Creating account…" : "Create account"}
-      </Button>
-    </form>
+      <form action={formAction} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="signup-email">Email</Label>
+          <Input
+            id="signup-email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            placeholder="you@example.com"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="signup-password">Password</Label>
+          <Input
+            id="signup-password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            placeholder="At least 8 characters"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="signup-confirm">Confirm password</Label>
+          <Input
+            id="signup-confirm"
+            name="confirm"
+            type="password"
+            autoComplete="new-password"
+            required
+            placeholder="••••••••"
+          />
+        </div>
+        {state?.error && (
+          <p className="text-sm text-red-600">{state.error}</p>
+        )}
+        <Button type="submit" className="w-full" disabled={isPending}>
+          {isPending ? "Creating account…" : "Create account"}
+        </Button>
+        <p className="text-center text-sm text-gray-500">
+          Already have an account?{" "}
+          <Link href="/auth" className="text-gray-900 font-semibold hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </form>
+    </div>
   );
 }
 
-function AuthTabs() {
+function AuthContent() {
   const searchParams = useSearchParams();
-  const defaultTab = searchParams.get("tab") === "signup" ? "signup" : "login";
-
-  return (
-    <Tabs defaultValue={defaultTab}>
-      <TabsList className="w-full mb-6">
-        <TabsTrigger value="login" className="flex-1">
-          Sign in
-        </TabsTrigger>
-        <TabsTrigger value="signup" className="flex-1">
-          Sign up
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="login">
-        <LoginForm />
-      </TabsContent>
-      <TabsContent value="signup">
-        <SignupForm />
-      </TabsContent>
-    </Tabs>
-  );
+  const isSignup = searchParams.get("tab") === "signup";
+  return isSignup ? <SignupForm /> : <LoginForm />;
 }
 
 export default function AuthPage() {
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Auth card */}
-      <div className="flex-1 flex items-center justify-center px-6 py-16">
-        <div className="w-full max-w-sm">
-          <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Welcome back
-            </h1>
-            <p className="text-gray-500 text-sm mt-2">
-              Sign in or create an account to manage your roster.
-            </p>
-          </div>
+    <div className="flex-1 flex min-h-screen">
+      {/* Left: Balatro animation */}
+      <div className="hidden md:block w-1/2 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <Balatro
+            spinRotation={-2}
+            spinSpeed={10}
+            color1="#ea580c"
+            color2="#9ca3af"
+            color3="#162325"
+            contrast={3.5}
+            lighting={0.4}
+            spinAmount={0.25}
+            pixelFilter={700}
+          />
+        </div>
+      </div>
 
-          <div className="bg-gray-50 rounded-3xl p-8">
-            <Suspense fallback={<div className="h-48" />}>
-              <AuthTabs />
-            </Suspense>
-          </div>
+      {/* Right: auth form */}
+      <div className="flex-1 flex items-center justify-center px-8 py-16 bg-white">
+        <div className="w-full max-w-sm">
+          <Suspense fallback={<div className="h-72" />}>
+            <AuthContent />
+          </Suspense>
         </div>
       </div>
     </div>
