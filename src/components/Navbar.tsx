@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { AuthButton } from "@/components/AuthButton";
+import { MobileNav } from "@/components/MobileNav";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export default async function Navbar() {
@@ -14,8 +15,8 @@ export default async function Navbar() {
     <nav className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-black/6 px-6 py-1">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         {/* Left: Logo + Nav links */}
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-1">
+        <div className="flex items-center gap-8 min-w-0">
+          <Link href="/" className="flex items-center gap-1 shrink-0">
             <Image
               src="/fbclogo.png"
               alt="Fantasy Basketball Companion logo"
@@ -23,11 +24,11 @@ export default async function Navbar() {
               height={50}
               className="object-contain mt-2"
             />
-            <span className="font-semibold text-gray-900 tracking-tight">
+            <span className="hidden sm:inline font-semibold text-gray-900 tracking-tight">
               Fantasy Basketball Companion
             </span>
           </Link>
-          <div className="flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-6">
             <Link
               href="/analyzer"
               className="text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 font-medium"
@@ -51,8 +52,11 @@ export default async function Navbar() {
           </div>
         </div>
 
-        {/* Right: Auth */}
-        <AuthButton userEmail={userEmail} />
+        {/* Right: Auth + Mobile menu */}
+        <div className="flex items-center gap-2">
+          <AuthButton userEmail={userEmail} />
+          <MobileNav userEmail={userEmail} />
+        </div>
       </div>
     </nav>
   );

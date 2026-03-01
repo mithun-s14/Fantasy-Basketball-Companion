@@ -31,7 +31,7 @@ export function AuthButton({ userEmail }: Props) {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm text-gray-500 truncate max-w-[160px]" title={userEmail}>
+      <span className="hidden sm:inline text-sm text-gray-500 truncate max-w-[160px]" title={userEmail}>
         {userEmail}
       </span>
       <form action={logout}>
