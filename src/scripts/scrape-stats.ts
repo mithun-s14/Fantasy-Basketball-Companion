@@ -175,8 +175,11 @@ async function fetchBbrefStats(): Promise<StatRow[] | null> {
 
     const html = await res.text();
     const $ = cheerio.load(html);
-    const rows: StatRow[] = [];
-    const seenPlayers = new Set<string>();
+
+    // Use a Map to keep the last (most recent) row per player.
+    // BBRef lists traded players as: xTM combined row first, then per-team rows.
+    // We want the final per-team row (current team), not the combined xTM row.
+    const playerMap = new Map<string, StatRow>();
 
     $("#per_game_stats tbody tr").each((_, el) => {
       const tds = $(el).find("td");
@@ -185,19 +188,14 @@ async function fetchBbrefStats(): Promise<StatRow[] | null> {
       const playerName = $(el).find('[data-stat="name_display"]').text().trim();
       const teamAbr    = $(el).find('[data-stat="team_name_abbr"]').text().trim();
 
-      if (!playerName) return;
-      // Skip duplicate rows for traded players — keep only first occurrence
-      // (BBRef lists a combined xTM row first, then per-team rows)
-      if (seenPlayers.has(playerName)) return;
-      seenPlayers.add(playerName);
-      // Resolve team: xTM rows don't have a real team — use empty string fallback
-      const resolvedTeam = BBREF_ABR_TO_FULL[teamAbr] ?? teamAbr;
+      // Skip xTM combined rows (2TM, 3TM) — we want per-team rows only
+      if (!playerName || teamAbr.endsWith("TM")) return;
 
       const g = (key: string) => parseFloat($(el).find(`[data-stat="${key}"]`).text()) || 0;
 
-      rows.push({
+      playerMap.set(playerName.normalize("NFC"), {
         player_name: playerName.normalize("NFC"),
-        nba_team:    resolvedTeam,
+        nba_team:    BBREF_ABR_TO_FULL[teamAbr] ?? teamAbr,
         stat_type:   "season",
         pts:      g("pts_per_g"),
         reb:      g("trb_per_g"),
@@ -213,6 +211,7 @@ async function fetchBbrefStats(): Promise<StatRow[] | null> {
       });
     });
 
+    const rows = Array.from(playerMap.values());
     console.log(`[scrape-stats] BBRef: parsed ${rows.length} player rows`);
     return rows.length > 0 ? rows : null;
   } catch (err) {
@@ -271,6 +270,7 @@ async function main() {
 
   const BATCH = 200;
   let upserted = 0;
+  let hadError = false;
   for (let i = 0; i < allRows.length; i += BATCH) {
     const batch = allRows.slice(i, i + BATCH);
     const { error } = await supabase
@@ -279,12 +279,17 @@ async function main() {
 
     if (error) {
       console.error(`[scrape-stats] Upsert error at batch ${i}:`, error.message);
+      hadError = true;
     } else {
       upserted += batch.length;
     }
   }
 
-  console.log(`[scrape-stats] Done. Upserted ${upserted} rows.`);
+  console.log(`[scrape-stats] Done. Upserted ${upserted} of ${allRows.length} rows.`);
+  if (hadError) {
+    console.error("[scrape-stats] Some batches failed — exiting with error.");
+    process.exit(1);
+  }
 }
 
 main().catch((err) => {
