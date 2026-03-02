@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useActionState, useRef } from "react";
+import { useState, useEffect, useActionState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Swords, Trash2, AlertTriangle } from "lucide-react";
@@ -80,6 +80,7 @@ function PlayerAutocomplete({
   const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -99,13 +100,21 @@ function PlayerAutocomplete({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // C2: cleanup effect — abort any in-flight request on unmount
+  useEffect(() => {
+    return () => { if (abortRef.current) abortRef.current.abort(); };
+  }, []);
+
   function triggerSearch(val: string) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (abortRef.current) abortRef.current.abort();
     if (val.trim().length < 2) { setSuggestions([]); setIsOpen(false); return; }
     debounceRef.current = setTimeout(async () => {
+      const controller = new AbortController();
+      abortRef.current = controller;
       setLoading(true);
       try {
-        const res = await fetch(`/api/players?search=${encodeURIComponent(val)}`);
+        const res = await fetch(`/api/players?search=${encodeURIComponent(val)}`, { signal: controller.signal });
         if (res.ok) {
           const data = await res.json();
           const list: PlayerSuggestion[] = Array.isArray(data) ? data : [];
@@ -113,7 +122,11 @@ function PlayerAutocomplete({
           setIsOpen(list.length > 0);
           setActiveIndex(-1);
         }
-      } catch { /* ignore */ } finally { setLoading(false); }
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") { /* ignore */ }
+      } finally {
+        setLoading(false);
+      }
     }, 250);
   }
 
@@ -146,6 +159,8 @@ function PlayerAutocomplete({
         required
         aria-autocomplete="list"
         aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-controls="player-autocomplete-listbox"
       />
       {loading && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -153,7 +168,7 @@ function PlayerAutocomplete({
         </div>
       )}
       {isOpen && suggestions.length > 0 && (
-        <ul role="listbox" className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+        <ul id="player-autocomplete-listbox" role="listbox" className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
           {suggestions.map((player, i) => (
             <li
               key={player.name}
@@ -172,20 +187,21 @@ function PlayerAutocomplete({
   );
 }
 
-function AddOpponentForm({ onSuccess }: { onSuccess: () => void }) {
+// I1: removed onSuccess prop — AddOpponentForm handles its own refresh
+function AddOpponentForm() {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(addOpponentPlayer, null);
   const [resetKey, setResetKey] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState("");
 
+  // C1: removed onSuccess() call; only state changes + router.refresh()
   useEffect(() => {
     if (state && "success" in state) {
       setResetKey((k) => k + 1);
       setSelectedTeam("");
-      onSuccess();
       router.refresh();
     }
-  }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [state, router]);
 
   return (
     <form action={formAction} className="space-y-3">
@@ -211,9 +227,14 @@ function AddOpponentForm({ onSuccess }: { onSuccess: () => void }) {
 
 function RemoveOpponentButton({ playerId, onSuccess }: { playerId: string; onSuccess: () => void }) {
   const [state, formAction, isPending] = useActionState(removeOpponentPlayer, null);
+
+  // C1: store onSuccess in a ref to avoid stale closure
+  const onSuccessRef = useRef(onSuccess);
+  useEffect(() => { onSuccessRef.current = onSuccess; });
+
   useEffect(() => {
-    if (state && "success" in state) onSuccess();
-  }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (state && "success" in state) onSuccessRef.current();
+  }, [state]);
 
   return (
     <form action={formAction}>
@@ -251,7 +272,8 @@ function RosterColumn({
       {showAddForm && onRemove && (
         <div className="bg-gray-50 rounded-2xl p-5">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Add player</p>
-          <AddOpponentForm onSuccess={() => {}} />
+          {/* I1: removed dead onSuccess={() => {}} prop */}
+          <AddOpponentForm />
         </div>
       )}
 
@@ -267,7 +289,8 @@ function RosterColumn({
                   <p className="text-xs text-gray-500">{player.nba_team}</p>
                 </div>
                 {missingNames.has(player.player_name) && (
-                  <AlertTriangle className="w-3.5 h-3.5 text-yellow-500 shrink-0" aria-label="No stats available" />
+                  // I3: added role="img" for proper ARIA semantics
+                  <AlertTriangle role="img" aria-label="No stats available" className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
                 )}
               </div>
               {showAddForm && onRemove && (
@@ -305,7 +328,7 @@ export function MatchupClient({ userPlayers, opponentPlayers, allStats }: Props)
   // Sync server-refreshed opponentPlayers into local state
   useEffect(() => { setOppPlayers(opponentPlayers); }, [opponentPlayers]);
 
-  // Fetch game counts when date range changes
+  // I5: fetch game counts — only clear loading on success or real error, not AbortError
   useEffect(() => {
     if (!startDate || !endDate) { setGameCounts({}); return; }
     const controller = new AbortController();
@@ -314,10 +337,20 @@ export function MatchupClient({ userPlayers, opponentPlayers, allStats }: Props)
     const s = format(startDate, "yyyy-MM-dd");
     const e = format(endDate, "yyyy-MM-dd");
     fetch(`/api/games?start=${s}&end=${e}`, { signal: controller.signal })
-      .then((res) => { if (!res.ok) throw new Error("Failed to fetch schedule"); return res.json(); })
-      .then((data) => setGameCounts(data.gameCounts ?? {}))
-      .catch((err) => { if (err.name !== "AbortError") setGameError(err.message); })
-      .finally(() => setIsLoadingGames(false));
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch schedule");
+        return res.json();
+      })
+      .then((data) => {
+        setGameCounts(data.gameCounts ?? {});
+        setIsLoadingGames(false);
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          setGameError(err.message);
+          setIsLoadingGames(false);
+        }
+      });
     return () => controller.abort();
   }, [startDate, endDate]);
 
@@ -330,15 +363,24 @@ export function MatchupClient({ userPlayers, opponentPlayers, allStats }: Props)
       ? computeMatchup(userPlayers, oppPlayers, allStats, gameCounts, effectiveStatType)
       : null;
 
-  // Which players are missing stats
-  const statNames = new Set(
-    allStats.filter((s) => s.stat_type === effectiveStatType).map((s) => s.player_name.normalize("NFC").toLowerCase())
+  // M1: memoize derived Sets to avoid recomputation on every render
+  const statNames = useMemo(
+    () => new Set(
+      allStats.filter((s) => s.stat_type === effectiveStatType).map((s) => s.player_name.normalize("NFC").toLowerCase())
+    ),
+    [allStats, effectiveStatType]
   );
-  const missingUserNames = new Set(
-    userPlayers.filter((p) => !statNames.has(p.player_name.normalize("NFC").toLowerCase())).map((p) => p.player_name)
+  const missingUserNames = useMemo(
+    () => new Set(
+      userPlayers.filter((p) => !statNames.has(p.player_name.normalize("NFC").toLowerCase())).map((p) => p.player_name)
+    ),
+    [userPlayers, statNames]
   );
-  const missingOppNames = new Set(
-    oppPlayers.filter((p) => !statNames.has(p.player_name.normalize("NFC").toLowerCase())).map((p) => p.player_name)
+  const missingOppNames = useMemo(
+    () => new Set(
+      oppPlayers.filter((p) => !statNames.has(p.player_name.normalize("NFC").toLowerCase())).map((p) => p.player_name)
+    ),
+    [oppPlayers, statNames]
   );
   const hasMissing = missingUserNames.size > 0 || missingOppNames.size > 0;
 
