@@ -23,7 +23,7 @@ export async function addOpponentPlayer(
       (formData.get("player_name") as string | null)?.trim() ?? "";
     const nbaTeam = (formData.get("nba_team") as string | null)?.trim() ?? "";
 
-    if (!PLAYER_NAME_REGEX.test(playerName)) {
+    if (playerName.length < 2 || playerName.length > 60 || !PLAYER_NAME_REGEX.test(playerName)) {
       return {
         error:
           "Player name must be 2–60 characters and contain only letters, spaces, hyphens, or apostrophes.",
@@ -47,7 +47,8 @@ export async function addOpponentPlayer(
       if (!NBA_TEAMS.includes(resolvedTeam)) {
         return { error: "Could not determine a valid team for this player." };
       }
-    } catch {
+    } catch (nbaErr) {
+      console.error("[addOpponentPlayer] NBA API error:", nbaErr);
       if (!NBA_TEAMS.includes(nbaTeam)) {
         return { error: "Please select a valid NBA team." };
       }
