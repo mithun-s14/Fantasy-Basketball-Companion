@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useActionState, useRef, useMemo } from "react";
+import { useState, useEffect, useActionState, useRef, useMemo, useId } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Swords, Trash2, AlertTriangle } from "lucide-react";
@@ -79,6 +79,7 @@ function PlayerAutocomplete({
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const listboxId = useId();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -125,7 +126,7 @@ function PlayerAutocomplete({
       } catch (err) {
         if ((err as Error).name !== "AbortError") { /* ignore */ }
       } finally {
-        setLoading(false);
+        if (abortRef.current === controller) setLoading(false);
       }
     }, 250);
   }
@@ -160,7 +161,7 @@ function PlayerAutocomplete({
         aria-autocomplete="list"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        aria-controls="player-autocomplete-listbox"
+        aria-controls={listboxId}
       />
       {loading && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -168,7 +169,7 @@ function PlayerAutocomplete({
         </div>
       )}
       {isOpen && suggestions.length > 0 && (
-        <ul id="player-autocomplete-listbox" role="listbox" className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+        <ul id={listboxId} role="listbox" className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
           {suggestions.map((player, i) => (
             <li
               key={player.name}
