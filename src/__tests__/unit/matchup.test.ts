@@ -140,4 +140,49 @@ describe("computeMatchup", () => {
     const pts = result.categories.find((c) => c.category === "pts")!;
     expect(pts.userTotal).toBeCloseTo(90); // 30 * 3
   });
+
+  it("contributes zero for players whose team has no games in range", () => {
+    const user = [makePlayer("LeBron James", "Los Angeles Lakers")];
+    const opp  = [makePlayer("Steph Curry", "Golden State Warriors")]; // not in gameCounts
+    const stats = [
+      makeStats("LeBron James", "Los Angeles Lakers", { pts: 25 }),
+      makeStats("Steph Curry",  "Golden State Warriors", { pts: 30 }),
+    ];
+    const result = computeMatchup(user, opp, stats, gameCounts, "season");
+    const pts = result.categories.find((c) => c.category === "pts")!;
+    expect(pts.opponentTotal).toBeCloseTo(0); // 30 * 0 games
+    expect(pts.winner).toBe("user");
+  });
+
+  it("returns zero FG% when all players have zero attempts", () => {
+    const user = [makePlayer("LeBron James", "Los Angeles Lakers")];
+    const opp  = [makePlayer("Jayson Tatum", "Boston Celtics")];
+    const stats = [
+      makeStats("LeBron James", "Los Angeles Lakers", { fgm: 0, fga: 0 }),
+      makeStats("Jayson Tatum",  "Boston Celtics",    { fgm: 0, fga: 0 }),
+    ];
+    const result = computeMatchup(user, opp, stats, gameCounts, "season");
+    const fg = result.categories.find((c) => c.category === "fg_pct")!;
+    expect(fg.userTotal).toBe(0);
+    expect(fg.opponentTotal).toBe(0);
+    expect(fg.winner).toBe("tie");
+  });
+
+  it("sums contributions from multiple players on the same roster", () => {
+    const user = [
+      makePlayer("LeBron James",  "Los Angeles Lakers"),
+      makePlayer("Anthony Davis", "Los Angeles Lakers"),
+    ];
+    const opp = [makePlayer("Jayson Tatum", "Boston Celtics")];
+    const stats = [
+      makeStats("LeBron James",  "Los Angeles Lakers", { pts: 25 }),
+      makeStats("Anthony Davis", "Los Angeles Lakers", { pts: 20 }),
+      makeStats("Jayson Tatum",  "Boston Celtics",     { pts: 30 }),
+    ];
+    const result = computeMatchup(user, opp, stats, gameCounts, "season");
+    const pts = result.categories.find((c) => c.category === "pts")!;
+    expect(pts.userTotal).toBeCloseTo(135); // (25+20)*3
+    expect(pts.opponentTotal).toBeCloseTo(60); // 30*2
+    expect(pts.winner).toBe("user");
+  });
 });
