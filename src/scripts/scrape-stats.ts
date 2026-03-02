@@ -177,8 +177,10 @@ async function fetchBbrefStats(): Promise<StatRow[] | null> {
     const $ = cheerio.load(html);
 
     // Use a Map to keep the last (most recent) row per player.
-    // BBRef lists traded players as: xTM combined row first, then per-team rows.
-    // We want the final per-team row (current team), not the combined xTM row.
+    // BBRef lists rows in this order: xTM combined row first, then per-team rows
+    // in chronological trade order. By skipping xTM rows and overwriting on each
+    // subsequent per-team row, the final map entry per player is their current team.
+    // Assumption: BBRef per-team rows are in chronological order (consistent since 2010s).
     const playerMap = new Map<string, StatRow>();
 
     $("#per_game_stats tbody tr").each((_, el) => {
