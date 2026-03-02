@@ -44,15 +44,15 @@ export function MatchupProjectionTable({ result }: Props) {
               <td className="px-4 py-3 font-medium text-gray-700">{label}</td>
               <td
                 className={`px-4 py-3 text-right tabular-nums font-medium ${
-                  winner === "user" ? "text-green-600" : "text-gray-700"
+                  winner === "user" ? "text-green-600" : "text-gray-400"
                 }`}
               >
                 {formatStat(category, userTotal)}
               </td>
-              <td className="px-4 py-3 text-center text-gray-400 text-xs">vs</td>
+              <td className="px-4 py-3 text-center text-gray-400 text-xs" aria-label="vs">vs</td>
               <td
                 className={`px-4 py-3 tabular-nums font-medium ${
-                  winner === "opponent" ? "text-green-600" : "text-gray-700"
+                  winner === "opponent" ? "text-green-600" : "text-gray-400"
                 }`}
               >
                 {formatStat(category, opponentTotal)}
