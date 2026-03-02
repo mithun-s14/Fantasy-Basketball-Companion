@@ -8,6 +8,7 @@
     "start": "next start",
     "scrape": "npx tsx src/scripts/scrape.ts",
     "seed-players": "npx tsx src/scripts/seed-players.ts",
+    "scrape-stats": "npx tsx src/scripts/scrape-stats.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
