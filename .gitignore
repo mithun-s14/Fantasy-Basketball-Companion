@@ -3,5 +3,6 @@
 .env*.local
 .next/
 node_modules/
+coverage/
 .guidelines
 CLAUDE.md

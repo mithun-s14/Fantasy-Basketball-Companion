@@ -75,6 +75,42 @@ npm run seed-players  # Seed active NBA player roster into Supabase
 - **Unicode names**: player names with diacritics (e.g. Jokić, Vučević) are handled via NFC normalization at both the search and validation layers.
 - **shadcn/ui**: use the shadcn CLI to add or update components — do not edit files in `src/components/ui/` directly.
 
+## Testing
+
+Two separate test suites cover different layers of the app.
+
+### Unit & Component Tests — Vitest + React Testing Library
+
+```bash
+npm test                # Run all unit/component tests once
+npm run test:watch      # Re-run on file changes
+npm run test:coverage   # Run with coverage report (outputs to coverage/)
+```
+
+Tests live in `src/__tests__/` and run in a **happy-dom** environment (no real browser needed). Mock data is passed directly as props, so no database or network calls.
+
+| File | What it covers |
+|------|---------------|
+| `unit/constants.test.ts` | NBA team constants |
+| `unit/games-api.test.ts` | `/api/games` route handler logic |
+| `components/AuthButton.test.tsx` | Auth button render states |
+| `components/MobileNav.test.tsx` | Mobile navigation component |
+| `components/TeamScheduleTable.test.tsx` | Table sorting, filtering, and badge colours |
+
+### End-to-End Tests — Playwright
+
+```bash
+npm run test:e2e        # Run e2e tests (headless)
+npm run test:e2e:ui     # Run with the Playwright UI
+```
+
+Tests live in `tests/e2e/` and run against a real browser pointed at `localhost:3000`. The dev server starts automatically. Runs against Desktop Chrome and Mobile Chrome (Pixel 5).
+
+| File | What it covers |
+|------|---------------|
+| `navigation.spec.ts` | Page loads and link navigation |
+| `auth.spec.ts` | Login and signup flows |
+
 ## To-do
 - [ ] Matchup estimator. Compare user's roster vs opponents and attempt to determine who will win the matchup
 - [ ] Add trade analyzer. Help compare player's sent and recieved statistics
