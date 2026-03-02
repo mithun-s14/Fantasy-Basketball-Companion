@@ -234,7 +234,7 @@ function AddPlayerForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <form action={formAction} className="space-y-3">
-      <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-start">
         <div className="space-y-1.5">
           <Label>Player name</Label>
           <PlayerAutocomplete
@@ -250,7 +250,7 @@ function AddPlayerForm({ onSuccess }: { onSuccess: () => void }) {
             externalValue={selectedTeam}
           />
         </div>
-        <Button type="submit" disabled={isPending} className="whitespace-nowrap">
+        <Button type="submit" disabled={isPending} className="whitespace-nowrap self-end mb-1.5">
           {isPending ? "Adding…" : "Add player"}
         </Button>
       </div>

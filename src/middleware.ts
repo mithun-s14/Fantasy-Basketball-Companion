@@ -32,11 +32,11 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Protect /roster — redirect to /auth if not logged in
-  if (pathname.startsWith("/roster") && !user) {
+  // Protect /roster and /matchup — redirect to /auth if not logged in
+  if ((pathname.startsWith("/roster") || pathname.startsWith("/matchup")) && !user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/auth";
-    redirectUrl.searchParams.set("next", "/roster");
+    redirectUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
