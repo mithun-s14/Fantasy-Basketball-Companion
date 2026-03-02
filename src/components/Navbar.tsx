@@ -49,6 +49,14 @@ export default async function Navbar() {
                 Roster
               </Link>
             )}
+            {userEmail && (
+              <Link
+                href="/matchup"
+                className="text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 font-medium"
+              >
+                Matchup
+              </Link>
+            )}
           </div>
         </div>
 
