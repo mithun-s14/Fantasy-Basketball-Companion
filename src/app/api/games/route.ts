@@ -54,11 +54,16 @@ export async function GET(request: NextRequest) {
       gameCounts[team] = 0;
     });
 
+    const validTeams = new Set(NBA_TEAMS);
     for (const row of homeGames) {
-      gameCounts[row.home_team] = (gameCounts[row.home_team] || 0) + 1;
+      if (validTeams.has(row.home_team)) {
+        gameCounts[row.home_team] = (gameCounts[row.home_team] || 0) + 1;
+      }
     }
     for (const row of awayGames) {
-      gameCounts[row.away_team] = (gameCounts[row.away_team] || 0) + 1;
+      if (validTeams.has(row.away_team)) {
+        gameCounts[row.away_team] = (gameCounts[row.away_team] || 0) + 1;
+      }
     }
 
     const totalGames = homeGames.length;
