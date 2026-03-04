@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Bot, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { HomepageFeatureCards } from "@/components/HomepageFeatureCards";
 
 export default async function Home() {
   const supabase = await createSupabaseServerClient();
@@ -29,7 +30,7 @@ export default async function Home() {
           </h1>
 
           <p className="text-xl text-gray-500 max-w-xl mx-auto mb-12 leading-relaxed">
-            Analyze NBA schedules to find streaming opportunities, read up on injury reports, then get personalized advice from an AI coach.
+            Analyze NBA schedules to find streaming opportunities, get personalized advice from an AI coach powered by Gemini, and sign in to get matchup analysis.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -52,78 +53,7 @@ export default async function Home() {
 
       {/* Feature cards */}
       <section className="max-w-6xl mx-auto px-6 pb-24">
-        <div className={`grid gap-5 ${userEmail ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
-          {/* Schedule Analyzer */}
-          <Link
-            href="/analyzer"
-            className="group relative bg-gray-50 rounded-3xl p-9 hover:bg-gray-100/80 transition-colors duration-200 overflow-hidden"
-          >
-            <div className="absolute -top-12 -right-12 w-56 h-56 bg-orange-100/60 rounded-full blur-3xl pointer-events-none" />
-            <div className="relative">
-              <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-7">
-                <CalendarDays className="w-6 h-6 text-orange-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-3">
-                Schedule Analyzer
-              </h2>
-              <p className="text-gray-500 leading-relaxed mb-8 text-[15px]">
-                Pick any date range and instantly see how many games each NBA team plays.
-                Identify streaming targets and plan your lineup moves with precision.
-              </p>
-              <div className="flex items-center gap-1.5 text-orange-600 font-semibold text-sm group-hover:gap-2.5 transition-all duration-150">
-                Open analyzer <ArrowRight className="w-4 h-4" />
-              </div>
-            </div>
-          </Link>
-
-          {/* AI Coach */}
-          <Link
-            href="/chat"
-            className="group relative bg-gray-900 rounded-3xl p-9 hover:bg-[#111] transition-colors duration-200 overflow-hidden"
-          >
-            <div className="absolute -top-12 -right-12 w-56 h-56 bg-orange-600/20 rounded-full blur-3xl pointer-events-none" />
-            <div className="relative">
-              <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-7">
-                <Bot className="w-6 h-6 text-orange-400" />
-              </div>
-              <h2 className="text-2xl font-bold text-white tracking-tight mb-3">
-                AI Coach
-              </h2>
-              <p className="text-gray-400 leading-relaxed mb-8 text-[15px]">
-                Ask anything about your fantasy team. Get trade advice, waiver wire
-                recommendations, and strategic insights powered by a large language model.
-              </p>
-              <div className="flex items-center gap-1.5 text-orange-400 font-semibold text-sm group-hover:gap-2.5 transition-all duration-150">
-                Chat now <ArrowRight className="w-4 h-4" />
-              </div>
-            </div>
-          </Link>
-
-          {/* Roster — only shown when logged in */}
-          {userEmail && (
-            <Link
-              href="/roster"
-              className="group relative bg-gray-50 rounded-3xl p-9 hover:bg-gray-100/80 transition-colors duration-200 overflow-hidden"
-            >
-              <div className="absolute -top-12 -right-12 w-56 h-56 bg-orange-100/60 rounded-full blur-3xl pointer-events-none" />
-              <div className="relative">
-                <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-7">
-                  <Users className="w-6 h-6 text-orange-600" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-3">
-                  My Roster
-                </h2>
-                <p className="text-gray-500 leading-relaxed mb-8 text-[15px]">
-                  Track the NBA players on your fantasy team. Add and remove players
-                  as the season evolves.
-                </p>
-                <div className="flex items-center gap-1.5 text-orange-600 font-semibold text-sm group-hover:gap-2.5 transition-all duration-150">
-                  View roster <ArrowRight className="w-4 h-4" />
-                </div>
-              </div>
-            </Link>
-          )}
-        </div>
+        <HomepageFeatureCards userEmail={userEmail} />
       </section>
     </div>
   );
