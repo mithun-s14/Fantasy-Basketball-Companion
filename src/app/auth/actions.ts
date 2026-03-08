@@ -72,8 +72,11 @@ export async function signInWithGoogle(
   _formData: FormData
 ): Promise<{ error: string } | never> {
   const headersList = await headers();
-  const host = headersList.get("host") ?? "localhost:3000";
-  const proto = headersList.get("x-forwarded-proto") ?? "http";
+  // x-forwarded-host is set by Vercel and proxies; fall back to host
+  const host = headersList.get("x-forwarded-host") ?? headersList.get("host") ?? "localhost:3000";
+  // x-forwarded-proto is always "https" on Vercel production
+  const proto = headersList.get("x-forwarded-proto")?.split(",")[0].trim() ?? "http";
+  // NEXT_PUBLIC_SITE_URL must include the protocol, e.g. https://example.com
   const origin = process.env.NEXT_PUBLIC_SITE_URL ?? `${proto}://${host}`;
 
   const supabase = await createSupabaseServerClient();

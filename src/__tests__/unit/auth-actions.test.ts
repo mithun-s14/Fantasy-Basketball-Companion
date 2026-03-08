@@ -17,6 +17,7 @@ vi.mock("next/navigation", () => ({ redirect: mockRedirect }));
 vi.mock("next/headers", () => ({
   headers: vi.fn(async () => ({
     get: (key: string) => {
+      if (key === "x-forwarded-host") return null;
       if (key === "host") return "localhost:3000";
       if (key === "x-forwarded-proto") return "http";
       return null;
