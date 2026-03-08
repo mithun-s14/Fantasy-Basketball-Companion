@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
@@ -64,4 +65,28 @@ export async function logout(): Promise<never> {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
   redirect("/");
+}
+
+export async function signInWithGoogle(
+  _prevState: { error: string } | null,
+  _formData: FormData
+): Promise<{ error: string } | never> {
+  const headersList = await headers();
+  const host = headersList.get("host") ?? "localhost:3000";
+  const proto = headersList.get("x-forwarded-proto") ?? "http";
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? `${proto}://${host}`;
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${origin}/auth/callback`,
+    },
+  });
+
+  if (error || !data.url) {
+    return { error: "Could not initiate Google sign-in. Please try again." };
+  }
+
+  redirect(data.url);
 }
