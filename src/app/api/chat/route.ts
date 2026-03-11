@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { chatRateLimiter } from "@/lib/rate-limiter";
 
 interface Message {
   role: "user" | "assistant";
@@ -11,6 +12,26 @@ interface Message {
 const MAX_HISTORY = 20;
 
 export async function POST(request: NextRequest) {
+  // Rate limit by IP address
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+    request.headers.get("x-real-ip") ??
+    "unknown";
+
+  const rateLimit = chatRateLimiter.check(ip);
+  if (!rateLimit.allowed) {
+    const retryAfterSec = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
+    return new Response("Too many requests. Please wait before sending another message.", {
+      status: 429,
+      headers: {
+        "Retry-After": String(retryAfterSec),
+        "X-RateLimit-Limit": "3",
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Reset": String(rateLimit.resetAt),
+      },
+    });
+  }
+
   let messages: Message[];
   try {
     const body = await request.json();
