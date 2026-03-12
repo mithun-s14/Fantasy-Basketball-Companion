@@ -12,7 +12,7 @@ export default async function Navbar() {
   const userEmail = user?.email ?? null;
 
   return (
-    <nav className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-black/6 px-6 py-1">
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-black/6 px-6 py-1">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         {/* Left: Logo + Nav links */}
         <div className="flex items-center gap-8 min-w-0">
