@@ -1,67 +1,51 @@
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
 /**
- * In-memory sliding-window rate limiter.
+ * Redis-backed sliding window rate limiter.
  *
- * Each key (e.g. IP address) has a list of request timestamps.
- * On every call we drop timestamps older than `windowMs` and check
- * whether the remaining count exceeds `limit`.
+ * How it works:
+ *   Each IP address gets a sorted set in Redis where every request is stored
+ *   as an entry with its timestamp as the score. On each incoming request:
+ *     1. Entries older than the window (60s) are removed
+ *     2. The remaining count is checked against the limit
+ *     3. If allowed, a new entry is added — all atomically via a Lua script
+ *
+ * Why Redis instead of in-memory:
+ *   Next.js API routes run as serverless functions. Multiple instances can
+ *   run simultaneously, each with their own memory — so an in-memory Map
+ *   would give each instance its own separate limit, making the limit
+ *   ineffective. Redis is a shared external store that all instances read
+ *   from, so the limit is enforced globally.
+ *
+ * Why Upstash:
+ *   Traditional Redis requires a persistent TCP connection, which doesn't
+ *   work well in serverless environments that spin up and down per request.
+ *   Upstash exposes Redis over HTTP, making it compatible with Vercel and
+ *   any serverless platform.
  */
 
-interface RateLimiterOptions {
-  /** Maximum requests allowed within the window. */
-  limit: number;
-  /** Window length in milliseconds. */
-  windowMs: number;
-}
+const redis = Redis.fromEnv();
+// Redis.fromEnv() reads UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN
+// from your environment variables automatically.
 
-export interface RateLimitResult {
-  allowed: boolean;
-  /** How many requests remain before the key is throttled. */
-  remaining: number;
-  /** Unix ms timestamp when the oldest request in the window expires. */
-  resetAt: number;
-}
+export const chatRateLimiter = new Ratelimit({
+  redis,
+  // Sliding window: allows `limit` requests per `window`, smoothly.
+  // Unlike a fixed window (which resets at a hard boundary and can allow
+  // a burst of 2x limit at window edges), sliding window tracks the exact
+  // timestamps of the last N requests.
+  limiter: Ratelimit.slidingWindow(3, "60 s"),
+  prefix: "fantasy_chat", // namespaces the Redis keys for this limiter
+});
 
-export class RateLimiter {
-  private readonly limit: number;
-  private readonly windowMs: number;
-  private readonly store = new Map<string, number[]>();
-
-  constructor({ limit, windowMs }: RateLimiterOptions) {
-    this.limit = limit;
-    this.windowMs = windowMs;
-  }
-
-  check(key: string): RateLimitResult {
-    const now = Date.now();
-    const windowStart = now - this.windowMs;
-
-    const timestamps = (this.store.get(key) ?? []).filter(
-      (ts) => ts > windowStart
-    );
-
-    const allowed = timestamps.length < this.limit;
-
-    if (allowed) {
-      timestamps.push(now);
-    }
-
-    this.store.set(key, timestamps);
-
-    const oldest = timestamps[0] ?? now;
-    const resetAt = oldest + this.windowMs;
-
-    return {
-      allowed,
-      remaining: Math.max(0, this.limit - timestamps.length),
-      resetAt,
-    };
-  }
-
-  /** Exposed for testing — clears all stored state. */
-  reset() {
-    this.store.clear();
-  }
-}
-
-/** Shared limiter: 3 requests per minute per IP for the Gemini chat endpoint. */
-export const chatRateLimiter = new RateLimiter({ limit: 3, windowMs: 60_000 });
+/**
+ * Usage in an API route:
+ *
+ *   const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+ *   const { success, remaining, reset } = await chatRateLimiter.limit(ip);
+ *
+ *   if (!success) {
+ *     return new Response("Too many requests", { status: 429 });
+ *   }
+ */

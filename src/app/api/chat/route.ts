@@ -18,16 +18,16 @@ export async function POST(request: NextRequest) {
     request.headers.get("x-real-ip") ??
     "unknown";
 
-  const rateLimit = chatRateLimiter.check(ip);
-  if (!rateLimit.allowed) {
-    const retryAfterSec = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
+  const rateLimit = await chatRateLimiter.limit(ip);
+  if (!rateLimit.success) {
+    const retryAfterSec = Math.ceil((rateLimit.reset - Date.now()) / 1000);
     return new Response("Too many requests. Please wait before sending another message.", {
       status: 429,
       headers: {
         "Retry-After": String(retryAfterSec),
         "X-RateLimit-Limit": "3",
         "X-RateLimit-Remaining": "0",
-        "X-RateLimit-Reset": String(rateLimit.resetAt),
+        "X-RateLimit-Reset": String(rateLimit.reset),
       },
     });
   }
