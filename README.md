@@ -5,7 +5,7 @@ A full-stack web app for fantasy basketball players. Analyze NBA schedules, mana
 ## Features
 
 - **Schedule Analyzer** — Pick any date range and instantly see how many games each NBA team plays. Color-coded by volume to surface streaming targets and back-to-back situations.
-- **AI Coach** — Chat with a Gemini-powered assistant for trade advice, waiver wire recommendations, and lineup decisions. If you're signed in with a saved roster, the AI uses it as context for personalized answers.
+- **AI Coach** — Chat with a Gemini-powered assistant for trade advice, waiver wire recommendations, and lineup decisions. If you're signed in with a saved roster, the AI uses it as context for personalized answers. Rate limiting with Redis
 - **Roster Management** — Add and remove active NBA players from your fantasy team. Player names are validated against the live NBA roster (pulled from the NBA Stats API and stored in Supabase). Supports accented names (Jokić, Vučević, etc.).
 - **Matchup Analysis** - Determine whether or not you can win this week's matchup by comparing your roster against your opponents. Statistics scraped from Basketball Reference.
 - **Auth** — Email/password sign-up and login via Supabase Auth and Google OAuth2. The Roster page is protected; the Schedule Analyzer and AI Coach are public.
