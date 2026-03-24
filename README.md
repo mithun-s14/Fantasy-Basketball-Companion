@@ -5,7 +5,7 @@ A full-stack web app for fantasy basketball players. Analyze NBA schedules, mana
 ## Features
 
 - **Schedule Analyzer** — Pick any date range and instantly see how many games each NBA team plays. Color-coded by volume to surface streaming targets and back-to-back situations.
-- **AI Coach** — Chat with a Gemini-powered assistant for trade advice, waiver wire recommendations, and lineup decisions. If you're signed in with a saved roster, the AI uses it as context for personalized answers. Rate limiting with Redis
+- **AI Coach** — Chat with a Gemini-powered assistant for trade advice, waiver wire recommendations, and lineup decisions. If you're signed in with a saved roster, the AI uses it as context for personalized answers. Requests are rate-limited per IP via a Redis-backed sliding window (3 req/min) enforced globally across all serverless instances.
 - **Roster Management** — Add and remove active NBA players from your fantasy team. Player names are validated against the live NBA roster (pulled from the NBA Stats API and stored in Supabase). Supports accented names (Jokić, Vučević, etc.).
 - **Matchup Analysis** - Determine whether or not you can win this week's matchup by comparing your roster against your opponents. Statistics scraped from Basketball Reference.
 - **Auth** — Email/password sign-up and login via Supabase Auth and Google OAuth2. The Roster page is protected; the Schedule Analyzer and AI Coach are public.
@@ -18,6 +18,7 @@ A full-stack web app for fantasy basketball players. Analyze NBA schedules, mana
 | Language | TypeScript |
 | Database & Auth | Supabase (PostgreSQL + Supabase Auth) |
 | AI | Google Gemini (`gemini-2.5-flash`) via `@google/generative-ai` |
+| Rate Limiting | Upstash Redis (sliding window, HTTP-compatible with serverless) |
 | UI | shadcn/ui + Tailwind CSS |
 | Deployment | Vercel |
 
@@ -74,6 +75,7 @@ npm run seed-players  # Seed active NBA player roster into Supabase
 - **Streaming AI**: the `/api/chat` route returns a `ReadableStream` and the chat UI renders tokens as they arrive.
 - **Roster context**: when a signed-in user chats with the AI, their roster players are injected into the Gemini system prompt automatically.
 - **Unicode names**: player names with diacritics (e.g. Jokić, Vučević) are handled via NFC normalization at both the search and validation layers.
+- **Rate limiting**: the `/api/chat` route uses Upstash Redis with a sliding window algorithm (3 req/min per IP). Redis is used instead of in-memory state because Next.js serverless functions each have isolated memory — Redis acts as a shared external store so limits are enforced globally across all instances.
 - **shadcn/ui**: use the shadcn CLI to add or update components — do not edit files in `src/components/ui/` directly.
 
 ## Testing
