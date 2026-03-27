@@ -1,18 +1,6 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { Syne, DM_Sans } from "next/font/google";
 import { HeroSection } from "@/components/HeroSection";
-
-const syne = Syne({
-  subsets: ["latin"],
-  variable: "--font-syne",
-  weight: ["400", "500", "600", "700", "800"],
-});
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-dm",
-  weight: ["300", "400", "500", "600"],
-});
 
 export default async function Home() {
   const supabase = await createSupabaseServerClient();
@@ -22,7 +10,7 @@ export default async function Home() {
   const isLoggedIn = !!user;
 
   return (
-    <div className={`${syne.variable} ${dmSans.variable}`} style={{ fontFamily: "var(--font-dm, sans-serif)" }}>
+    <div>
 
       <HeroSection isLoggedIn={isLoggedIn} />
 
@@ -37,7 +25,7 @@ export default async function Home() {
               { value: "Free", label: "No subscription needed" },
             ].map((s) => (
               <div key={s.label} className="text-center px-4 first:pl-0 last:pr-0">
-                <p className="text-[1.6rem] font-extrabold text-[#0C0C0C]" style={{ fontFamily: "var(--font-syne)" }}>{s.value}</p>
+                <p className="text-[1.6rem] font-extrabold text-[#0C0C0C]">{s.value}</p>
                 <p className="text-[13px] text-gray-500 mt-0.5">{s.label}</p>
               </div>
             ))}
@@ -51,7 +39,7 @@ export default async function Home() {
           <div className="text-center mb-16">
             <h2
               className="text-[clamp(2rem,4vw,3.2rem)] font-extrabold text-[#111] mb-4"
-              style={{ fontFamily: "var(--font-syne)", letterSpacing: "-0.03em" }}
+              style={{ letterSpacing: "-0.03em" }}
             >
               Four tools. One edge.
             </h2>
@@ -69,7 +57,7 @@ export default async function Home() {
                 <div className="w-11 h-11 bg-orange-100 rounded-2xl flex items-center justify-center mb-6">
                   <CalendarIcon className="w-5 h-5 text-[#F26419]" />
                 </div>
-                <h3 className="text-[1.15rem] font-bold text-[#111] mb-2" style={{ fontFamily: "var(--font-syne)" }}>Schedule Analyzer</h3>
+                <h3 className="text-[1.15rem] font-bold text-[#111] mb-2">Schedule Analyzer</h3>
                 <p className="text-gray-500 text-[13.5px] leading-relaxed mb-5">
                   Pick any date range and see game counts for every NBA team. Spot streaming targets before your opponents do.
                 </p>
@@ -98,7 +86,7 @@ export default async function Home() {
                 <div className="w-11 h-11 bg-white/10 rounded-2xl flex items-center justify-center mb-6">
                   <SparkleIcon className="w-5 h-5 text-[#F26419]" />
                 </div>
-                <h3 className="text-[1.15rem] font-bold text-white mb-2" style={{ fontFamily: "var(--font-syne)" }}>AI Coach</h3>
+                <h3 className="text-[1.15rem] font-bold text-white mb-2">AI Coach</h3>
                 <p className="text-gray-400 text-[13.5px] leading-relaxed mb-5">
                   Ask anything about your lineup. Trade analysis, waiver targets, start/sit — powered by Gemini with your roster context baked in.
                 </p>
@@ -124,7 +112,7 @@ export default async function Home() {
                   <UsersIcon className="w-5 h-5 text-[#F26419]" />
                 </div>
                 <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-[1.15rem] font-bold text-[#111]" style={{ fontFamily: "var(--font-syne)" }}>Roster Management</h3>
+                  <h3 className="text-[1.15rem] font-bold text-[#111]">Roster Management</h3>
                   {!isLoggedIn && <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full">Sign in</span>}
                 </div>
                 <p className="text-gray-500 text-[13.5px] leading-relaxed mb-5">
@@ -159,7 +147,7 @@ export default async function Home() {
                   <BarChartIcon className="w-5 h-5 text-[#F26419]" />
                 </div>
                 <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-[1.15rem] font-bold text-[#111]" style={{ fontFamily: "var(--font-syne)" }}>Matchup Analysis</h3>
+                  <h3 className="text-[1.15rem] font-bold text-[#111]">Matchup Analysis</h3>
                   {!isLoggedIn && <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full">Sign in</span>}
                 </div>
                 <p className="text-gray-500 text-[13.5px] leading-relaxed mb-5">
@@ -200,7 +188,7 @@ export default async function Home() {
           <div className="text-center mb-16">
             <h2
               className="text-[clamp(2rem,4vw,3.2rem)] font-extrabold text-[#111] mb-4"
-              style={{ fontFamily: "var(--font-syne)", letterSpacing: "-0.03em" }}
+              style={{ letterSpacing: "-0.03em" }}
             >
               Up and running in minutes.
             </h2>
@@ -233,7 +221,7 @@ export default async function Home() {
                     {parseInt(s.n)}
                   </span>
                 </div>
-                <h3 className="text-base font-bold text-[#111] mb-2" style={{ fontFamily: "var(--font-syne)" }}>{s.title}</h3>
+                <h3 className="text-base font-bold text-[#111] mb-2">{s.title}</h3>
                 <p className="text-gray-500 text-[13.5px] leading-relaxed">{s.desc}</p>
               </div>
             ))}
@@ -252,7 +240,7 @@ export default async function Home() {
               </div>
               <h2
                 className="text-[clamp(2rem,4vw,3rem)] font-extrabold text-[#111] mb-5"
-                style={{ fontFamily: "var(--font-syne)", letterSpacing: "-0.03em" }}
+                style={{ letterSpacing: "-0.03em" }}
               >
                 Know exactly<br />who to stream.
               </h2>
@@ -392,7 +380,7 @@ export default async function Home() {
               </div>
               <h2
                 className="text-[clamp(2rem,4vw,3rem)] font-extrabold text-white mb-5"
-                style={{ fontFamily: "var(--font-syne)", letterSpacing: "-0.03em" }}
+                style={{ letterSpacing: "-0.03em" }}
               >
                 Your personal<br />fantasy analyst.
               </h2>
@@ -434,7 +422,7 @@ export default async function Home() {
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2
             className="text-[clamp(2.4rem,5vw,3.8rem)] font-extrabold text-white mb-5"
-            style={{ fontFamily: "var(--font-syne)", letterSpacing: "-0.035em" }}
+            style={{ letterSpacing: "-0.035em" }}
           >
             Ready to dominate<br />your league?
           </h2>

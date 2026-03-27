@@ -81,7 +81,7 @@ export function HeroSection({ isLoggedIn }: Props) {
 
             <h1
               className="text-[clamp(2.8rem,5.5vw,4.5rem)] font-extrabold text-white leading-none mb-6"
-              style={{ fontFamily: "var(--font-syne)", letterSpacing: "-0.035em" }}
+              style={{ letterSpacing: "-0.035em" }}
             >
               Stop guessing.<br />
               <span style={{ color: "#F26419" }}>Start winning.</span>
@@ -134,7 +134,7 @@ export function HeroSection({ isLoggedIn }: Props) {
             {/* Projected win badge */}
             <div className="absolute top-0 right-10 bg-[#F26419] rounded-2xl shadow-xl p-4 w-32.5">
               <p className="text-[9px] text-white/70 font-bold uppercase tracking-widest mb-0.5">Projected</p>
-              <p className="text-[2.2rem] font-extrabold text-white leading-none" style={{ fontFamily: "var(--font-syne)" }}>6–3</p>
+              <p className="text-[2.2rem] font-extrabold text-white leading-none">6–3</p>
               <p className="text-[11px] text-white/70 mt-0.5">Category wins</p>
             </div>
 

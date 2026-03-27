@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Fantasy Basketball Companion",
@@ -14,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning className="flex flex-col min-h-screen">
+      <body suppressHydrationWarning className={`${inter.className} flex flex-col min-h-screen`}>
         {children}
         <Analytics />
       </body>
