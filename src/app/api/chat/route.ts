@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
+import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { chatRateLimiter } from "@/lib/rate-limiter";
 
@@ -76,9 +78,9 @@ export async function POST(request: NextRequest) {
     // Auth unavailable — continue without roster context
   }
 
-  const systemInstruction = `
+  const systemPrompt = `
   ## ROLE
-You are a elite-level Fantasy Basketball Analyst for the 2025-26 NBA season. 
+You are a elite-level Fantasy Basketball Analyst for the 2025-26 NBA season.
 Your goal is to provide data-driven, actionable advice for:
 - Trades & Waiver Wire pickups
 - Lineup optimization & Streaming (especially for H2H and Rotisserie)
@@ -86,37 +88,53 @@ Your goal is to provide data-driven, actionable advice for:
 
 ## CONTEXT & DATA PRIORITY
 1. **Roster Context:** Use the user's provided roster as the primary source of truth for their current team state: ${rosterContext}.
-2. **URL Context:** When URLs are provided, prioritize the live data found there (stats, injury news, depth charts) over your internal training data. 
+2. **URL Context:** When URLs are provided, prioritize the live data found there (stats, injury news, depth charts) over your internal training data.
 3. **NBA Trends:** Factor in current 2025-26 trends: high-usage centers who shoot 3s, positionless guards with high rebound rates, and the impact of the NBA Cup/In-Season Tournament schedules.
 
 ## ANALYSIS GUIDELINES
-- **Efficiency over Volume:** In Category leagues, value FG% and FT% as much as Points. 
+- **Efficiency over Volume:** In Category leagues, value FG% and FT% as much as Points.
 - **The "Why":** Don't just give a name. Briefly mention a metric (e.g., "Usage rate increased by 5% with [Player] out" or "They play 4 games this week including 2 against bottom-10 defenses").
 - **Conciseness:** Be direct. Use bullet points for recommendations. Use bold text for player names.`;
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
+    const model = new ChatGoogleGenerativeAI({
       model: "gemini-2.5-flash",
-      systemInstruction,
+      apiKey,
+      streaming: true,
     });
 
-    // Build chat history from all messages except the final user message
-    const history = trimmed.slice(0, -1).map((m) => ({
-      role: m.role === "user" ? ("user" as const) : ("model" as const),
-      parts: [{ text: m.content }],
-    }));
+    // Reconstruct in-session conversation buffer from the incoming message history.
+    // This is the standard LangChain stateless-serverless pattern: the client owns
+    // persistence (sends full history each request); InMemoryChatMessageHistory
+    // manages the typed message buffer for this request's lifetime.
+    const chatHistory = new InMemoryChatMessageHistory();
+    const priorMessages = trimmed.slice(0, -1);
+    for (const m of priorMessages) {
+      await chatHistory.addMessage(
+        m.role === "user" ? new HumanMessage(m.content) : new AIMessage(m.content)
+      );
+    }
 
-    const chat = model.startChat({ history });
-    const lastMessage = trimmed[trimmed.length - 1];
-    const result = await chat.sendMessageStream(lastMessage.content);
+    // Build the full prompt: system context + buffered history + current turn
+    const buffered = await chatHistory.getMessages();
+    const langchainMessages = [
+      new SystemMessage(systemPrompt),
+      ...buffered,
+      new HumanMessage(trimmed[trimmed.length - 1].content),
+    ];
+
+    // Await the stream before constructing ReadableStream so any initialisation
+    // errors (bad API key, network failure) are caught by the outer try/catch
+    // and returned as a 500 — matching the original Gemini route behaviour.
+    const responseStream = await model.stream(langchainMessages);
 
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
         try {
-          for await (const chunk of result.stream) {
-            controller.enqueue(encoder.encode(chunk.text()));
+          for await (const chunk of responseStream) {
+            const text = typeof chunk.content === "string" ? chunk.content : "";
+            controller.enqueue(encoder.encode(text));
           }
         } finally {
           controller.close();
@@ -131,7 +149,7 @@ Your goal is to provide data-driven, actionable advice for:
       },
     });
   } catch (err) {
-    console.error("Gemini API error:", err);
+    console.error("LangChain/Gemini error:", err);
     return new Response("Failed to get AI response", { status: 500 });
   }
 }
