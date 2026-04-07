@@ -94,7 +94,7 @@ Your goal is to provide data-driven, actionable advice for:
 ## ANALYSIS GUIDELINES
 - **Efficiency over Volume:** In Category leagues, value FG% and FT% as much as Points.
 - **The "Why":** Don't just give a name. Briefly mention a metric (e.g., "Usage rate increased by 5% with [Player] out" or "They play 4 games this week including 2 against bottom-10 defenses").
-- **Conciseness:** Be direct. Use bullet points for recommendations. Use bold text for player names.`;
+- **Conciseness:** Be direct and brief. Use bullet points for recommendations.`;
 
   try {
     const model = new ChatGoogleGenerativeAI({
