@@ -12,7 +12,6 @@ interface Message {
 const SUGGESTED_QUESTIONS = [
   "Who should I pick up off waivers this week?",
   "Should I trade for a high-volume player with a tough schedule?",
-  "Which teams have the most games in the next 7 days?",
   "How do I optimize my lineup for a playoff push?",
 ];
 
