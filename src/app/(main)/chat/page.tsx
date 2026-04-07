@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Bot, Send } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   role: "user" | "assistant";
@@ -139,12 +140,23 @@ export default function ChatPage() {
                   <Bot className="w-3.5 h-3.5 text-orange-400" />
                 </div>
                 <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 max-w-lg shadow-sm border border-black/[0.06]">
-                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {msg.content}
+                  <div className="text-sm text-gray-700 leading-relaxed">
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
+                        ul: ({ children }) => <ul className="list-disc pl-4 mb-1 space-y-0.5">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-4 mb-1 space-y-0.5">{children}</ol>,
+                        li: ({ children }) => <li>{children}</li>,
+                        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                        h1: ({ children }) => <h1 className="font-semibold text-base mb-1">{children}</h1>,
+                        h2: ({ children }) => <h2 className="font-semibold mb-1">{children}</h2>,
+                        h3: ({ children }) => <h3 className="font-medium mb-1">{children}</h3>,
+                      }}
+                    >{msg.content}</ReactMarkdown>
                     {isStreaming && i === messages.length - 1 && (
                       <span className="inline-block w-0.5 h-4 bg-orange-400 ml-0.5 animate-pulse align-middle" />
                     )}
-                  </p>
+                  </div>
                 </div>
               </div>
             )
