@@ -303,7 +303,7 @@ export default async function DashboardPage() {
                       <span
                         className={`text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 ${badgeCls(row.games)}`}
                       >
-                        {row.games}G
+                        {row.games}
                       </span>
                     </div>
                   ))}
