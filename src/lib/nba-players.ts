@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from "./supabase";
 
-export interface NBAPlayer {
+interface NBAPlayer {
   name: string;
   team: string;
 }

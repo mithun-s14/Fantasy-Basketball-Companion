@@ -1,6 +1,6 @@
 import type { PlayerStats, RosterPlayer } from "./types";
 
-export type StatCategory =
+type StatCategory =
   | "pts" | "reb" | "ast" | "stl" | "blk"
   | "tov" | "three_pm" | "fg_pct" | "ft_pct";
 
