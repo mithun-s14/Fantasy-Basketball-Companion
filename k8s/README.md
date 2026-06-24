@@ -267,14 +267,8 @@ done
 
 ---
 
-## Summary bullets
+## Resume bullets
 
-> Containerized a Next.js / Node.js / Supabase application into a three-service
-> Kubernetes architecture (Next.js frontend, Express AI microservice, Redis),
-> deployed on GKE Autopilot with a Cloud Load Balancer, nginx-ingress, and a
-> HorizontalPodAutoscaler on the AI service scaling 1–5 replicas based on CPU.
+> Decomposed a monolithic Next.js/Supabase app into three independently deployable services using Docker multi-stage builds, Kubernetes, and GKE Autopilot, configuring a HorizontalPodAutoscaler on the AI inference service to scale 1–5 replicas on CPU load — isolating AI scaling costs from the stateless web frontend.
 
-> Instrumented services with Prometheus metrics (`prom-client`) and structured
-> JSON logging (`pino`), provisioned `kube-prometheus-stack` via Helm, and built
-> a Grafana dashboard tracking chat request rate, P95 AI call latency, and
-> rate-limit hit rate across the cluster.
+> Instrumented a multi-service Kubernetes deployment with Prometheus counters and histograms (`prom-client`) and structured JSON logging (`pino`), deploying `kube-prometheus-stack` via Helm to expose real-time P95 AI latency, request throughput, and rate-limit hit rate — reducing mean time to diagnose AI performance regressions.
