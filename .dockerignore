@@ -1,0 +1,27 @@
+# Dependencies — installed fresh inside the image
+node_modules
+
+# Next.js build output — rebuilt inside the image
+.next
+
+# The ai-service has its own Dockerfile and build context
+ai-service
+
+# Local environment files — secrets go in Kubernetes Secrets, not images
+.env
+.env.local
+.env*.local
+
+# Dev/test artifacts
+coverage
+test-results
+playwright-report
+
+# Git and editor metadata
+.git
+.gitignore
+.DS_Store
+
+# CI/docs that don't affect the runtime
+*.md
+KUBERNETES_MIGRATION.md

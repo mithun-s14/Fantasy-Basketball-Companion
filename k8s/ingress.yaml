@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fantasy-basketball-ingress
+  namespace: fantasy-basketball
+  annotations:
+    # Tell K8s which ingress controller handles this Ingress.
+    # In Phase 4 (kind) we install nginx-ingress; in Phase 6 (GKE) we switch
+    # to the GKE-managed ingress controller.
+    kubernetes.io/ingress.class: "nginx"
+    # Strip /api/ai path prefix before forwarding to web (web expects /api/chat)
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  rules:
+    - host: fantasy-basketball.local   # Override with real domain in GKE
+      http:
+        paths:
+          # All traffic goes to the web service.
+          # web handles /api/chat by proxying to ai-service internally —
+          # ai-service does not need its own Ingress rule.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 3000

@@ -1,0 +1,22 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: fantasy-basketball
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            # nginx-ingress uses this label to find which node to schedule on.
+            # Without it, the ingress controller pod stays Pending forever.
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      # Map host port 80 → container port 80 so the ingress is reachable
+      # from your browser at http://fantasy-basketball.local
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP

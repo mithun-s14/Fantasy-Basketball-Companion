@@ -1,4 +1,5 @@
 .claude
+.env
 .env.local
 .env*.local
 .next/
@@ -7,3 +8,6 @@ coverage/
 .guidelines
 CLAUDE.md
 test-results/
+KUBERNETES_MIGRATION.md
+tsconfig.tsbuildinfo
+dist/

@@ -1,0 +1,35 @@
+# Helm values for kube-prometheus-stack.
+# Tuned for a local kind cluster (reduced resources, alertmanager disabled).
+# Production would increase resources and enable alertmanager.
+
+grafana:
+  adminPassword: "admin"   # Change this for any real deployment
+  service:
+    type: ClusterIP        # Access via kubectl port-forward, not a LoadBalancer
+
+prometheus:
+  prometheusSpec:
+    # By default Prometheus only scrapes ServiceMonitors created by this Helm release.
+    # Empty selectors mean: scrape ALL ServiceMonitors in ALL namespaces.
+    # This is what lets our app's ServiceMonitor be picked up.
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "400Mi"
+      limits:
+        cpu: "500m"
+        memory: "800Mi"
+
+# Alertmanager adds ~200Mi RAM. Skip for this demo.
+alertmanager:
+  enabled: false
+
+# Node exporter: collects host-level CPU/memory metrics from each node.
+nodeExporter:
+  enabled: true
+
+# kube-state-metrics: exposes Deployment/Pod/HPA state as Prometheus metrics.
+kubeStateMetrics:
+  enabled: true

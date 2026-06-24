@@ -1,0 +1,95 @@
+services:
+
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  # Standard Redis image — no custom Dockerfile needed.
+  # Used by ai-service for rate limiting (sliding-window sorted set).
+  # In production this would be a managed service like GCP Memorystore.
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      # redis-cli ping returns "PONG" when Redis is ready.
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      # Persist Redis data across container restarts so rate-limit state survives.
+      - redis-data:/data
+    networks:
+      - app-net
+
+  # ── AI Service ───────────────────────────────────────────────────────────────
+  # Express app: accepts POST /chat, calls Gemini via LangChain, streams response.
+  # Owns rate limiting — reads/writes to Redis.
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # "redis" resolves to the redis container's IP on the shared Docker network.
+      - REDIS_URL=redis://redis:6379
+      - PORT=3001
+    depends_on:
+      redis:
+        # Wait until Redis healthcheck passes before starting ai-service.
+        condition: service_healthy
+    healthcheck:
+      # wget is available in Alpine; curl is not by default.
+      # --spider fetches headers only, -q suppresses output.
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      # Give the Node process time to start before the first check.
+      start_period: 15s
+    networks:
+      - app-net
+
+  # ── Web (Next.js) ────────────────────────────────────────────────────────────
+  # The main application: all pages, /api/games, /api/players, auth.
+  # Proxies /api/chat to ai-service.
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_* vars must be passed as build args — they are baked into
+        # the client bundle at `next build` time, not injected at runtime.
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    restart: unless-stopped
+    ports:
+      # Map host port 3000 to container port 3000.
+      # Only web is exposed — ai-service and redis are internal to app-net.
+      - "3000:3000"
+    environment:
+      # Server-side only — not baked into the bundle, injected at runtime.
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      # The URL ai-service is reachable at inside the Docker network.
+      - AI_SERVICE_URL=http://ai-service:3001
+    depends_on:
+      ai-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      # next build + node startup takes longer than Express.
+      start_period: 30s
+    networks:
+      - app-net
+
+networks:
+  # Bridge network: containers can reach each other by service name.
+  # Isolated from your host network except for the port mappings above.
+  app-net:
+    driver: bridge
+
+volumes:
+  # Named volume: Docker manages the storage location.
+  # Data persists when the container stops; deleted only by `docker compose down -v`.
+  redis-data:

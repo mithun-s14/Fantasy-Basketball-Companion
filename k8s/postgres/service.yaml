@@ -1,0 +1,17 @@
+# ── PATTERN ONLY — see statefulset.yaml for context ─────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: fantasy-basketball
+spec:
+  # clusterIP: None makes this a "headless" Service — standard for StatefulSets.
+  # Instead of one stable IP, DNS returns the IPs of individual pods directly.
+  # This lets clients connect to a specific pod (e.g. the primary in a replica set).
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP

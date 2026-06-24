@@ -1,0 +1,33 @@
+# ServiceMonitor is a custom resource installed by kube-prometheus-stack.
+# The Prometheus Operator watches for these objects and automatically updates
+# Prometheus's scrape config when they appear or change.
+# Think of it as: "hey Prometheus, please poll this Service for metrics."
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ai-service-monitor
+  namespace: fantasy-basketball
+spec:
+  # Find the Service with this label in the fantasy-basketball namespace.
+  selector:
+    matchLabels:
+      app: ai-service
+  endpoints:
+    - port: http            # Must match the port name in the Service
+      path: /metrics        # Where prom-client exposes metrics in ai-service
+      interval: 15s         # How often Prometheus scrapes this endpoint
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: web-monitor
+  namespace: fantasy-basketball
+spec:
+  selector:
+    matchLabels:
+      app: web
+  endpoints:
+    - port: http
+      path: /api/metrics    # Next.js API route that returns the prom-client registry
+      interval: 15s

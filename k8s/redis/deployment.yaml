@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: fantasy-basketball
+spec:
+  # One replica is fine for dev/demo. In production Redis would be
+  # a managed service (GCP Memorystore) or a Redis cluster, not a single pod.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis       # ← This Deployment manages pods with this label
+  template:
+    metadata:
+      labels:
+        app: redis     # ← Pods get this label so the Deployment and Service can find them
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              cpu: "50m"      # 50 millicores = 5% of one CPU core
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          # Liveness: restart the pod if Redis stops responding to PING
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          # Readiness: stop sending traffic if Redis isn't ready yet
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-data
+          # emptyDir is ephemeral — lost when the pod restarts.
+          # Production would use a PersistentVolumeClaim here.
+          # For rate-limit state this is acceptable: counters reset on restart.
+          emptyDir: {}

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-service
+  namespace: fantasy-basketball
+  labels:
+    app: ai-service      # ServiceMonitor uses this label to find this Service
+spec:
+  type: ClusterIP
+  selector:
+    app: ai-service
+  ports:
+    - name: http         # Named port — ServiceMonitor references this by name, not number
+      port: 3001
+      targetPort: 3001
+      protocol: TCP

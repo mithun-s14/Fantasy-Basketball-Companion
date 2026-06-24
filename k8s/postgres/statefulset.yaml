@@ -1,0 +1,71 @@
+# ── PATTERN ONLY ─────────────────────────────────────────────────────────────
+# This app uses Supabase (hosted PostgreSQL + Auth) and does not deploy
+# an in-cluster Postgres. This manifest demonstrates the StatefulSet pattern
+# for the Kubernetes story. In a fully self-hosted setup, you would:
+#   1. Apply this manifest to get an in-cluster Postgres pod
+#   2. Seed it with the games and nba_players tables
+#   3. Replace the Supabase client calls in the app with a direct pg connection
+#   4. Handle auth separately (e.g. Auth.js or a self-hosted Supabase)
+# In real production, use a managed service (Cloud SQL, RDS) instead of this.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: fantasy-basketball
+spec:
+  serviceName: postgres    # Must match the headless Service name below
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: "fantasy_basketball"
+            - name: POSTGRES_USER
+              value: "app"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fantasy-basketball-secrets
+                  key: POSTGRES_PASSWORD   # Add this key to secret.yaml if using
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "app", "-d", "fantasy_basketball"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "app", "-d", "fantasy_basketball"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+  # volumeClaimTemplates: StatefulSet creates one PVC per pod automatically.
+  # Unlike a plain volume, this PVC survives pod restarts and rescheduling.
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]   # One pod can read+write at a time
+        resources:
+          requests:
+            storage: 5Gi
