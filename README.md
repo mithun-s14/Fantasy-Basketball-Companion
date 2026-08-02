@@ -113,8 +113,3 @@ Tests live in `tests/e2e/` and run against a real browser pointed at `localhost:
 |------|---------------|
 | `navigation.spec.ts` | Page loads and link navigation |
 | `auth.spec.ts` | Login and signup flows |
-
-## To-do
-- [ ] Allow user's to upload screenshots of rosters
-- [ ] Add trade analyzer. Help compare player's sent and recieved statistics
-- [ ] Implement strength of schedule indicators in Schedule Analyzer page
