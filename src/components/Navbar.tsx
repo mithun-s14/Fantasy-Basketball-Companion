@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { AuthButton } from "@/components/AuthButton";
-import { MobileNav } from "@/components/MobileNav";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export default async function Navbar() {
@@ -60,10 +59,9 @@ export default async function Navbar() {
           </div>
         </div>
 
-        {/* Right: Auth + Mobile menu */}
+        {/* Right: Auth */}
         <div className="flex items-center gap-2">
           <AuthButton userEmail={userEmail} />
-          <MobileNav userEmail={userEmail} />
         </div>
       </div>
     </nav>

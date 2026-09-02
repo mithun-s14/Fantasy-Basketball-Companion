@@ -154,98 +154,9 @@ export default async function DashboardPage() {
         )}
 
         {/* ── Main grid ── */}
-        <div className="grid lg:grid-cols-[1fr_340px] gap-6">
+        <div className="grid lg:grid-cols-[1fr_320px] gap-6">
 
-          {/* Left: Tool cards */}
-          <div className="space-y-4">
-            <h2 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest">Tools</h2>
-
-            <div className="grid sm:grid-cols-2 gap-4">
-
-              {/* Schedule Analyzer */}
-              <Link
-                href="/analyzer"
-                className="group bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg hover:shadow-black/[0.06] transition-all duration-200 flex flex-col"
-              >
-                <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center mb-4">
-                  <CalendarIcon className="w-5 h-5 text-[#F26419]" />
-                </div>
-                <h3 className="font-bold text-[#111] mb-1.5">Schedule Analyzer</h3>
-                <p className="text-gray-400 text-[13px] leading-relaxed flex-1">
-                  Game counts for every team across any date range. Spot streamers before anyone else.
-                </p>
-                <div className="flex items-center gap-1.5 text-[#F26419] text-[13px] font-semibold mt-4 group-hover:gap-2.5 transition-all">
-                  Open <ArrowIcon />
-                </div>
-              </Link>
-
-              {/* AI Coach */}
-              <Link
-                href="/chat"
-                className="group bg-[#111] rounded-2xl p-6 hover:bg-[#161616] transition-all duration-200 flex flex-col"
-              >
-                <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center mb-4">
-                  <SparkleIcon className="w-5 h-5 text-[#F26419]" />
-                </div>
-                <h3 className="font-bold text-white mb-1.5">AI Coach</h3>
-                <p className="text-gray-400 text-[13px] leading-relaxed flex-1">
-                  Start/sit decisions, waiver targets, trade analysis — powered by Gemini with your roster context.
-                </p>
-                <div className="flex items-center gap-1.5 text-[#F26419] text-[13px] font-semibold mt-4 group-hover:gap-2.5 transition-all">
-                  Chat now <ArrowIcon />
-                </div>
-              </Link>
-
-              {/* Roster */}
-              <Link
-                href={user ? "/roster" : "/auth?next=/roster"}
-                className="group bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg hover:shadow-black/[0.06] transition-all duration-200 flex flex-col relative overflow-hidden"
-              >
-                {!user && (
-                  <span className="absolute top-3 right-3 text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
-                    <LockIcon className="w-2.5 h-2.5" /> Sign in
-                  </span>
-                )}
-                <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center mb-4">
-                  <UsersIcon className="w-5 h-5 text-[#F26419]" />
-                </div>
-                <h3 className="font-bold text-[#111] mb-1.5">My Roster</h3>
-                <p className="text-gray-400 text-[13px] leading-relaxed flex-1">
-                  {user && rosterCount > 0
-                    ? `${rosterCount} player${rosterCount !== 1 ? "s" : ""} tracked. Manage your squad and keep the AI in context.`
-                    : "Add your NBA players so the AI Coach can give you personalised advice."}
-                </p>
-                <div className="flex items-center gap-1.5 text-[#F26419] text-[13px] font-semibold mt-4 group-hover:gap-2.5 transition-all">
-                  {user ? "Manage roster" : "Sign in to track"} <ArrowIcon />
-                </div>
-              </Link>
-
-              {/* Matchup */}
-              <Link
-                href={user ? "/matchup" : "/auth?next=/matchup"}
-                className="group bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg hover:shadow-black/[0.06] transition-all duration-200 flex flex-col relative overflow-hidden"
-              >
-                {!user && (
-                  <span className="absolute top-3 right-3 text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
-                    <LockIcon className="w-2.5 h-2.5" /> Sign in
-                  </span>
-                )}
-                <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center mb-4">
-                  <BarChartIcon className="w-5 h-5 text-[#F26419]" />
-                </div>
-                <h3 className="font-bold text-[#111] mb-1.5">Matchup Analysis</h3>
-                <p className="text-gray-400 text-[13px] leading-relaxed flex-1">
-                  Head-to-head category projections against your opponent. See where to stream, sit, or trade.
-                </p>
-                <div className="flex items-center gap-1.5 text-[#F26419] text-[13px] font-semibold mt-4 group-hover:gap-2.5 transition-all">
-                  {user ? "Analyze matchup" : "Sign in to analyze"} <ArrowIcon />
-                </div>
-              </Link>
-
-            </div>
-          </div>
-
-          {/* Right: This week's game leaders */}
+          {/* Left: This week's game leaders */}
           <div className="space-y-4">
             <h2 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest">
               This Week&apos;s Schedule
@@ -319,6 +230,31 @@ export default async function DashboardPage() {
                 </Link>
               </div>
             </div>
+          </div>
+
+          {/* Right: Menu pointer + contextual prompts */}
+          <div className="space-y-4">
+            <h2 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest">Tools</h2>
+
+            {/* Where the tools live now */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="flex items-center justify-center rounded-r-lg border border-l-0 border-black/8 bg-white shadow-sm py-3 pl-1 pr-1.5 -ml-6 shrink-0">
+                  <span
+                    className="text-[8px] font-semibold uppercase tracking-[0.25em] text-gray-600"
+                    style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+                  >
+                    Menu
+                  </span>
+                </span>
+                <p className="text-[13px] font-semibold text-[#111]">Everything is in the menu</p>
+              </div>
+              <p className="text-[12.5px] text-gray-400 leading-relaxed">
+                The Schedule Analyzer, AI Coach, Roster and Matchup Analysis all open from
+                the <span className="text-gray-700 font-medium">Menu</span> tab on the left edge
+                of the screen — on every page.
+              </p>
+            </div>
 
             {/* Quick tip card */}
             {!user && (
@@ -364,41 +300,6 @@ function ArrowIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-    </svg>
-  );
-}
-function SparkleIcon({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
-    </svg>
-  );
-}
-function CalendarIcon({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-    </svg>
-  );
-}
-function UsersIcon({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-    </svg>
-  );
-}
-function BarChartIcon({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
-    </svg>
-  );
-}
-function LockIcon({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
     </svg>
   );
 }
