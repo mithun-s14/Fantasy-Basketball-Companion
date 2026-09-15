@@ -22,37 +22,37 @@ export function MatchupProjectionTable({ result }: Props) {
       : `Tied ${userWins}–${opponentWins}`;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+    <div className="overflow-x-auto bg-card rounded-xl border border-border overflow-hidden">
       {/* Overall score header */}
-      <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-        <h3 className="font-semibold text-gray-900">Matchup Projection</h3>
-        <span className="text-sm font-semibold text-orange-600">{overallLabel}</span>
+      <div className="px-5 py-4 bg-gradient-to-r from-primary/15 to-transparent border-b border-border flex items-center justify-between">
+        <h3 className="font-display text-xl font-bold uppercase tracking-wide">Matchup Projection</h3>
+        <span className="font-display text-2xl font-bold uppercase text-primary tabular-nums">{overallLabel}</span>
       </div>
 
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-gray-100">
-            <th className="px-4 py-3 text-left font-medium text-gray-500 w-16">Category</th>
-            <th className="px-4 py-3 text-right font-medium text-gray-500">You</th>
-            <th className="px-4 py-3 text-center font-medium text-gray-500 w-12"></th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">Opponent</th>
+          <tr className="border-b border-border">
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground w-16">Category</th>
+            <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">You</th>
+            <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground w-12"></th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Opponent</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-50">
+        <tbody className="divide-y divide-border">
           {categories.map(({ category, label, userTotal, opponentTotal, winner }) => (
-            <tr key={category} className="hover:bg-gray-50 transition-colors">
-              <td className="px-4 py-3 font-medium text-gray-700">{label}</td>
+            <tr key={category} className="hover:bg-accent/50 transition-colors">
+              <td className="px-4 py-3 font-medium text-foreground/90">{label}</td>
               <td
                 className={`px-4 py-3 text-right tabular-nums font-medium ${
-                  winner === "user" ? "text-green-600" : "text-gray-400"
+                  winner === "user" ? "text-emerald-300" : "text-muted-foreground"
                 }`}
               >
                 {formatStat(category, userTotal)}
               </td>
-              <td className="px-4 py-3 text-center text-gray-400 text-xs" aria-label="vs">vs</td>
+              <td className="px-4 py-3 text-center text-muted-foreground text-xs" aria-label="vs">vs</td>
               <td
                 className={`px-4 py-3 tabular-nums font-medium ${
-                  winner === "opponent" ? "text-green-600" : "text-gray-400"
+                  winner === "opponent" ? "text-emerald-300" : "text-muted-foreground"
                 }`}
               >
                 {formatStat(category, opponentTotal)}

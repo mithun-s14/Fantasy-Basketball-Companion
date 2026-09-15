@@ -3,6 +3,7 @@
 import { useActionState, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Trash2 } from "lucide-react";
+import { PageHeader, Panel, StatTile } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -179,7 +180,7 @@ function PlayerAutocomplete({
       {/* Spinner */}
       {loading && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-          <div className="w-3.5 h-3.5 border-2 border-gray-200 border-t-orange-500 rounded-full animate-spin" />
+          <div className="w-3.5 h-3.5 border-2 border-border border-t-primary rounded-full animate-spin" />
         </div>
       )}
 
@@ -187,7 +188,7 @@ function PlayerAutocomplete({
       {isOpen && suggestions.length > 0 && (
         <ul
           role="listbox"
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
+          className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-2xl overflow-hidden"
         >
           {suggestions.map((player, i) => (
             <li
@@ -200,13 +201,13 @@ function PlayerAutocomplete({
                 handleSelect(player);
               }}
               className={`flex items-center justify-between px-4 py-2.5 cursor-pointer gap-4 ${
-                i === activeIndex ? "bg-orange-50" : "hover:bg-gray-50"
+                i === activeIndex ? "bg-accent" : "hover:bg-accent/50"
               }`}
             >
-              <span className="text-sm font-medium text-gray-900">
+              <span className="text-sm font-medium text-foreground">
                 {player.name}
               </span>
-              <span className="text-xs text-gray-400 shrink-0">
+              <span className="text-xs text-muted-foreground shrink-0">
                 {player.team}
               </span>
             </li>
@@ -234,7 +235,7 @@ function AddPlayerForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <form action={formAction} className="space-y-3">
-      <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-start">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3 items-start">
         <div className="space-y-1.5">
           <Label>Player name</Label>
           <PlayerAutocomplete
@@ -250,12 +251,12 @@ function AddPlayerForm({ onSuccess }: { onSuccess: () => void }) {
             externalValue={selectedTeam}
           />
         </div>
-        <Button type="submit" disabled={isPending} className="whitespace-nowrap self-end mb-1.5">
+        <Button type="submit" disabled={isPending} className="whitespace-nowrap sm:col-span-2 xl:col-span-1">
           {isPending ? "Adding…" : "Add player"}
         </Button>
       </div>
       {state && "error" in state && (
-        <p className="text-sm text-red-600">{state.error}</p>
+        <p className="text-sm text-rose-400">{state.error}</p>
       )}
     </form>
   );
@@ -285,7 +286,7 @@ function RemoveButton({
         size="icon"
         disabled={isPending}
         aria-label="Remove player"
-        className="text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+        className="text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
       >
         <Trash2 className="w-4 h-4" />
       </Button>
@@ -311,63 +312,47 @@ export function RosterClient({ initialPlayers }: Props) {
     router.refresh();
   }
 
+  const teamCount = new Set(players.map((p) => p.nba_team)).size;
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="w-full space-y-6 px-4 py-6 sm:px-6">
+      <PageHeader title="My Roster" description="Track the NBA players on your fantasy team." />
 
-      <div className="max-w-3xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="mb-10">
-          <div className="flex items-center gap-3 mb-2">
-            <Users className="w-8 h-8 text-orange-600" />
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-            My Roster
-          </h1></div>
-          
-          <p className="text-gray-500">
-            Track the NBA players on your fantasy team.
-          </p>
-        </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatTile label="Players" value={players.length} hint="On your roster" />
+        <StatTile label="NBA teams" value={teamCount} hint="Represented" />
+      </div>
 
-        {/* Add player form */}
-        <div className="bg-gray-50 rounded-3xl p-8 mb-8">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">
-            Add a player
-          </h2>
-          <AddPlayerForm onSuccess={() => {}} />
-        </div>
-
-        {/* Player list */}
-        {players.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-              <Users className="w-7 h-7 text-gray-400" />
-            </div>
-            <p className="font-medium text-gray-900 mb-1">No players yet</p>
-            <p className="text-sm text-gray-500">
-              Add your first player using the form above.
-            </p>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+        <Panel title="Add a player" className="self-start">
+          <div className="p-4">
+            <AddPlayerForm onSuccess={() => {}} />
           </div>
-        ) : (
-          <div className="divide-y divide-gray-100 border border-gray-100 rounded-2xl overflow-hidden">
-            {players.map((player) => (
-              <div
-                key={player.id}
-                className="flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors"
-              >
-                <div>
-                  <p className="font-medium text-gray-900 text-sm">
-                    {player.player_name}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">{player.nba_team}</p>
-                </div>
-                <RemoveButton
-                  playerId={player.id}
-                  onSuccess={() => handleRemove(player.id)}
-                />
+        </Panel>
+
+        <Panel title={`Roster (${players.length})`}>
+          {players.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-14 text-center">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary">
+                <Users className="h-6 w-6 text-muted-foreground" />
               </div>
-            ))}
-          </div>
-        )}
+              <p className="mb-1 font-medium">No players yet</p>
+              <p className="text-sm text-muted-foreground">Add your first player using the form.</p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {players.map((player) => (
+                <li key={player.id} className="flex items-center justify-between px-4 py-2.5 transition-colors hover:bg-accent/50">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{player.player_name}</p>
+                    <p className="text-xs text-muted-foreground">{player.nba_team}</p>
+                  </div>
+                  <RemoveButton playerId={player.id} onSuccess={() => handleRemove(player.id)} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
       </div>
     </div>
   );

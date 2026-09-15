@@ -72,7 +72,7 @@ describe("TeamScheduleTable", () => {
   // and red for <2.
   // The rank column also renders numbers, so getBadge targets only <span>
   // elements to avoid false matches on the rank cell.
-  it("shows green badge for ≥4 games, yellow for ≥2, red for <2", () => {
+  it("shows emerald badge for ≥4 games, amber for ≥2, rose for <2", () => {
     const gameCounts = new Map([
       ["Boston Celtics", 4],
       ["Los Angeles Lakers", 2],
@@ -89,9 +89,9 @@ describe("TeamScheduleTable", () => {
     // Rank column also contains numbers, so target the badge <span> elements specifically
     const getBadge = (text: string) =>
       screen.getAllByText(text).find((el) => el.tagName === "SPAN");
-    expect(getBadge("4")).toHaveClass("bg-green-100");
-    expect(getBadge("2")).toHaveClass("bg-yellow-100");
-    expect(getBadge("1")).toHaveClass("bg-red-100");
+    expect(getBadge("4")).toHaveClass("text-emerald-300");
+    expect(getBadge("2")).toHaveClass("text-amber-300");
+    expect(getBadge("1")).toHaveClass("text-rose-300");
   });
 
   // Even if gameCounts contains entries for all three teams, only the teams

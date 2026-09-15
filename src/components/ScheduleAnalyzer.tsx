@@ -5,7 +5,8 @@ import { DateRangeSelector } from "@/components/DateRangeSelector";
 import { TeamFilter } from "@/components/TeamFilter";
 import { TeamScheduleTable } from "@/components/TeamScheduleTable";
 import { NBA_TEAMS } from "@/lib/constants";
-import { CalendarCheck2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { PageHeader, StatTile } from "@/components/PageHeader";
 import { format } from "date-fns";
 
 export default function ScheduleAnalyzer() {
@@ -56,56 +57,57 @@ export default function ScheduleAnalyzer() {
     return () => controller.abort();
   }, [startDate, endDate]);
 
+  const visible = [...gameCounts].filter(([team]) => selectedTeams.has(team));
+  const totalGames = visible.reduce((sum, [, c]) => sum + c, 0);
+  const avg = visible.length ? (totalGames / visible.length).toFixed(1) : "0.0";
+  const top = visible.reduce<[string, number] | null>((best, row) => (!best || row[1] > best[1] ? row : best), null);
+  const sitCount = visible.filter(([, c]) => c < 2).length;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <CalendarCheck2 className="w-8 h-8 text-orange-600" />
-            <h1 className="text-3xl font-bold">Schedule Analyzer</h1>
-          </div>
-          <p className="text-gray-600">
-            Select a date range to see how many times an NBA team plays during that period, helping you optimize your fantasy lineup and free agency pick ups.
-          </p>
-        </div>
+    <div className="w-full space-y-6 px-4 py-6 sm:px-6">
+      <PageHeader
+        title="Schedule Analyzer"
+        description="Games per NBA team in a date range — find streamers and plan lineup moves."
+      />
 
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Select Date Range</h2>
-          <DateRangeSelector
-            startDate={startDate}
-            endDate={endDate}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-          />
-          <div className="mt-4">
-            <TeamFilter
-              selectedTeams={selectedTeams}
-              onSelectedTeamsChange={setSelectedTeams}
-            />
-          </div>
-        </div>
-
-        {error && (
-          <div className="p-4 bg-red-50 rounded-lg border border-red-200 mb-6">
-            <p className="text-sm text-red-800">{error}</p>
-          </div>
-        )}
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-          </div>
-        ) : (
-          <TeamScheduleTable
-            gameCounts={gameCounts}
-            startDate={startDate}
-            endDate={endDate}
-            selectedTeams={selectedTeams}
-          />
-        )}
+      <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 lg:flex-row lg:items-end">
+        <DateRangeSelector
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+        />
+        <TeamFilter
+          selectedTeams={selectedTeams}
+          onSelectedTeamsChange={setSelectedTeams}
+        />
       </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatTile label="Teams shown" value={visible.length} hint={`of ${gameCounts.size || 30}`} />
+        <StatTile label="Avg games / team" value={avg} hint="In selected range" />
+        <StatTile label="Most games" value={top?.[1] ?? 0} hint={top && top[1] > 0 ? top[0] : "—"} />
+        <StatTile label="Teams with 0–1" value={sitCount} hint="Consider sitting" />
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+          <p className="text-sm text-rose-300">{error}</p>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="flex items-center justify-center rounded-lg border border-border bg-card py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <TeamScheduleTable
+          gameCounts={gameCounts}
+          startDate={startDate}
+          endDate={endDate}
+          selectedTeams={selectedTeams}
+        />
+      )}
     </div>
   );
 }

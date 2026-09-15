@@ -83,18 +83,24 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex-1 bg-gray-50 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden">
       {/* Chat */}
-      <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full px-4 pt-6 pb-4 min-h-0">
+      <div className="flex-1 flex flex-col w-full px-4 sm:px-6 pt-6 pb-4 min-h-0 h-[calc(100dvh-3.5rem-4rem)] md:h-[calc(100dvh-3.5rem)]">
+        <div className="mb-6 flex items-center gap-3">
+          <div>
+            <h1 className="font-display text-3xl font-bold uppercase leading-none tracking-wide">AI Coach</h1>
+            <p className="text-sm text-muted-foreground mt-1.5">Trades, waivers, streaming and lineup calls</p>
+          </div>
+        </div>
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto flex flex-col gap-5 mb-4 pr-1">
+        <div className="flex-1 overflow-y-auto flex flex-col gap-5 mb-4 p-4 rounded-lg border border-border bg-card/40">
           {/* Bot greeting */}
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center shrink-0">
-              <Bot className="w-3.5 h-3.5 text-orange-400" />
+            <div className="w-8 h-8 bg-primary/10 ring-1 ring-primary/30 rounded-full flex items-center justify-center shrink-0">
+              <Bot className="w-3.5 h-3.5 text-primary" />
             </div>
-            <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 max-w-sm shadow-sm border border-black/[0.06]">
-              <p className="text-sm text-gray-700 leading-relaxed">
+            <div className="bg-card rounded-2xl rounded-tl-sm px-4 py-3 max-w-sm border border-border">
+              <p className="text-sm text-foreground/90 leading-relaxed">
                 Hey! I&apos;m your AI fantasy coach. Ask me anything — trades,
                 waiver pickups, streaming targets, lineup decisions. I&apos;ve
                 got you covered.
@@ -105,7 +111,7 @@ export default function ChatPage() {
           {/* Suggested questions (only before first message) */}
           {messages.length === 0 && (
             <div className="ml-11">
-              <p className="text-xs text-gray-400 mb-2.5 font-medium">
+              <p className="text-xs text-muted-foreground mb-2.5 font-medium">
                 Suggested questions
               </p>
               <div className="flex flex-col gap-2">
@@ -114,7 +120,7 @@ export default function ChatPage() {
                     key={q}
                     onClick={() => sendMessage(q)}
                     disabled={isStreaming}
-                    className="text-left text-xs text-gray-600 bg-white border border-gray-100 rounded-xl px-3.5 py-2.5 hover:bg-gray-50 hover:border-gray-200 transition-colors duration-150 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="text-left text-xs text-muted-foreground bg-card border border-border rounded-lg px-3.5 py-2.5 hover:border-primary/40 hover:text-foreground transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {q}
                   </button>
@@ -127,19 +133,19 @@ export default function ChatPage() {
           {messages.map((msg, i) =>
             msg.role === "user" ? (
               <div key={i} className="flex justify-end">
-                <div className="bg-gray-900 rounded-2xl rounded-tr-sm px-4 py-3 max-w-sm">
-                  <p className="text-sm text-white leading-relaxed">
+                <div className="bg-primary rounded-2xl rounded-tr-sm px-4 py-3 max-w-sm">
+                  <p className="text-sm text-primary-foreground font-medium leading-relaxed">
                     {msg.content}
                   </p>
                 </div>
               </div>
             ) : (
               <div key={i} className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center shrink-0">
-                  <Bot className="w-3.5 h-3.5 text-orange-400" />
+                <div className="w-8 h-8 bg-primary/10 ring-1 ring-primary/30 rounded-full flex items-center justify-center shrink-0">
+                  <Bot className="w-3.5 h-3.5 text-primary" />
                 </div>
-                <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 max-w-lg shadow-sm border border-black/[0.06]">
-                  <div className="text-sm text-gray-700 leading-relaxed">
+                <div className="bg-card rounded-2xl rounded-tl-sm px-4 py-3 max-w-lg border border-border">
+                  <div className="text-sm text-foreground/90 leading-relaxed">
                     <ReactMarkdown
                       components={{
                         p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
@@ -153,7 +159,7 @@ export default function ChatPage() {
                       }}
                     >{msg.content}</ReactMarkdown>
                     {isStreaming && i === messages.length - 1 && (
-                      <span className="inline-block w-0.5 h-4 bg-orange-400 ml-0.5 animate-pulse align-middle" />
+                      <span className="inline-block w-0.5 h-4 bg-primary ml-0.5 animate-pulse align-middle" />
                     )}
                   </div>
                 </div>
@@ -164,14 +170,14 @@ export default function ChatPage() {
           {/* Thinking indicator — shown between request and first chunk */}
           {isThinking && (
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center shrink-0">
-                <Bot className="w-3.5 h-3.5 text-orange-400" />
+              <div className="w-8 h-8 bg-primary/10 ring-1 ring-primary/30 rounded-full flex items-center justify-center shrink-0">
+                <Bot className="w-3.5 h-3.5 text-primary" />
               </div>
-              <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3.5 shadow-sm border border-black/[0.06]">
+              <div className="bg-card rounded-2xl rounded-tl-sm px-4 py-3.5 border border-border">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce [animation-delay:0ms]" />
-                  <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce [animation-delay:150ms]" />
-                  <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce [animation-delay:300ms]" />
+                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:0ms]" />
+                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:150ms]" />
+                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:300ms]" />
                 </div>
               </div>
             </div>
@@ -181,7 +187,7 @@ export default function ChatPage() {
         </div>
 
         {/* Input bar */}
-        <div className="bg-white rounded-2xl shadow-sm border border-black/[0.06] px-4 py-3 shrink-0">
+        <div className="bg-card rounded-xl border border-border px-4 py-3 shrink-0 focus-within:border-primary/50 transition-colors">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -194,16 +200,16 @@ export default function ChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about trades, pickups, streaming targets..."
-              className="flex-1 text-sm text-gray-700 outline-none placeholder:text-gray-400 bg-transparent"
+              className="flex-1 text-sm text-foreground outline-none placeholder:text-muted-foreground bg-transparent"
               disabled={isStreaming}
               autoFocus
             />
             <button
               type="submit"
               disabled={!input.trim() || isStreaming}
-              className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center transition-opacity disabled:opacity-40 shrink-0"
+              className="w-8 h-8 bg-primary rounded-full flex items-center justify-center transition-opacity disabled:opacity-40 shrink-0"
             >
-              <Send className="w-3.5 h-3.5 text-white" />
+              <Send className="w-3.5 h-3.5 text-primary-foreground" />
             </button>
           </form>
         </div>

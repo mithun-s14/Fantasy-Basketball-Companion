@@ -1,5 +1,4 @@
-import Navbar from "@/components/Navbar";
-import { SideMenu } from "@/components/SideMenu";
+import { AppShell } from "@/components/AppShell";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export default async function MainLayout({
@@ -12,11 +11,5 @@ export default async function MainLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  return (
-    <>
-      <Navbar />
-      <SideMenu userEmail={user?.email ?? null} />
-      {children}
-    </>
-  );
+  return <AppShell userEmail={user?.email ?? null}>{children}</AppShell>;
 }

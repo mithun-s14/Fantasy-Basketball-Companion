@@ -25,3 +25,4 @@ playwright-report
 # CI/docs that don't affect the runtime
 *.md
 KUBERNETES_MIGRATION.md
+markdowns

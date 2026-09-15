@@ -42,7 +42,7 @@ export function TeamFilter({ selectedTeams, onSelectedTeamsChange }: TeamFilterP
 
   return (
     <div className="flex flex-col gap-2 w-full sm:w-auto">
-      <label className="text-sm font-medium">Filter Teams</label>
+      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Filter Teams</label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button

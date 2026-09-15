@@ -8,111 +8,52 @@ interface Props {
 export function HomepageFeatureCards({ userEmail }: Props) {
   const locked = !userEmail;
 
+  const tools = [
+    { title: "Schedule Analyzer", body: "Game counts over any date range", href: "/analyzer", cta: "Open analyzer", Icon: CalendarDays, gated: false },
+    { title: "AI Coach", body: "Trades, waivers and lineup calls", href: "/chat", cta: "Chat now", Icon: Bot, gated: false },
+    {
+      title: "My Roster",
+      body: "Track your fantasy players",
+      href: locked ? "/auth?next=/roster" : "/roster",
+      cta: locked ? "Sign in to view roster" : "View roster",
+      Icon: Users,
+      gated: true,
+    },
+    {
+      title: "Matchup Analysis",
+      body: "Project 9 H2H categories",
+      href: locked ? "/auth?next=/matchup" : "/matchup",
+      cta: locked ? "Sign in to analyze matchup" : "Analyze matchup",
+      Icon: BarChart2,
+      gated: true,
+    },
+  ];
+
   return (
-    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-      {/* Schedule Analyzer */}
-      <Link
-        href="/analyzer"
-        className="group relative bg-gray-50 rounded-3xl p-9 hover:bg-gray-100/80 transition-colors duration-200 overflow-hidden"
-      >
-        <div className="absolute -top-12 -right-12 w-56 h-56 bg-orange-100/60 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative">
-          <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-7">
-            <CalendarDays className="w-6 h-6 text-orange-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-3">
-            Schedule Analyzer
-          </h2>
-          <p className="text-gray-500 leading-relaxed mb-8 text-[15px]">
-            Pick any date range and instantly see how many games each NBA team plays.
-            Identify streaming targets and plan your lineup moves with precision.
-          </p>
-          <div className="flex items-center gap-1.5 text-orange-600 font-semibold text-sm group-hover:gap-2.5 transition-all duration-150">
-            Open analyzer <ArrowRight className="w-4 h-4" />
-          </div>
-        </div>
-      </Link>
-
-      {/* AI Coach */}
-      <Link
-        href="/chat"
-        className="group relative bg-gray-900 rounded-3xl p-9 hover:bg-[#111] transition-colors duration-200 overflow-hidden"
-      >
-        <div className="absolute -top-12 -right-12 w-56 h-56 bg-orange-600/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative">
-          <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-7">
-            <Bot className="w-6 h-6 text-orange-400" />
-          </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight mb-3">
-            AI Coach
-          </h2>
-          <p className="text-gray-400 leading-relaxed mb-8 text-[15px]">
-            Ask anything about your fantasy team. Get trade advice, waiver wire
-            recommendations, and strategic insights powered by a large language model.
-          </p>
-          <div className="flex items-center gap-1.5 text-orange-400 font-semibold text-sm group-hover:gap-2.5 transition-all duration-150">
-            Chat now <ArrowRight className="w-4 h-4" />
-          </div>
-        </div>
-      </Link>
-
-      {/* My Roster */}
-      <Link
-        href={locked ? "/auth?next=/roster" : "/roster"}
-        className={`group relative bg-gray-50 rounded-3xl p-9 hover:bg-gray-100/80 transition-colors duration-200 overflow-hidden${locked ? " opacity-75" : ""}`}
-      >
-        <div className="absolute -top-12 -right-12 w-56 h-56 bg-orange-100/60 rounded-full blur-3xl pointer-events-none" />
-        {locked && (
-          <div className="absolute top-4 right-4 flex items-center gap-1 bg-gray-200 text-gray-600 text-xs font-medium px-2 py-1 rounded-full">
-            <Lock className="w-3 h-3" />
-            Sign in
-          </div>
-        )}
-        <div className="relative">
-          <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-7">
-            <Users className="w-6 h-6 text-orange-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-3">
-            My Roster
-          </h2>
-          <p className="text-gray-500 leading-relaxed mb-8 text-[15px]">
-            Track the NBA players on your fantasy team. Add and remove players
-            as the season evolves.
-          </p>
-          <div className="flex items-center gap-1.5 text-orange-600 font-semibold text-sm group-hover:gap-2.5 transition-all duration-150">
-            {locked ? "Sign in to view roster" : "View roster"} <ArrowRight className="w-4 h-4" />
-          </div>
-        </div>
-      </Link>
-
-      {/* Matchup Analysis */}
-      <Link
-        href={locked ? "/auth?next=/matchup" : "/matchup"}
-        className={`group relative bg-gray-50 rounded-3xl p-9 hover:bg-gray-100/80 transition-colors duration-200 overflow-hidden${locked ? " opacity-75" : ""}`}
-      >
-        <div className="absolute -top-12 -right-12 w-56 h-56 bg-orange-100/60 rounded-full blur-3xl pointer-events-none" />
-        {locked && (
-          <div className="absolute top-4 right-4 flex items-center gap-1 bg-gray-200 text-gray-600 text-xs font-medium px-2 py-1 rounded-full">
-            <Lock className="w-3 h-3" />
-            Sign in
-          </div>
-        )}
-        <div className="relative">
-          <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-7">
-            <BarChart2 className="w-6 h-6 text-orange-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-3">
-            Matchup Analysis
-          </h2>
-          <p className="text-gray-500 leading-relaxed mb-8 text-[15px]">
-            Compare your roster against your opponent&apos;s. See projected stat
-            category winners and identify where you need to stream or sit players.
-          </p>
-          <div className="flex items-center gap-1.5 text-orange-600 font-semibold text-sm group-hover:gap-2.5 transition-all duration-150">
-            {locked ? "Sign in to analyze matchup" : "Analyze matchup"} <ArrowRight className="w-4 h-4" />
-          </div>
-        </div>
-      </Link>
-    </div>
+    <ul className="divide-y divide-border">
+      {tools.map(({ title, body, href, cta, Icon, gated }) => (
+        <li key={title}>
+          <Link href={href} className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/60">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-primary/20">
+              <Icon className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-medium">{title}</h3>
+                {gated && locked && (
+                  <span className="flex items-center gap-1 rounded-full bg-secondary px-1.5 py-px text-[10px] font-medium text-muted-foreground">
+                    <Lock className="h-2.5 w-2.5" />
+                    Sign in
+                  </span>
+                )}
+              </div>
+              <span className="block truncate text-xs text-muted-foreground">{body}</span>
+            </div>
+            <span className="hidden text-xs font-semibold text-primary xl:inline">{cta}</span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }
