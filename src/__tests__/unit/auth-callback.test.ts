@@ -27,7 +27,7 @@ describe("GET /auth/callback", () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: null });
     const req = new Request("http://localhost:3000/auth/callback?code=abc123");
 
-    const res = await GET(req) as { redirectUrl: string };
+    const res = await GET(req) as unknown as { redirectUrl: string };
     expect(res.redirectUrl).toBe("http://localhost:3000/roster");
     expect(mockExchangeCodeForSession).toHaveBeenCalledWith("abc123");
   });
@@ -36,14 +36,14 @@ describe("GET /auth/callback", () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: null });
     const req = new Request("http://localhost:3000/auth/callback?code=xyz&next=/matchup");
 
-    const res = await GET(req) as { redirectUrl: string };
+    const res = await GET(req) as unknown as { redirectUrl: string };
     expect(res.redirectUrl).toBe("http://localhost:3000/matchup");
   });
 
   it("redirects to /auth?error=oauth_failed when no code is present", async () => {
     const req = new Request("http://localhost:3000/auth/callback");
 
-    const res = await GET(req) as { redirectUrl: string };
+    const res = await GET(req) as unknown as { redirectUrl: string };
     expect(res.redirectUrl).toBe("http://localhost:3000/auth?error=oauth_failed");
     expect(mockExchangeCodeForSession).not.toHaveBeenCalled();
   });
@@ -52,7 +52,7 @@ describe("GET /auth/callback", () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: new Error("invalid code") });
     const req = new Request("http://localhost:3000/auth/callback?code=bad");
 
-    const res = await GET(req) as { redirectUrl: string };
+    const res = await GET(req) as unknown as { redirectUrl: string };
     expect(res.redirectUrl).toBe("http://localhost:3000/auth?error=oauth_failed");
   });
 });
