@@ -1,0 +1,23 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ai-service-hpa
+  namespace: fantasy-basketball
+spec:
+  # The HPA watches this Deployment and adjusts its replica count.
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ai-service
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          # Scale up when average CPU across all pods exceeds 70% of their request.
+          # 70% is a common starting point — high enough to use resources efficiently,
+          # low enough to have headroom before a new pod is ready (~30s).
+          averageUtilization: 70

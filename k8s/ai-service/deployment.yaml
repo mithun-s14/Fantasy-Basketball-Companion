@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-service
+  namespace: fantasy-basketball
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-service
+  template:
+    metadata:
+      labels:
+        app: ai-service
+    spec:
+      containers:
+        - name: ai-service
+          # Replace with your actual image name after building in Phase 4/6.
+          # imagePullPolicy: IfNotPresent — use the local image if it exists,
+          # otherwise pull. Works for both kind (images loaded locally) and GKE.
+          image: fantasy-basketball/ai-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3001
+          env:
+            # Pull every key from the ConfigMap as an env var.
+            # ai-service uses: REDIS_URL, NODE_ENV
+          envFrom:
+            - configMapRef:
+                name: fantasy-basketball-config
+            - secretRef:
+                name: fantasy-basketball-secrets
+          resources:
+            # Requests: the scheduler reserves this much CPU/memory per pod.
+            # The HPA measures actual usage as a % of the CPU request.
+            # Without requests, the HPA has no baseline and cannot autoscale.
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            # Limits: the container is throttled (CPU) or OOM-killed (memory) if exceeded.
+            limits:
+              cpu: "1000m"   # 1 full core — AI calls can be CPU-intensive
+              memory: "512Mi"
+          # Liveness: restart the pod if the Express process hangs
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            failureThreshold: 3
+          # Readiness: stop sending traffic if Redis isn't reachable yet
+          # (readyz pings Redis before returning 200)
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3

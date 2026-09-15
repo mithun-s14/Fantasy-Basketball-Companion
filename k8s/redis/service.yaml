@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis              # ← This name becomes the DNS hostname: redis.fantasy-basketball.svc.cluster.local
+  namespace: fantasy-basketball
+spec:
+  # ClusterIP: only reachable inside the cluster. Redis should never be
+  # directly exposed to the internet.
+  type: ClusterIP
+  selector:
+    app: redis             # ← Route traffic to pods with this label
+  ports:
+    - port: 6379           # The port other services connect to
+      targetPort: 6379     # The port on the container (must match containerPort above)
+      protocol: TCP

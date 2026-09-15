@@ -1,39 +1,12 @@
 import { NextRequest } from "next/server";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
-import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { chatRateLimiter } from "@/lib/rate-limiter";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
 
-// Cap history to avoid excessive token usage
-const MAX_HISTORY = 20;
-
 export async function POST(request: NextRequest) {
-  // Rate limit by IP address
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
-    request.headers.get("x-real-ip") ??
-    "unknown";
-
-  const rateLimit = await chatRateLimiter.limit(ip);
-  if (!rateLimit.success) {
-    const retryAfterSec = Math.ceil((rateLimit.reset - Date.now()) / 1000);
-    return new Response("Too many requests. Please wait before sending another message.", {
-      status: 429,
-      headers: {
-        "Retry-After": String(retryAfterSec),
-        "X-RateLimit-Limit": "3",
-        "X-RateLimit-Remaining": "0",
-        "X-RateLimit-Reset": String(rateLimit.reset),
-      },
-    });
-  }
-
   let messages: Message[];
   try {
     const body = await request.json();
@@ -45,15 +18,7 @@ export async function POST(request: NextRequest) {
     return new Response("Invalid JSON body", { status: 400 });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return new Response("AI service not configured", { status: 503 });
-  }
-
-  // Trim to recent history to keep prompts lean
-  const trimmed = messages.slice(-MAX_HISTORY);
-
-  // Fetch roster for personalized context if the user is authenticated
+  // Resolve roster context here — web owns auth, ai-service does not
   let rosterContext = "";
   try {
     const supabase = await createSupabaseServerClient();
@@ -71,85 +36,43 @@ export async function POST(request: NextRequest) {
         const playerList = roster
           .map((p) => `${p.player_name} (${p.nba_team})`)
           .join(", ");
-        rosterContext = `\n\nThe user's current fantasy roster: ${playerList}. Reference these players when giving personalized advice.`;
+        rosterContext = `The user's current fantasy roster: ${playerList}. Reference these players when giving personalized advice.`;
       }
     }
   } catch {
     // Auth unavailable — continue without roster context
   }
 
-  const systemPrompt = `
-  ## ROLE
-You are a elite-level Fantasy Basketball Analyst for the 2025-26 NBA season.
-Your goal is to provide data-driven, actionable advice for:
-- Trades & Waiver Wire pickups
-- Lineup optimization & Streaming (especially for H2H and Rotisserie)
-- Schedule & Back-to-Back (B2B) analysis
+  // Forward to ai-service, passing the original client IP for rate limiting
+  const aiServiceUrl = process.env.AI_SERVICE_URL ?? "http://localhost:3001";
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+    request.headers.get("x-real-ip") ??
+    "unknown";
 
-## CONTEXT & DATA PRIORITY
-1. **Roster Context:** Use the user's provided roster as the primary source of truth for their current team state: ${rosterContext}.
-2. **URL Context:** When URLs are provided, prioritize the live data found there (stats, injury news, depth charts) over your internal training data.
-3. **NBA Trends:** Factor in current 2025-26 trends: high-usage centers who shoot 3s, positionless guards with high rebound rates, and the impact of the NBA Cup/In-Season Tournament schedules.
-
-## ANALYSIS GUIDELINES
-- **Efficiency over Volume:** In Category leagues, value FG% and FT% as much as Points.
-- **The "Why":** Don't just give a name. Briefly mention a metric (e.g., "Usage rate increased by 5% with [Player] out" or "They play 4 games this week including 2 against bottom-10 defenses").
-- **Conciseness:** Be direct and brief. Use bullet points for recommendations.`;
-
+  let aiResponse: Response;
   try {
-    const model = new ChatGoogleGenerativeAI({
-      model: "gemini-2.5-flash",
-      apiKey,
-      streaming: true,
-    });
-
-    // Reconstruct in-session conversation buffer from the incoming message history.
-    // This is the standard LangChain stateless-serverless pattern: the client owns
-    // persistence (sends full history each request); InMemoryChatMessageHistory
-    // manages the typed message buffer for this request's lifetime.
-    const chatHistory = new InMemoryChatMessageHistory();
-    const priorMessages = trimmed.slice(0, -1);
-    for (const m of priorMessages) {
-      await chatHistory.addMessage(
-        m.role === "user" ? new HumanMessage(m.content) : new AIMessage(m.content)
-      );
-    }
-
-    // Build the full prompt: system context + buffered history + current turn
-    const buffered = await chatHistory.getMessages();
-    const langchainMessages = [
-      new SystemMessage(systemPrompt),
-      ...buffered,
-      new HumanMessage(trimmed[trimmed.length - 1].content),
-    ];
-
-    // Await the stream before constructing ReadableStream so any initialisation
-    // errors (bad API key, network failure) are caught by the outer try/catch
-    // and returned as a 500 — matching the original Gemini route behaviour.
-    const responseStream = await model.stream(langchainMessages);
-
-    const stream = new ReadableStream({
-      async start(controller) {
-        const encoder = new TextEncoder();
-        try {
-          for await (const chunk of responseStream) {
-            const text = typeof chunk.content === "string" ? chunk.content : "";
-            controller.enqueue(encoder.encode(text));
-          }
-        } finally {
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(stream, {
+    aiResponse = await fetch(`${aiServiceUrl}/chat`, {
+      method: "POST",
       headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache",
+        "Content-Type": "application/json",
+        "X-Forwarded-For": ip,
       },
+      body: JSON.stringify({ messages, rosterContext }),
     });
-  } catch (err) {
-    console.error("LangChain/Gemini error:", err);
-    return new Response("Failed to get AI response", { status: 500 });
+  } catch {
+    return new Response("AI service unreachable", { status: 503 });
   }
+
+  // Pipe the streaming response straight through — no buffering
+  return new Response(aiResponse.body, {
+    status: aiResponse.status,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-cache",
+      ...(aiResponse.headers.get("Retry-After")
+        ? { "Retry-After": aiResponse.headers.get("Retry-After")! }
+        : {}),
+    },
+  });
 }

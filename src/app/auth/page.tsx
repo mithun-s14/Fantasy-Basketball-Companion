@@ -14,7 +14,7 @@ function GoogleButton() {
   return (
     <form action={googleFormAction}>
       {googleState?.error && (
-        <p className="text-sm text-red-600 mb-2">{googleState.error}</p>
+        <p className="text-sm text-rose-400 mb-2">{googleState.error}</p>
       )}
       <Button
         type="submit"
@@ -52,16 +52,16 @@ function LoginForm() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Welcome back</h1>
-        <p className="text-gray-500 text-sm mt-1">Sign in to your account to continue.</p>
+        <h1 className="font-display text-4xl font-extrabold uppercase leading-none tracking-tight">Welcome back</h1>
+        <p className="text-muted-foreground text-sm mt-2">Sign in to your account to continue.</p>
       </div>
       <GoogleButton />
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-gray-200" />
+          <span className="w-full border-t border-border" />
         </div>
-        <div className="relative flex justify-center text-xs text-gray-400 uppercase">
-          <span className="bg-white px-2">or</span>
+        <div className="relative flex justify-center text-xs text-muted-foreground uppercase">
+          <span className="bg-background px-2">or</span>
         </div>
       </div>
       <form action={formAction} className="space-y-4">
@@ -88,16 +88,16 @@ function LoginForm() {
           />
         </div>
         {state?.error && (
-          <p className="text-sm text-red-600">{state.error}</p>
+          <p className="text-sm text-rose-400">{state.error}</p>
         )}
         <Button type="submit" className="w-full" disabled={isPending}>
           {isPending ? "Signing in…" : "Sign in"}
         </Button>
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-muted-foreground">
           New user?{" "}
           <Link
             href="/auth?tab=signup"
-            className="text-gray-900 font-semibold hover:underline"
+            className="text-primary font-semibold hover:underline"
           >
             Create an account
           </Link>
@@ -113,16 +113,16 @@ function SignupForm() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Create account</h1>
-        <p className="text-gray-500 text-sm mt-1">Sign up to manage your fantasy roster.</p>
+        <h1 className="font-display text-4xl font-extrabold uppercase leading-none tracking-tight">Create account</h1>
+        <p className="text-muted-foreground text-sm mt-2">Sign up to manage your fantasy roster.</p>
       </div>
       <GoogleButton />
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-gray-200" />
+          <span className="w-full border-t border-border" />
         </div>
-        <div className="relative flex justify-center text-xs text-gray-400 uppercase">
-          <span className="bg-white px-2">or</span>
+        <div className="relative flex justify-center text-xs text-muted-foreground uppercase">
+          <span className="bg-background px-2">or</span>
         </div>
       </div>
       <form action={formAction} className="space-y-4">
@@ -160,14 +160,14 @@ function SignupForm() {
           />
         </div>
         {state?.error && (
-          <p className="text-sm text-red-600">{state.error}</p>
+          <p className="text-sm text-rose-400">{state.error}</p>
         )}
         <Button type="submit" className="w-full" disabled={isPending}>
           {isPending ? "Creating account…" : "Create account"}
         </Button>
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/auth" className="text-gray-900 font-semibold hover:underline">
+          <Link href="/auth" className="text-primary font-semibold hover:underline">
             Sign in
           </Link>
         </p>
@@ -192,18 +192,25 @@ export default function AuthPage() {
             spinRotation={-2}
             spinSpeed={10}
             color1="#ea580c"
-            color2="#9ca3af"
-            color3="#162325"
+            color2="#1b2438"
+            color3="#080b12"
             contrast={3.5}
             lighting={0.4}
             spinAmount={0.25}
             pixelFilter={700}
           />
         </div>
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-10">
+          <Link href="/" className="font-display text-4xl font-extrabold uppercase leading-[0.9] tracking-tight text-white">
+            Win the schedule.
+            <br />
+            Win the week.
+          </Link>
+        </div>
       </div>
 
       {/* Right: auth form */}
-      <div className="flex-1 flex items-center justify-center px-8 py-16 bg-white">
+      <div className="flex-1 flex items-center justify-center px-6 py-16 bg-background">
         <div className="w-full max-w-sm">
           <Suspense fallback={<div className="h-72" />}>
             <AuthContent />

@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Barlow_Condensed } from "next/font/google";
+import "@fontsource/apfel-grotezk/400.css";
+import "@fontsource/apfel-grotezk/700.css";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 
-const inter = Inter({ subsets: ["latin"] });
+const barlow = Barlow_Condensed({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  variable: "--font-barlow",
+});
 
 export const metadata: Metadata = {
   title: "Fantasy Basketball Companion",
@@ -16,8 +22,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body suppressHydrationWarning className={`${inter.className} flex flex-col min-h-screen`}>
+    <html lang="en" className={`dark ${barlow.variable}`}>
+      <body suppressHydrationWarning className="font-sans flex flex-col min-h-screen">
         {children}
         <Analytics />
       </body>

@@ -26,7 +26,7 @@ export function DateRangeSelector({
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
       <div className="flex flex-col gap-2 w-full sm:w-auto">
-        <label className="text-sm font-medium">Start Date</label>
+        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Start Date</label>
         <Popover open={startOpen} onOpenChange={setStartOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -52,7 +52,7 @@ export function DateRangeSelector({
       </div>
 
       <div className="flex flex-col gap-2 w-full sm:w-auto">
-        <label className="text-sm font-medium">End Date</label>
+        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">End Date</label>
         <Popover open={endOpen} onOpenChange={setEndOpen}>
           <PopoverTrigger asChild>
             <Button

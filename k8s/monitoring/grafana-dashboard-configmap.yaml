@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fantasy-basketball-dashboard
+  namespace: monitoring
+  labels:
+    # This label tells the Grafana sidecar to auto-import this ConfigMap as a dashboard.
+    grafana_dashboard: "1"
+data:
+  fantasy-basketball.json: |
+    {
+      "title": "Fantasy Basketball — AI Service",
+      "uid": "fantasy-basketball",
+      "schemaVersion": 36,
+      "refresh": "15s",
+      "panels": [
+        {
+          "id": 1,
+          "title": "Chat Request Rate (req/s)",
+          "type": "timeseries",
+          "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "expr": "sum(rate(chat_requests_total[5m])) by (status)",
+              "legendFormat": "{{status}}"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "AI Call Latency P95 (ms)",
+          "type": "timeseries",
+          "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(chat_latency_ms_bucket[5m])) by (le))",
+              "legendFormat": "P95 latency"
+            },
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(chat_latency_ms_bucket[5m])) by (le))",
+              "legendFormat": "P50 latency"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Rate Limit Hits (req/s)",
+          "type": "timeseries",
+          "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "expr": "rate(rate_limit_hits_total[5m])",
+              "legendFormat": "rate-limited requests"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "ai-service CPU Usage (%)",
+          "type": "timeseries",
+          "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "expr": "rate(process_cpu_seconds_total{job=\"ai-service\"}[1m]) * 100",
+              "legendFormat": "CPU %"
+            }
+          ]
+        }
+      ]
+    }

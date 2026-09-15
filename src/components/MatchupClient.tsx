@@ -3,7 +3,8 @@
 import { useState, useEffect, useActionState, useRef, useMemo, useId } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Swords, Trash2, AlertTriangle } from "lucide-react";
+import { Trash2, AlertTriangle } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -165,21 +166,21 @@ function PlayerAutocomplete({
       />
       {loading && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-          <div className="w-3.5 h-3.5 border-2 border-gray-200 border-t-orange-500 rounded-full animate-spin" />
+          <div className="w-3.5 h-3.5 border-2 border-border border-t-primary rounded-full animate-spin" />
         </div>
       )}
       {isOpen && suggestions.length > 0 && (
-        <ul id={listboxId} role="listbox" className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+        <ul id={listboxId} role="listbox" className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-2xl overflow-hidden">
           {suggestions.map((player, i) => (
             <li
               key={player.name}
               role="option"
               aria-selected={i === activeIndex}
               onMouseDown={(e) => { e.preventDefault(); handleSelect(player); }}
-              className={`flex items-center justify-between px-4 py-2.5 cursor-pointer gap-4 ${i === activeIndex ? "bg-orange-50" : "hover:bg-gray-50"}`}
+              className={`flex items-center justify-between px-4 py-2.5 cursor-pointer gap-4 ${i === activeIndex ? "bg-accent" : "hover:bg-accent/50"}`}
             >
-              <span className="text-sm font-medium text-gray-900">{player.name}</span>
-              <span className="text-xs text-gray-400 shrink-0">{player.team}</span>
+              <span className="text-sm font-medium text-foreground">{player.name}</span>
+              <span className="text-xs text-muted-foreground shrink-0">{player.team}</span>
             </li>
           ))}
         </ul>
@@ -220,7 +221,7 @@ function AddOpponentForm() {
         </Button>
       </div>
       {state && "error" in state && (
-        <p className="text-sm text-red-600">{state.error}</p>
+        <p className="text-sm text-rose-400">{state.error}</p>
       )}
     </form>
   );
@@ -242,7 +243,7 @@ function RemoveOpponentButton({ playerId, onSuccess }: { playerId: string; onSuc
       <input type="hidden" name="player_id" value={playerId} />
       <Button type="submit" variant="ghost" size="icon" disabled={isPending}
         aria-label="Remove player"
-        className="text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+        className="text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
       >
         <Trash2 className="w-4 h-4" />
       </Button>
@@ -268,30 +269,30 @@ function RosterColumn({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="font-semibold text-gray-900">{title}</h2>
+      <h2 className="text-sm font-semibold">{title} <span className="text-muted-foreground">({players.length})</span></h2>
 
       {showAddForm && onRemove && (
-        <div className="bg-gray-50 rounded-2xl p-5">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Add player</p>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Add player</p>
           {/* I1: removed dead onSuccess={() => {}} prop */}
           <AddOpponentForm />
         </div>
       )}
 
       {players.length === 0 ? (
-        <p className="text-sm text-gray-400 py-4">No players yet.</p>
+        <p className="text-sm text-muted-foreground py-4">No players yet.</p>
       ) : (
-        <div className="divide-y divide-gray-100 border border-gray-100 rounded-2xl overflow-hidden">
+        <div className="divide-y divide-border border border-border rounded-2xl overflow-hidden">
           {players.map((player) => (
-            <div key={player.id} className="flex items-center justify-between px-4 py-3 bg-white hover:bg-gray-50 transition-colors">
+            <div key={player.id} className="flex items-center justify-between px-4 py-3 bg-card hover:bg-accent/50 transition-colors">
               <div className="flex items-center gap-2 min-w-0">
                 <div>
-                  <p className="text-sm font-medium text-gray-900 truncate">{player.player_name}</p>
-                  <p className="text-xs text-gray-500">{player.nba_team}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{player.player_name}</p>
+                  <p className="text-xs text-muted-foreground">{player.nba_team}</p>
                 </div>
                 {missingNames.has(player.player_name) && (
                   // I3: added role="img" for proper ARIA semantics
-                  <AlertTriangle role="img" aria-label="No stats available" className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
+                  <AlertTriangle role="img" aria-label="No stats available" className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 )}
               </div>
               {showAddForm && onRemove && (
@@ -386,25 +387,18 @@ export function MatchupClient({ userPlayers, opponentPlayers, allStats }: Props)
   const hasMissing = missingUserNames.size > 0 || missingOppNames.size > 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="p-4 md:p-8">
-        <div className="max-w-6xl mx-auto space-y-6">
+    <div className="flex-1">
+      <div className="px-4 sm:px-6 py-6">
+        <div className="space-y-6">
 
-          {/* Header */}
-          <div className="mb-2">
-            <div className="flex items-center gap-3 mb-2">
-              <Swords className="w-8 h-8 text-orange-600" />
-              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Matchup Estimator</h1>
-            </div>
-            <p className="text-gray-500">
-              Compare your roster against {"opponent's"} across 9 H2H categories.
-            </p>
-          </div>
+          <PageHeader
+            title="Matchup Estimator"
+            description="Compare your roster against your opponent's across 9 H2H categories."
+          />
 
           {/* Controls */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-end">
+          <div className="bg-card rounded-lg border border-border p-4 flex flex-col sm:flex-row gap-6 items-start sm:items-end">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-700 mb-2">Date range</p>
               <DateRangeSelector
                 startDate={startDate}
                 endDate={endDate}
@@ -413,17 +407,17 @@ export function MatchupClient({ userPlayers, opponentPlayers, allStats }: Props)
               />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">Stats</p>
-              <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm font-medium">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Stats</p>
+              <div className="flex h-9 rounded-md border border-border overflow-hidden text-sm font-medium">
                 <button
                   onClick={() => setStatType("season")}
-                  className={`px-4 py-2 transition-colors ${statType === "season" ? "bg-orange-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+                  className={`px-4 py-2 transition-colors ${statType === "season" ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-accent"}`}
                 >
                   Season
                 </button>
                 <button
                   onClick={() => setStatType("last10")}
-                  className={`px-4 py-2 transition-colors ${statType === "last10" ? "bg-orange-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+                  className={`px-4 py-2 transition-colors ${statType === "last10" ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-accent"}`}
                   title={!hasLast10Stats ? "Last 10 stats not yet available \u2014 using season averages" : undefined}
                 >
                   Last 10
@@ -434,15 +428,15 @@ export function MatchupClient({ userPlayers, opponentPlayers, allStats }: Props)
           </div>
 
           {gameError && (
-            <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-              <p className="text-sm text-red-800">{gameError}</p>
+            <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/30">
+              <p className="text-sm text-rose-300">{gameError}</p>
             </div>
           )}
 
           {hasMissing && (
-            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200 flex gap-2 items-start">
-              <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 shrink-0" />
-              <p className="text-sm text-yellow-800">
+            <div className="p-4 bg-amber-400/10 rounded-lg border border-amber-400/30 flex gap-2 items-start">
+              <AlertTriangle className="w-4 h-4 text-amber-300 mt-0.5 shrink-0" />
+              <p className="text-sm text-amber-200">
                 Some players are missing stats (shown with warning icon). Totals for those rosters are incomplete.
                 Stats update daily — check back tomorrow if a player was recently added.
               </p>
@@ -472,7 +466,7 @@ export function MatchupClient({ userPlayers, opponentPlayers, allStats }: Props)
           {result ? (
             <MatchupProjectionTable result={result} />
           ) : (
-            <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-500">
+            <div className="bg-card rounded-xl border border-border p-10 text-center text-muted-foreground">
               {allStats.length === 0
                 ? "No player stats available yet. Stats are seeded daily — check back tomorrow."
                 : userPlayers.length === 0 || oppPlayers.length === 0

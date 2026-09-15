@@ -14,7 +14,7 @@ export function AuthButton({ userEmail }: Props) {
     return (
       <Link
         href="/auth"
-        className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-150 font-medium px-3 py-1.5 rounded-md hover:bg-gray-100"
+        className="rounded-md bg-primary px-3.5 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
       >
         Log In
       </Link>
@@ -22,18 +22,15 @@ export function AuthButton({ userEmail }: Props) {
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="hidden sm:inline text-sm text-gray-500 truncate max-w-[160px]" title={userEmail}>
+    <div className="flex items-center gap-2">
+      <span
+        className="hidden max-w-[180px] truncate rounded-full border border-border bg-secondary px-3 py-1 text-xs text-muted-foreground sm:inline"
+        title={userEmail}
+      >
         {userEmail}
       </span>
       <form action={logout}>
-        <Button
-          type="submit"
-          variant="ghost"
-          size="icon"
-          aria-label="Log out"
-          className="text-gray-400 hover:text-gray-900 hover:bg-gray-100"
-        >
+        <Button type="submit" variant="ghost" size="icon" aria-label="Log out" className="text-muted-foreground">
           <LogOut className="w-4 h-4" />
         </Button>
       </form>

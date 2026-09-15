@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: fantasy-basketball
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: fantasy-basketball/web:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: fantasy-basketball-config
+            - secretRef:
+                name: fantasy-basketball-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          # Next.js health endpoints added in Phase 2.
+          # Liveness: restart if the Next.js process is unresponsive.
+          livenessProbe:
+            httpGet:
+              path: /api/healthz
+              port: 3000
+            initialDelaySeconds: 20   # Next.js takes longer to start than Express
+            periodSeconds: 15
+            failureThreshold: 3
+          # Readiness: hold traffic until the Next.js server is accepting requests.
+          # readyz is lightweight (no external calls) so it passes as soon as
+          # the server starts. A stricter version would check Supabase here,
+          # but the 1s probe timeout can be shorter than a cold DB round-trip.
+          readinessProbe:
+            httpGet:
+              path: /api/readyz
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 3
