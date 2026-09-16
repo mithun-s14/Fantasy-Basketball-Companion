@@ -238,8 +238,10 @@ export default function AuthPage() {
       <aside className="hidden w-1/2 max-w-[520px] flex-col justify-between border-r border-[var(--border)] bg-[var(--surface)] p-10 min-[901px]:flex">
         <Link href="/" className="flex items-center gap-2.5">
           <BrandMark />
-          <span className="text-sm font-semibold">Fantasy Companion</span>
-          <span className="text-[11px] text-[var(--text-3)]">26–27</span>
+          <span className="flex items-baseline gap-2">
+            <span className="text-sm font-semibold">Fantasy Companion</span>
+            <span className="text-[11px] text-[var(--text-3)]">26–27</span>
+          </span>
         </Link>
 
         <div>

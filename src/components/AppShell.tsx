@@ -95,10 +95,10 @@ export function AppShell({ userEmail, weekLabel, children }: Props) {
         >
           <BrandMark />
           {!collapsed && (
-            <>
+            <span className="flex flex-1 items-baseline gap-2">
               <span className="text-sm font-semibold">Fantasy Companion</span>
               <span className="ml-auto text-[11px] text-[var(--text-3)]">26–27</span>
-            </>
+            </span>
           )}
         </Link>
 
@@ -174,12 +174,16 @@ export function AppShell({ userEmail, weekLabel, children }: Props) {
       {/* ── Main column ─────────────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-col">
         <header className="sticky top-0 z-20 flex h-14 flex-none items-center gap-3 border-b border-[var(--border)] bg-[var(--surface)] px-6 max-[900px]:gap-2 max-[900px]:px-4">
-          <h1 className="flex-none whitespace-nowrap text-base font-semibold">{title}</h1>
-          {subtitle && (
-            <span className="truncate text-[13px] text-[var(--text-3)] max-[900px]:hidden">
-              {subtitle}
-            </span>
-          )}
+          {/* Baseline-aligned: the title and subtitle are different sizes, so
+              centring them would leave their text sitting at different heights. */}
+          <div className="flex min-w-0 items-baseline gap-3">
+            <h1 className="flex-none whitespace-nowrap text-base font-semibold">{title}</h1>
+            {subtitle && (
+              <span className="truncate text-[13px] text-[var(--text-3)] max-[900px]:hidden">
+                {subtitle}
+              </span>
+            )}
+          </div>
           <div className="flex-1" />
           <ThemeToggle />
           <AuthButton userEmail={userEmail} />
