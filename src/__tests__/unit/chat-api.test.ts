@@ -141,6 +141,16 @@ describe("POST /api/chat — rate limiting", () => {
 
     expect(mockLimit).toHaveBeenCalledWith("unknown");
   });
+
+  it("fails open when the rate limiter throws", async () => {
+    mockLimit.mockRejectedValue(new Error("fetch failed"));
+    mockStreamFn.mockResolvedValue(makeChunks("ok"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await POST(makeRequest(SINGLE_USER_MESSAGE) as never);
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("ok");
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -20,8 +20,12 @@ export async function POST(request: NextRequest) {
     request.headers.get("x-real-ip") ??
     "unknown";
 
-  const rateLimit = await chatRateLimiter.limit(ip);
-  if (!rateLimit.success) {
+  // Fail open if Redis is unreachable so chat still works without rate limiting
+  const rateLimit = await chatRateLimiter.limit(ip).catch((err) => {
+    console.error("Rate limiter unavailable:", err);
+    return null;
+  });
+  if (rateLimit && !rateLimit.success) {
     const retryAfterSec = Math.ceil((rateLimit.reset - Date.now()) / 1000);
     return new Response("Too many requests. Please wait before sending another message.", {
       status: 429,
