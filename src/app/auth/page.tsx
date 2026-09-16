@@ -4,6 +4,7 @@ import { useActionState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CalendarDays, TrendingUp, Swords } from "lucide-react";
+import { BrandMark } from "@/components/BrandMark";
 import { login, signup, signInWithGoogle } from "./actions";
 
 /* ── shared pieces, styled from the design tokens ───────────────────────── */
@@ -236,9 +237,7 @@ export default function AuthPage() {
       {/* Left: quiet brand panel, hidden on narrow screens */}
       <aside className="hidden w-1/2 max-w-[520px] flex-col justify-between border-r border-[var(--border)] bg-[var(--surface)] p-10 min-[901px]:flex">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="grid h-7 w-7 place-items-center rounded-[7px] bg-[var(--accent)] text-xs font-bold text-white">
-            FBC
-          </span>
+          <BrandMark />
           <span className="text-sm font-semibold">Fantasy Companion</span>
           <span className="text-[11px] text-[var(--text-3)]">26–27</span>
         </Link>
@@ -279,9 +278,7 @@ export default function AuthPage() {
             href="/"
             className="mb-5 flex items-center justify-center gap-2.5 min-[901px]:hidden"
           >
-            <span className="grid h-7 w-7 place-items-center rounded-[7px] bg-[var(--accent)] text-xs font-bold text-white">
-              FBC
-            </span>
+            <BrandMark />
             <span className="text-sm font-semibold">Fantasy Companion</span>
           </Link>
           <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">

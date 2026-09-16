@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AuthButton } from "@/components/AuthButton";
+import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
@@ -92,9 +93,7 @@ export function AppShell({ userEmail, weekLabel, children }: Props) {
           href="/"
           className="flex h-14 flex-none items-center gap-2.5 whitespace-nowrap border-b border-[var(--border)] px-3.5"
         >
-          <span className="grid h-7 w-7 flex-none place-items-center rounded-[7px] bg-[var(--accent)] text-xs font-bold text-white">
-            FBC
-          </span>
+          <BrandMark />
           {!collapsed && (
             <>
               <span className="text-sm font-semibold">Fantasy Companion</span>
