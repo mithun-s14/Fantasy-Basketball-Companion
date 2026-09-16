@@ -5,8 +5,9 @@ import { config } from "dotenv";
 // Load .env.local for standalone script execution
 config({ path: ".env.local" });
 
-const SEASON = "2025-26";
-const BBREF_YEAR = "2026";
+// Usage: npm run scrape -- 2027  (bbref end year; defaults to 2026 → "2025-26")
+const BBREF_YEAR = process.argv[2] ?? "2026";
+const SEASON = `${Number(BBREF_YEAR) - 1}-${BBREF_YEAR.slice(2)}`;
 const MONTHS = [
   "october",
   "november",
