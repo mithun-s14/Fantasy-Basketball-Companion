@@ -11,4 +11,4 @@ test-results/
 KUBERNETES_MIGRATION.md
 tsconfig.tsbuildinfo
 dist/
-markdowns
+docs
