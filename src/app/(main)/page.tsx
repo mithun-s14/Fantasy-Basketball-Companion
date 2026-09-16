@@ -2,27 +2,11 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { NBA_TEAMS } from "@/lib/constants";
-import { gameTierClass } from "@/lib/utils";
+import { gameTierClass, getWeekRange } from "@/lib/utils";
 import { HomepageFeatureCards } from "@/components/HomepageFeatureCards";
 import { PageHeader, Panel, StatTile } from "@/components/PageHeader";
 
 /* ── helpers ── */
-
-function getWeekRange(): { start: string; end: string; label: string } {
-  const today = new Date();
-  const day = today.getDay(); // 0 = Sun
-  const diffToMon = day === 0 ? -6 : 1 - day;
-  const mon = new Date(today);
-  mon.setDate(today.getDate() + diffToMon);
-  const sun = new Date(mon);
-  sun.setDate(mon.getDate() + 6);
-
-  const iso = (d: Date) => d.toISOString().split("T")[0];
-  const label = (d: Date) =>
-    d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-
-  return { start: iso(mon), end: iso(sun), label: `${label(mon)} – ${label(sun)}` };
-}
 
 async function fetchWeeklyCounts(start: string, end: string) {
   try {

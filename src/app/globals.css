@@ -7,52 +7,132 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ---------------------------------------------------------------------------
+   Design tokens (docs/design/DESIGN.md section 1).
+   Light values live on :root; dark values are layered on top for both the
+   system preference (unless light is explicitly chosen) and data-theme="dark".
+   Components reference these variables only — no hardcoded hex.
+   --------------------------------------------------------------------------- */
 :root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #f0f2f5;
+  --surface-hover: #e9ecf0;
+  --border: #e1e4e8;
+  --border-strong: #cbd0d6;
+  --text: #14171c;
+  --text-2: #5b6570;
+  --text-3: #8a939d;
+  --accent: #2563eb;
+  --accent-soft: rgb(37 99 235 / 0.1);
+  --green: #15803d;
+  --green-soft: rgb(21 128 61 / 0.12);
+  --amber: #b45309;
+  --amber-soft: rgb(180 83 9 / 0.12);
+  --red: #b91c1c;
+  --red-soft: rgb(185 28 28 / 0.12);
+  --grid: rgb(0 0 0 / 0.08);
+
+  --sidebar-w: 256px;
+  --radius: 8px;
+  --font-size: 14px;
+}
+
+/* Dark is the default for a tool used daily in season. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0e13;
+    --surface: #11151c;
+    --surface-2: #151a22;
+    --surface-hover: #171c24;
+    --border: #232a34;
+    --border-strong: #30363d;
+    --text: #e6e8eb;
+    --text-2: #9aa3ae;
+    --text-3: #6b7480;
+    --accent: #4f8df7;
+    --accent-soft: rgb(79 141 247 / 0.12);
+    --green: #22c55e;
+    --green-soft: rgb(34 197 94 / 0.14);
+    --amber: #f59e0b;
+    --amber-soft: rgb(245 158 11 / 0.14);
+    --red: #ef4444;
+    --red-soft: rgb(239 68 68 / 0.14);
+    --grid: rgb(255 255 255 / 0.07);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b0e13;
+  --surface: #11151c;
+  --surface-2: #151a22;
+  --surface-hover: #171c24;
+  --border: #232a34;
+  --border-strong: #30363d;
+  --text: #e6e8eb;
+  --text-2: #9aa3ae;
+  --text-3: #6b7480;
+  --accent: #4f8df7;
+  --accent-soft: rgb(79 141 247 / 0.12);
+  --green: #22c55e;
+  --green-soft: rgb(34 197 94 / 0.14);
+  --amber: #f59e0b;
+  --amber-soft: rgb(245 158 11 / 0.14);
+  --red: #ef4444;
+  --red-soft: rgb(239 68 68 / 0.14);
+  --grid: rgb(255 255 255 / 0.07);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
   color-scheme: dark;
-  --font-size: 16px;
-  /* "Court at night": ink navy surfaces, basketball-orange accent */
-  --background: #080b12;
-  --foreground: #e9edf5;
-  --card: #0f1420;
-  --card-foreground: #e9edf5;
-  --popover: #131a28;
-  --popover-foreground: #e9edf5;
-  --primary: #ff6b1a;
-  --primary-foreground: #0a0d14;
-  --secondary: #182033;
-  --secondary-foreground: #e9edf5;
-  --muted: #151c2c;
-  --muted-foreground: #8b95a8;
-  --accent: #1b2438;
-  --accent-foreground: #e9edf5;
-  --destructive: #f25555;
+}
+
+/* shadcn/ui variables mapped onto the tokens above, so the existing ui/
+   components and not-yet-redesigned screens follow the same palette. */
+:root {
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card: var(--surface);
+  --card-foreground: var(--text);
+  --popover: var(--surface);
+  --popover-foreground: var(--text);
+  --primary: var(--accent);
+  --primary-foreground: #ffffff;
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--text);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--text-2);
+  --destructive: var(--red);
   --destructive-foreground: #ffffff;
-  --border: rgb(255 255 255 / 0.08);
-  --input: rgb(255 255 255 / 0.12);
-  --input-background: #0b0f19;
-  --switch-background: #2a3348;
+  --input: var(--border-strong);
+  --input-background: var(--surface);
+  --switch-background: var(--border-strong);
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #ff6b1a;
-  --chart-1: #ff6b1a;
-  --chart-2: #3ddc97;
-  --chart-3: #5b8def;
-  --chart-4: #f5b83d;
-  --chart-5: #c77dff;
-  --radius: 0.625rem;
-  --sidebar: #0f1420;
-  --sidebar-foreground: #e9edf5;
-  --sidebar-primary: #ff6b1a;
-  --sidebar-primary-foreground: #0a0d14;
-  --sidebar-accent: #1b2438;
-  --sidebar-accent-foreground: #e9edf5;
-  --sidebar-border: rgb(255 255 255 / 0.08);
-  --sidebar-ring: #ff6b1a;
+  --ring: var(--accent);
+  --chart-1: var(--accent);
+  --chart-2: var(--green);
+  --chart-3: var(--amber);
+  --chart-4: var(--red);
+  --chart-5: var(--text-3);
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--text);
+  --sidebar-primary: var(--accent);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--surface-hover);
+  --sidebar-accent-foreground: var(--text);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--accent);
 }
 
 @theme inline {
-  --font-sans: "Apfel Grotezk", ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-barlow), "Apfel Grotezk", sans-serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-display: var(--font-sans);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -65,8 +145,10 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  /* shadcn's "accent" means hover surface, the spec's --accent means the brand
+     colour — map the utility to the surface so both keep their meaning. */
+  --color-accent: var(--surface-hover);
+  --color-accent-foreground: var(--text);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
@@ -103,13 +185,17 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    background-image:
-      radial-gradient(60rem 28rem at 50% -8rem, rgb(255 107 26 / 0.09), transparent 70%);
-    background-repeat: no-repeat;
+    line-height: 1.45;
   }
 
   html {
     font-size: var(--font-size);
+  }
+
+  /* Every interactive element gets the same visible focus ring (spec 4, Focus). */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 
   h1 {

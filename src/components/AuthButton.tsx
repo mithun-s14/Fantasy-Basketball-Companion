@@ -14,7 +14,7 @@ export function AuthButton({ userEmail }: Props) {
     return (
       <Link
         href="/auth"
-        className="rounded-md bg-primary px-3.5 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+        className="inline-flex h-8 flex-none items-center whitespace-nowrap rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground transition-colors hover:brightness-110"
       >
         Log In
       </Link>

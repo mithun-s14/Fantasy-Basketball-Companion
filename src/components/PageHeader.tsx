@@ -1,19 +1,17 @@
 interface Props {
-  title: string;
-  description: string;
+  /** Kept for call-site compatibility; the topbar renders the title now. */
+  title?: string;
+  description?: string;
   actions?: React.ReactNode;
 }
 
-export function PageHeader({ title, description, actions }: Props) {
-  return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="font-display text-3xl font-bold uppercase leading-none tracking-wide">{title}</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>
-      </div>
-      {actions}
-    </div>
-  );
+/**
+ * Per spec section 2, the page title and subtitle live in the topbar, so this
+ * renders only the page's actions. Nothing at all when there are none.
+ */
+export function PageHeader({ actions }: Props) {
+  if (!actions) return null;
+  return <div className="mb-6 flex flex-wrap items-center justify-end gap-3">{actions}</div>;
 }
 
 // Small KPI tile used across dashboard pages.

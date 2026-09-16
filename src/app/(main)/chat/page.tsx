@@ -85,13 +85,8 @@ export default function ChatPage() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Chat */}
-      <div className="flex-1 flex flex-col w-full px-4 sm:px-6 pt-6 pb-4 min-h-0 h-[calc(100dvh-3.5rem-4rem)] md:h-[calc(100dvh-3.5rem)]">
-        <div className="mb-6 flex items-center gap-3">
-          <div>
-            <h1 className="font-display text-3xl font-bold uppercase leading-none tracking-wide">AI Coach</h1>
-            <p className="text-sm text-muted-foreground mt-1.5">Trades, waivers, streaming and lineup calls</p>
-          </div>
-        </div>
+      {/* 3.5rem is the topbar; the shell already reserves room for the mobile tab bar. */}
+      <div className="flex-1 flex flex-col w-full px-4 sm:px-6 pt-6 pb-4 min-h-0 h-[calc(100dvh-3.5rem)] max-[900px]:h-[calc(100dvh-3.5rem-60px)]">
         {/* Messages */}
         <div className="flex-1 overflow-y-auto flex flex-col gap-5 mb-4 p-4 rounded-lg border border-border bg-card/40">
           {/* Bot greeting */}

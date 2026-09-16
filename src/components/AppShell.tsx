@@ -1,115 +1,214 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, CalendarDays, Bot, Users, Swords, Lock, TrendingUp } from "lucide-react";
+import {
+  LayoutDashboard,
+  CalendarDays,
+  TrendingUp,
+  Swords,
+  Users,
+  Bot,
+  ChevronLeft,
+  type LucideIcon,
+} from "lucide-react";
 import { AuthButton } from "@/components/AuthButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 interface Props {
   userEmail: string | null;
+  /** Dashboard subtitle, resolved on the server so the date cannot mismatch. */
+  weekLabel: string;
   children: React.ReactNode;
 }
 
-export function AppShell({ userEmail, children }: Props) {
-  const pathname = usePathname();
-  const gated = (href: string) => (userEmail ? href : `/auth?next=${href}`);
+interface NavItem {
+  label: string;
+  short: string;
+  path: string;
+  Icon: LucideIcon;
+  gated?: boolean;
+}
 
-  const nav = [
-    { label: "Overview", short: "Home", path: "/", href: "/", Icon: LayoutDashboard, locked: false },
-    { label: "Schedule Analyzer", short: "Schedule", path: "/analyzer", href: "/analyzer", Icon: CalendarDays, locked: false },
-    { label: "2026–27 Projections", short: "Projections", path: "/projections", href: "/projections", Icon: TrendingUp, locked: false },
-    { label: "AI Coach", short: "Coach", path: "/chat", href: "/chat", Icon: Bot, locked: false },
-    { label: "My Roster", short: "Roster", path: "/roster", href: gated("/roster"), Icon: Users, locked: !userEmail },
-    { label: "Matchup Analysis", short: "Matchup", path: "/matchup", href: gated("/matchup"), Icon: Swords, locked: !userEmail },
-  ];
+// Nav order and grouping per spec section 2.
+const SECTIONS: { heading: string; items: NavItem[] }[] = [
+  {
+    heading: "Overview",
+    items: [{ label: "Dashboard", short: "Home", path: "/", Icon: LayoutDashboard }],
+  },
+  {
+    heading: "Analyze",
+    items: [
+      { label: "Schedule analyzer", short: "Schedule", path: "/analyzer", Icon: CalendarDays },
+      { label: "Projections", short: "Projections", path: "/projections", Icon: TrendingUp },
+      { label: "Matchup", short: "Matchup", path: "/matchup", Icon: Swords, gated: true },
+    ],
+  },
+  {
+    heading: "Manage",
+    items: [
+      { label: "My roster", short: "Roster", path: "/roster", Icon: Users, gated: true },
+      { label: "AI coach", short: "Coach", path: "/chat", Icon: Bot },
+    ],
+  },
+];
+
+const ALL_ITEMS = SECTIONS.flatMap((s) => s.items);
+// Five tabs on mobile, per spec.
+const TAB_PATHS = ["/", "/analyzer", "/matchup", "/roster", "/chat"];
+
+// Page title and subtitle live in the topbar (spec section 5).
+const TITLES: Record<string, [string, string]> = {
+  "/": ["Dashboard", ""], // subtitle is the week label, passed in
+  "/analyzer": ["Schedule analyzer", "Games per NBA team in a date range"],
+  "/projections": ["Projections", "2026–27 season averages · all players"],
+  "/matchup": ["Matchup", "Category projections for this week"],
+  "/roster": ["My roster", "Your players, games and category value"],
+  "/chat": ["AI coach", "Trades, waivers and lineup calls"],
+};
+
+export function AppShell({ userEmail, weekLabel, children }: Props) {
+  const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
+
   const isActive = (path: string) => (path === "/" ? pathname === "/" : pathname.startsWith(path));
-  const today = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  const hrefFor = (item: NavItem) =>
+    item.gated && !userEmail ? `/auth?next=${item.path}` : item.path;
+
+  const activeItem = ALL_ITEMS.find((i) => isActive(i.path));
+  const [title, staticSub] = TITLES[activeItem?.path ?? ""] ?? ["", ""];
+  const subtitle = activeItem?.path === "/" ? `Week of ${weekLabel}` : staticSub;
 
   return (
-    <div className="flex min-h-screen">
-      {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border bg-card/60 md:flex">
-        <Link href="/" className="flex h-14 items-center gap-2 border-b border-border px-5">
-          <Image src="/fbclogo.png" alt="Fantasy Basketball Companion logo" width={28} height={28} priority className="object-contain" />
-          <span className="font-display text-lg font-bold uppercase tracking-wide">
-            FB<span className="text-primary">C</span>
+    <div
+      className="grid min-h-screen transition-[grid-template-columns] duration-200 ease-in-out max-[900px]:grid-cols-1"
+      style={{ gridTemplateColumns: `${collapsed ? "64px" : "var(--sidebar-w)"} 1fr` }}
+    >
+      {/* ── Sidebar ─────────────────────────────────────────────────────── */}
+      <aside className="sticky top-0 flex h-screen flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--surface)] max-[900px]:hidden">
+        <Link
+          href="/"
+          className="flex h-14 flex-none items-center gap-2.5 whitespace-nowrap border-b border-[var(--border)] px-3.5"
+        >
+          <span className="grid h-7 w-7 flex-none place-items-center rounded-[7px] bg-[var(--accent)] text-xs font-bold text-white">
+            FBC
           </span>
+          {!collapsed && (
+            <>
+              <span className="text-sm font-semibold">Fantasy Companion</span>
+              <span className="ml-auto text-[11px] text-[var(--text-3)]">26–27</span>
+            </>
+          )}
         </Link>
 
-        <nav aria-label="Tools" className="flex-1 space-y-0.5 p-3">
-          <p className="px-2 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Tools</p>
-          {nav.map(({ label, path, href, Icon, locked }) => {
-            const active = isActive(path);
-            return (
-              <Link
-                key={path}
-                href={href}
-                aria-current={active ? "page" : undefined}
+        <nav aria-label="Tools" className="flex-1 overflow-y-auto p-2">
+          {SECTIONS.map(({ heading, items }, sectionIndex) => (
+            <div key={heading}>
+              <p
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-primary/10 text-foreground ring-1 ring-inset ring-primary/25"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  "whitespace-nowrap px-3 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-3)]",
+                  sectionIndex === 0 ? "mb-1.5 mt-2" : "mb-1.5 mt-5",
+                  collapsed && "invisible mb-0 h-0",
                 )}
               >
-                <Icon className={cn("h-4 w-4", active && "text-primary")} />
-                <span className="flex-1">{label}</span>
-                {locked && <Lock className="h-3 w-3 opacity-60" aria-label="Sign in required" />}
-              </Link>
-            );
-          })}
+                {heading}
+              </p>
+              {items.map((item) => {
+                const active = isActive(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    href={hrefFor(item)}
+                    title={collapsed ? item.label : undefined}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "relative flex h-9 items-center gap-2.5 whitespace-nowrap rounded-lg px-3 text-sm transition-colors",
+                      active
+                        ? "bg-[var(--accent-soft)] text-[var(--text)]"
+                        : "text-[var(--text-2)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
+                      collapsed && "justify-center px-0",
+                      // 3px accent bar on the left edge of the active item
+                      active &&
+                        "before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-sm before:bg-[var(--accent)] before:content-['']",
+                    )}
+                  >
+                    <item.Icon className="h-[18px] w-[18px] flex-none" strokeWidth={1.75} />
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1">{item.label}</span>
+                        {item.gated && !userEmail && (
+                          <span className="rounded border border-[var(--border)] px-[5px] py-px text-[10px] text-[var(--text-3)]">
+                            Sign in
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
-        <div className="border-t border-border p-4 text-xs text-muted-foreground">
-          {userEmail ? (
-            <p className="truncate">
-              Signed in as <span className="font-medium text-foreground">{userEmail}</span>
-            </p>
-          ) : (
-            <Link href="/auth?tab=signup" className="font-semibold text-primary hover:underline">
-              Create a free account →
-            </Link>
-          )}
+        <div className="flex-none border-t border-[var(--border)] p-2">
+          <button
+            type="button"
+            onClick={() => setCollapsed((c) => !c)}
+            aria-expanded={!collapsed}
+            title={collapsed ? "Expand sidebar" : undefined}
+            className={cn(
+              "flex h-9 w-full items-center gap-2.5 whitespace-nowrap rounded-lg px-3 text-sm text-[var(--text-2)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
+              collapsed && "justify-center px-0",
+            )}
+          >
+            <ChevronLeft
+              className={cn("h-[18px] w-[18px] flex-none transition-transform", collapsed && "rotate-180")}
+              strokeWidth={1.75}
+            />
+            {!collapsed && <span>Collapse</span>}
+          </button>
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col md:pl-60">
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-border bg-background/80 px-4 backdrop-blur-xl sm:px-6">
-          <Link href="/" className="flex items-center gap-2 md:hidden">
-            <Image src="/fbclogo.png" alt="" width={26} height={26} priority className="object-contain" />
-            <span className="font-display text-lg font-bold uppercase tracking-wide">
-              FB<span className="text-primary">C</span>
+      {/* ── Main column ─────────────────────────────────────────────────── */}
+      <div className="flex min-w-0 flex-col">
+        <header className="sticky top-0 z-20 flex h-14 flex-none items-center gap-3 border-b border-[var(--border)] bg-[var(--surface)] px-6 max-[900px]:gap-2 max-[900px]:px-4">
+          <h1 className="flex-none whitespace-nowrap text-base font-semibold">{title}</h1>
+          {subtitle && (
+            <span className="truncate text-[13px] text-[var(--text-3)] max-[900px]:hidden">
+              {subtitle}
             </span>
-          </Link>
-          <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex">
-            <span>{today}</span>
-            <span className="rounded-full border border-border px-2 py-0.5">2025–26 season</span>
-          </div>
+          )}
+          <div className="flex-1" />
+          <ThemeToggle />
           <AuthButton userEmail={userEmail} />
         </header>
 
-        <main className="flex flex-1 flex-col pb-16 md:pb-0">{children}</main>
+        <main className="flex flex-1 flex-col max-[900px]:pb-[60px]">{children}</main>
       </div>
 
-      {/* Mobile bottom tabs */}
-      <nav aria-label="Tools (mobile)" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
-        {nav.map(({ short, path, href, Icon }) => {
+      {/* ── Mobile tab bar ──────────────────────────────────────────────── */}
+      <nav
+        aria-label="Tools (mobile)"
+        className="fixed inset-x-0 bottom-0 z-30 hidden h-[60px] border-t border-[var(--border)] bg-[var(--surface)] max-[900px]:flex"
+      >
+        {TAB_PATHS.map((path) => {
+          const item = ALL_ITEMS.find((i) => i.path === path)!;
           const active = isActive(path);
           return (
             <Link
               key={path}
-              href={href}
+              href={hrefFor(item)}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium",
-                active ? "text-primary" : "text-muted-foreground",
+                "flex flex-1 flex-col items-center justify-center gap-[3px] text-[10px]",
+                active ? "text-[var(--accent)]" : "text-[var(--text-3)]",
               )}
             >
-              <Icon className="h-5 w-5" />
-              {short}
+              <item.Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              {item.short}
             </Link>
           );
         })}

@@ -3,26 +3,64 @@
 import { useActionState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { CalendarDays, TrendingUp, Swords } from "lucide-react";
 import { login, signup, signInWithGoogle } from "./actions";
-import Balatro from "@/components/Balatro";
+
+/* ── shared pieces, styled from the design tokens ───────────────────────── */
+
+const INPUT =
+  "h-8 w-full rounded-md border border-[var(--border-strong)] bg-[var(--surface)] px-2.5 text-[13px] text-[var(--text)] placeholder:text-[var(--text-3)] focus-visible:outline-none";
+const LABEL = "text-[11px] text-[var(--text-3)]";
+const BTN_PRIMARY =
+  "flex h-8 w-full items-center justify-center rounded-md bg-[var(--accent)] px-3 text-[13px] font-medium text-white transition hover:brightness-110 disabled:opacity-60";
+const BTN_OUTLINE =
+  "flex h-8 w-full items-center justify-center gap-2 rounded-md border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-[13px] font-medium text-[var(--text)] transition hover:bg-[var(--surface-hover)] disabled:opacity-60";
+
+function Field({
+  id,
+  label,
+  ...props
+}: { id: string; label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className={LABEL}>
+        {label}
+      </label>
+      <input id={id} className={INPUT} {...props} />
+    </div>
+  );
+}
+
+/** Inline error banner, per spec section 4 (States → Error). */
+function ErrorBanner({ message }: { message: string }) {
+  return (
+    <p
+      role="alert"
+      className="rounded-md border border-[var(--red)]/40 bg-[var(--red-soft)] px-2.5 py-2 text-[12px] text-[var(--red)]"
+    >
+      {message}
+    </p>
+  );
+}
+
+function Divider() {
+  return (
+    <div className="relative">
+      <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[var(--border)]" />
+      <span className="relative mx-auto block w-fit bg-[var(--surface)] px-2 text-[11px] uppercase tracking-[0.04em] text-[var(--text-3)]">
+        or
+      </span>
+    </div>
+  );
+}
 
 function GoogleButton() {
   const [googleState, googleFormAction, isGooglePending] = useActionState(signInWithGoogle, null);
   return (
-    <form action={googleFormAction}>
-      {googleState?.error && (
-        <p className="text-sm text-rose-400 mb-2">{googleState.error}</p>
-      )}
-      <Button
-        type="submit"
-        variant="outline"
-        className="w-full flex items-center gap-2"
-        disabled={isGooglePending}
-      >
-        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+    <form action={googleFormAction} className="flex flex-col gap-2">
+      {googleState?.error && <ErrorBanner message={googleState.error} />}
+      <button type="submit" className={"flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-[13px] font-medium text-[var(--text)] transition hover:bg-[var(--surface-hover)] disabled:opacity-60"} disabled={isGooglePending}>
+        <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true">
           <path
             fill="#4285F4"
             d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z"
@@ -41,69 +79,79 @@ function GoogleButton() {
           />
         </svg>
         {isGooglePending ? "Redirecting…" : "Continue with Google"}
-      </Button>
+      </button>
     </form>
   );
 }
+
+/** Sign in / Create account, as the spec's segmented control. */
+function Tabs({ isSignup }: { isSignup: boolean }) {
+  const tab = (label: string, href: string, on: boolean) => (
+    <Link
+      href={href}
+      aria-current={on ? "page" : undefined}
+      className={`flex h-[30px] flex-1 items-center justify-center text-xs ${
+        on ? "bg-[var(--accent-soft)] text-[var(--text)]" : "text-[var(--text-2)] hover:text-[var(--text)]"
+      }`}
+    >
+      {label}
+    </Link>
+  );
+  return (
+    <div className="mb-4 flex overflow-hidden rounded-md border border-[var(--border-strong)]">
+      {tab("Sign in", "/auth", !isSignup)}
+      <span className="w-px bg-[var(--border)]" />
+      {tab("Create account", "/auth?tab=signup", isSignup)}
+    </div>
+  );
+}
+
+/* ── forms ──────────────────────────────────────────────────────────────── */
 
 function LoginForm() {
   const [state, formAction, isPending] = useActionState(login, null);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-4xl font-extrabold uppercase leading-none tracking-tight">Welcome back</h1>
-        <p className="text-muted-foreground text-sm mt-2">Sign in to your account to continue.</p>
-      </div>
+    <>
+      <h1 className="text-base font-semibold">Welcome back</h1>
+      <p className="mb-4 mt-0.5 text-[13px] text-[var(--text-3)]">
+        Sign in to track your roster and matchups.
+      </p>
       <GoogleButton />
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs text-muted-foreground uppercase">
-          <span className="bg-background px-2">or</span>
-        </div>
+      <div className="my-4">
+        <Divider />
       </div>
-      <form action={formAction} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="login-email">Email</Label>
-          <Input
-            id="login-email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            placeholder="you@example.com"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="login-password">Password</Label>
-          <Input
-            id="login-password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            placeholder="••••••••"
-          />
-        </div>
-        {state?.error && (
-          <p className="text-sm text-rose-400">{state.error}</p>
-        )}
-        <Button type="submit" className="w-full" disabled={isPending}>
+      <form action={formAction} className="flex flex-col gap-3">
+        <Field
+          id="login-email"
+          label="Email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          placeholder="you@example.com"
+        />
+        <Field
+          id="login-password"
+          label="Password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          placeholder="••••••••"
+        />
+        {state?.error && <ErrorBanner message={state.error} />}
+        <button type="submit" className={BTN_PRIMARY} disabled={isPending}>
           {isPending ? "Signing in…" : "Sign in"}
-        </Button>
-        <p className="text-center text-sm text-muted-foreground">
-          New user?{" "}
-          <Link
-            href="/auth?tab=signup"
-            className="text-primary font-semibold hover:underline"
-          >
-            Create an account
-          </Link>
-        </p>
+        </button>
       </form>
-    </div>
+      <p className="mt-4 text-center text-[12px] text-[var(--text-3)]">
+        New user?{" "}
+        <Link href="/auth?tab=signup" className="font-medium text-[var(--accent)] hover:underline">
+          Create an account
+        </Link>
+      </p>
+    </>
   );
 }
 
@@ -111,110 +159,136 @@ function SignupForm() {
   const [state, formAction, isPending] = useActionState(signup, null);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-4xl font-extrabold uppercase leading-none tracking-tight">Create account</h1>
-        <p className="text-muted-foreground text-sm mt-2">Sign up to manage your fantasy roster.</p>
-      </div>
+    <>
+      <h1 className="text-base font-semibold">Create account</h1>
+      <p className="mb-4 mt-0.5 text-[13px] text-[var(--text-3)]">
+        Free, and takes about a minute.
+      </p>
       <GoogleButton />
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs text-muted-foreground uppercase">
-          <span className="bg-background px-2">or</span>
-        </div>
+      <div className="my-4">
+        <Divider />
       </div>
-      <form action={formAction} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="signup-email">Email</Label>
-          <Input
-            id="signup-email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            placeholder="you@example.com"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="signup-password">Password</Label>
-          <Input
-            id="signup-password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            required
-            placeholder="At least 8 characters"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="signup-confirm">Confirm password</Label>
-          <Input
-            id="signup-confirm"
-            name="confirm"
-            type="password"
-            autoComplete="new-password"
-            required
-            placeholder="••••••••"
-          />
-        </div>
-        {state?.error && (
-          <p className="text-sm text-rose-400">{state.error}</p>
-        )}
-        <Button type="submit" className="w-full" disabled={isPending}>
+      <form action={formAction} className="flex flex-col gap-3">
+        <Field
+          id="signup-email"
+          label="Email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          placeholder="you@example.com"
+        />
+        <Field
+          id="signup-password"
+          label="Password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          required
+          placeholder="At least 8 characters"
+        />
+        <Field
+          id="signup-confirm"
+          label="Confirm password"
+          name="confirm"
+          type="password"
+          autoComplete="new-password"
+          required
+          placeholder="••••••••"
+        />
+        {state?.error && <ErrorBanner message={state.error} />}
+        <button type="submit" className={BTN_PRIMARY} disabled={isPending}>
           {isPending ? "Creating account…" : "Create account"}
-        </Button>
-        <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link href="/auth" className="text-primary font-semibold hover:underline">
-            Sign in
-          </Link>
-        </p>
+        </button>
       </form>
-    </div>
+      <p className="mt-4 text-center text-[12px] text-[var(--text-3)]">
+        Already have an account?{" "}
+        <Link href="/auth" className="font-medium text-[var(--accent)] hover:underline">
+          Sign in
+        </Link>
+      </p>
+    </>
   );
 }
 
 function AuthContent() {
   const searchParams = useSearchParams();
   const isSignup = searchParams.get("tab") === "signup";
-  return isSignup ? <SignupForm /> : <LoginForm />;
+  return (
+    <>
+      <Tabs isSignup={isSignup} />
+      {isSignup ? <SignupForm /> : <LoginForm />}
+    </>
+  );
 }
+
+/* ── page ───────────────────────────────────────────────────────────────── */
+
+const SELLING_POINTS = [
+  { Icon: CalendarDays, title: "Schedule analyzer", body: "Game counts per team over any date range." },
+  { Icon: TrendingUp, title: "Projections", body: "2026–27 season averages with category value." },
+  { Icon: Swords, title: "Matchup analysis", body: "Project all nine categories against your opponent." },
+];
 
 export default function AuthPage() {
   return (
-    <div className="flex-1 flex min-h-screen">
-      {/* Left: Balatro animation */}
-      <div className="hidden md:block w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <Balatro
-            spinRotation={-2}
-            spinSpeed={10}
-            color1="#ea580c"
-            color2="#1b2438"
-            color3="#080b12"
-            contrast={3.5}
-            lighting={0.4}
-            spinAmount={0.25}
-            pixelFilter={700}
-          />
-        </div>
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-10">
-          <Link href="/" className="font-display text-4xl font-extrabold uppercase leading-[0.9] tracking-tight text-white">
+    <div className="flex min-h-screen flex-1">
+      {/* Left: quiet brand panel, hidden on narrow screens */}
+      <aside className="hidden w-1/2 max-w-[520px] flex-col justify-between border-r border-[var(--border)] bg-[var(--surface)] p-10 min-[901px]:flex">
+        <Link href="/" className="flex items-center gap-2.5">
+          <span className="grid h-7 w-7 place-items-center rounded-[7px] bg-[var(--accent)] text-xs font-bold text-white">
+            FBC
+          </span>
+          <span className="text-sm font-semibold">Fantasy Companion</span>
+          <span className="text-[11px] text-[var(--text-3)]">26–27</span>
+        </Link>
+
+        <div>
+          <h2 className="text-[28px] font-semibold leading-tight tracking-[-0.01em]">
             Win the schedule.
             <br />
             Win the week.
-          </Link>
-        </div>
-      </div>
+          </h2>
+          <p className="mt-2 max-w-[36ch] text-[13px] text-[var(--text-2)]">
+            Every lineup call starts with who plays how often. Sign in to keep your roster and
+            matchup in one place.
+          </p>
 
-      {/* Right: auth form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-16 bg-background">
+          <ul className="mt-8 flex flex-col gap-4">
+            {SELLING_POINTS.map(({ Icon, title, body }) => (
+              <li key={title} className="flex gap-3">
+                <span className="grid h-8 w-8 flex-none place-items-center rounded-lg border border-[var(--border)] bg-[var(--surface-2)]">
+                  <Icon className="h-4 w-4 text-[var(--text-3)]" strokeWidth={1.75} />
+                </span>
+                <span>
+                  <span className="block text-[13px] font-medium">{title}</span>
+                  <span className="block text-[12px] text-[var(--text-3)]">{body}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="text-[11px] text-[var(--text-3)]">Not affiliated with the NBA.</p>
+      </aside>
+
+      {/* Right: auth card */}
+      <div className="flex flex-1 items-center justify-center bg-[var(--bg)] px-6 py-16">
         <div className="w-full max-w-sm">
-          <Suspense fallback={<div className="h-72" />}>
-            <AuthContent />
-          </Suspense>
+          <Link
+            href="/"
+            className="mb-5 flex items-center justify-center gap-2.5 min-[901px]:hidden"
+          >
+            <span className="grid h-7 w-7 place-items-center rounded-[7px] bg-[var(--accent)] text-xs font-bold text-white">
+              FBC
+            </span>
+            <span className="text-sm font-semibold">Fantasy Companion</span>
+          </Link>
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
+            <Suspense fallback={<div className="h-72" />}>
+              <AuthContent />
+            </Suspense>
+          </div>
         </div>
       </div>
     </div>

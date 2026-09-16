@@ -42,10 +42,6 @@ vi.mock("@/app/auth/actions", () => ({
   logout: vi.fn(),
 }));
 
-vi.mock("@/components/Balatro", () => ({
-  default: () => <div data-testid="balatro" />,
-}));
-
 import AuthPage from "@/app/auth/page";
 import { useSearchParams } from "next/navigation";
 

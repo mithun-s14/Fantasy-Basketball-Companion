@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
-import { Barlow_Condensed } from "next/font/google";
-import "@fontsource/apfel-grotezk/400.css";
-import "@fontsource/apfel-grotezk/700.css";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 
-const barlow = Barlow_Condensed({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
-  variable: "--font-barlow",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter",
 });
+
+// Applies the stored theme before first paint so there is no flash of the wrong
+// palette. Keeps the `dark` class in sync because the shadcn ui/ components
+// style themselves with Tailwind `dark:` variants, which key off that class.
+const THEME_SCRIPT = `try{var t=localStorage.getItem('fbc-theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}var r=document.documentElement;r.setAttribute('data-theme',t);r.classList.toggle('dark',t==='dark')}catch(e){}`;
 
 export const metadata: Metadata = {
   title: "Fantasy Basketball Companion",
@@ -22,7 +25,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`dark ${barlow.variable}`}>
+    <html lang="en" data-theme="dark" className={`dark ${inter.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body suppressHydrationWarning className="font-sans flex flex-col min-h-screen">
         {children}
         <Analytics />

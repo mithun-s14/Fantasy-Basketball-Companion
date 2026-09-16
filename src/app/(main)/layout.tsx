@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { getWeekRange } from "@/lib/utils";
 
 export default async function MainLayout({
   children,
@@ -11,5 +12,9 @@ export default async function MainLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  return <AppShell userEmail={user?.email ?? null}>{children}</AppShell>;
+  return (
+    <AppShell userEmail={user?.email ?? null} weekLabel={getWeekRange().label}>
+      {children}
+    </AppShell>
+  );
 }
