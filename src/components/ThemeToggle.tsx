@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/@components/motion/tabs";
 
 type Theme = "light" | "dark";
 
@@ -34,26 +35,14 @@ export function ThemeToggle() {
   };
 
   return (
-    <div
-      role="group"
-      aria-label="Colour theme"
-      className="inline-flex flex-none overflow-hidden rounded-md border border-[var(--border-strong)]"
-    >
-      {(["light", "dark"] as const).map((t) => (
-        <button
-          key={t}
-          type="button"
-          onClick={() => choose(t)}
-          aria-pressed={theme === t}
-          className={`h-[30px] px-2.5 text-xs capitalize transition-colors first:border-r first:border-[var(--border)] ${
-            theme === t
-              ? "bg-[var(--accent-soft)] text-[var(--text)]"
-              : "text-[var(--text-2)] hover:text-[var(--text)]"
-          }`}
-        >
-          {t}
-        </button>
-      ))}
-    </div>
+    <Tabs value={theme} onValueChange={(v) => choose(v as Theme)} variant="segment">
+      <TabsList>
+        {(["light", "dark"] as const).map((t) => (
+          <TabsTrigger key={t} value={t} className="h-[30px] px-2.5 text-xs capitalize">
+            {t}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   );
 }
