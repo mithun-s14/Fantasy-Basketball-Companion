@@ -7,7 +7,15 @@ import ReactMarkdown from "react-markdown";
 interface Message {
   role: "user" | "assistant";
   content: string;
+  steps?: string[];
 }
+
+// Shown under the message while the agent gathers data
+const STEP_LABELS: Record<string, string> = {
+  get_roster: "Reading your roster...",
+  get_recent_performance: "Checking recent form...",
+  get_matchup_stats: "Checking this week's schedule...",
+};
 
 const SUGGESTED_QUESTIONS = [
   "Who should I pick up off waivers this week?",
@@ -55,17 +63,48 @@ export default function ChatPage() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
 
+      // With AGENT_MODE on the server sends SSE frames; otherwise it is the
+      // original plain-text stream and every chunk is answer text.
+      const isEventStream = (response.headers.get("Content-Type") ?? "").includes(
+        "text/event-stream"
+      );
+
+      const appendToLast = (update: (msg: Message) => Message) =>
+        setMessages((prev) => [...prev.slice(0, -1), update(prev[prev.length - 1])]);
+
+      let buffer = "";
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
-        setMessages((prev) => {
-          const last = prev[prev.length - 1];
-          return [
-            ...prev.slice(0, -1),
-            { ...last, content: last.content + chunk },
-          ];
-        });
+
+        if (!isEventStream) {
+          appendToLast((last) => ({ ...last, content: last.content + chunk }));
+          continue;
+        }
+
+        buffer += chunk;
+        const frames = buffer.split("\n\n");
+        buffer = frames.pop() ?? "";
+
+        for (const frame of frames) {
+          const payload = frame.replace(/^data: /, "").trim();
+          if (!payload) continue;
+          let event: { type?: string; delta?: string; action?: string };
+          try {
+            event = JSON.parse(payload);
+          } catch {
+            continue; // unknown frame, ignore it rather than break the stream
+          }
+
+          if (event.type === "text" && event.delta) {
+            const delta = event.delta;
+            appendToLast((last) => ({ ...last, content: last.content + delta }));
+          } else if (event.type === "agent_step" && event.action) {
+            const label = STEP_LABELS[event.action] ?? event.action;
+            appendToLast((last) => ({ ...last, steps: [...(last.steps ?? []), label] }));
+          }
+        }
       }
     } catch {
       setMessages((prev) => [
@@ -140,6 +179,13 @@ export default function ChatPage() {
                   <Bot className="w-3.5 h-3.5 text-primary" />
                 </div>
                 <div className="bg-card rounded-2xl rounded-tl-sm px-4 py-3 max-w-lg border border-border">
+                  {msg.steps && msg.steps.length > 0 && (
+                    <ul className="mb-2 space-y-0.5">
+                      {msg.steps.map((step, s) => (
+                        <li key={s} className="text-xs text-muted-foreground">{step}</li>
+                      ))}
+                    </ul>
+                  )}
                   <div className="text-sm text-foreground/90 leading-relaxed">
                     <ReactMarkdown
                       components={{
