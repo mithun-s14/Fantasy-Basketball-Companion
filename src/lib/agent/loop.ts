@@ -1,9 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getConfig } from "./config";
-import { routeWithFallback } from "./engines";
+import { getEngine, routeWithFallback } from "./engines";
 import { logDecision } from "./log";
 import { argsKey, resolvePlayers, type PlayerRef } from "./args";
-import { getRecentPerformanceCached, getRosterCached } from "./tools";
+import {
+  getMatchupStatsCached,
+  getRecentPerformanceCached,
+  getRosterCached,
+} from "./tools";
 import type { ActionId, AgentState } from "./types";
 
 export interface LoopInput {
@@ -45,6 +49,20 @@ export async function runAgentLoop({
     state.stepCount < config.maxAgentSteps &&
     Date.now() - startedAt < config.loopTimeoutMs
   ) {
+    // Shadow runs the same decision on a second engine for logging only. It is
+    // started before the primary is awaited so it costs no extra latency, and
+    // its answer never reaches the loop.
+    if (config.shadowEngine !== "off") {
+      const snapshot: AgentState = { ...state, steps: [...state.steps] };
+      const step = state.stepCount;
+      void getEngine(config.shadowEngine)
+        .route(snapshot)
+        .then((shadow) =>
+          logDecision({ requestId, userId, step, message, decision: shadow, isShadow: true })
+        )
+        .catch((err) => console.warn("[agent] shadow route failed:", err));
+    }
+
     const decision = await routeWithFallback(state);
     void logDecision({
       requestId,
@@ -59,15 +77,13 @@ export async function runAgentLoop({
       return { summaries: state.steps.map((s) => s.resultSummary), clarify: true, steps: state.steps };
     }
 
-    // Tools that are not built yet route to an answer rather than stalling
-    if (decision.action === "get_matchup_stats") break;
-
     const players =
-      decision.action === "get_recent_performance"
-        ? resolvePlayers(message, activePlayers, rosterPlayers)
-        : [];
+      decision.action === "get_roster"
+        ? []
+        : resolvePlayers(message, activePlayers, rosterPlayers);
 
-    // A tool that needs a player but has none is a question for the user
+    // A tool that needs a player but has none is a question for the user.
+    // Matchup stats still work without one: they fall back to league-wide counts.
     if (decision.action === "get_recent_performance" && players.length === 0) {
       return { summaries: state.steps.map((s) => s.resultSummary), clarify: true, steps: state.steps };
     }
@@ -91,6 +107,9 @@ export async function runAgentLoop({
           state.rosterSummary = roster.summary;
           state.steps.push({ action: "get_roster", resultSummary: roster.summary });
         }
+      } else if (decision.action === "get_matchup_stats") {
+        const summary = await getMatchupStatsCached(players.map((p) => p.team));
+        state.steps.push({ action: "get_matchup_stats", resultSummary: summary });
       } else {
         const summary = await getRecentPerformanceCached(supabase, players);
         state.steps.push({ action: "get_recent_performance", resultSummary: summary });

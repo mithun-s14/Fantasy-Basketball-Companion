@@ -8,6 +8,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   steps?: string[];
+  warning?: string;
 }
 
 // Shown under the message while the agent gathers data
@@ -90,7 +91,12 @@ export default function ChatPage() {
         for (const frame of frames) {
           const payload = frame.replace(/^data: /, "").trim();
           if (!payload) continue;
-          let event: { type?: string; delta?: string; action?: string };
+          let event: {
+            type?: string;
+            delta?: string;
+            action?: string;
+            message?: string;
+          };
           try {
             event = JSON.parse(payload);
           } catch {
@@ -103,6 +109,9 @@ export default function ChatPage() {
           } else if (event.type === "agent_step" && event.action) {
             const label = STEP_LABELS[event.action] ?? event.action;
             appendToLast((last) => ({ ...last, steps: [...(last.steps ?? []), label] }));
+          } else if (event.type === "agent_warning" && event.message) {
+            const warning = event.message;
+            appendToLast((last) => ({ ...last, warning }));
           }
         }
       }
@@ -203,6 +212,9 @@ export default function ChatPage() {
                       <span className="inline-block w-0.5 h-4 bg-primary ml-0.5 animate-pulse align-middle" />
                     )}
                   </div>
+                  {msg.warning && (
+                    <p className="mt-2 text-xs text-muted-foreground italic">{msg.warning}</p>
+                  )}
                 </div>
               </div>
             )

@@ -73,6 +73,26 @@ describe("the Coach chat client", () => {
     await waitFor(() => expect(screen.getByText("Split frame.")).toBeInTheDocument());
   });
 
+  it("renders an agent warning under the answer", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        streamResponse(
+          "text/event-stream; charset=utf-8",
+          'data: {"type":"text","delta":"Start Green."}\n\n',
+          'data: {"type":"agent_warning","message":"Some numbers may not match the latest data."}\n\n'
+        )
+      )
+    );
+    await ask();
+    await waitFor(() =>
+      expect(
+        screen.getByText("Some numbers may not match the latest data.")
+      ).toBeInTheDocument()
+    );
+    expect(screen.getByText("Start Green.")).toBeInTheDocument();
+  });
+
   it("ignores event types it does not know", async () => {
     vi.stubGlobal(
       "fetch",

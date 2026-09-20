@@ -1,21 +1,29 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const { mockRoute, mockLog, mockRoster, mockPerf } = vi.hoisted(() => ({
-  mockRoute: vi.fn(),
-  mockLog: vi.fn(),
-  mockRoster: vi.fn(),
-  mockPerf: vi.fn(),
-}));
+const { mockRoute, mockLog, mockRoster, mockPerf, mockMatchup, mockGetEngine } = vi.hoisted(
+  () => ({
+    mockRoute: vi.fn(),
+    mockLog: vi.fn(),
+    mockRoster: vi.fn(),
+    mockPerf: vi.fn(),
+    mockMatchup: vi.fn(),
+    mockGetEngine: vi.fn(),
+  })
+);
 
 vi.mock("@upstash/redis", () => ({
   Redis: { fromEnv: () => ({ hgetall: async () => null }) },
 }));
 
-vi.mock("@/lib/agent/engines", () => ({ routeWithFallback: mockRoute }));
+vi.mock("@/lib/agent/engines", () => ({
+  routeWithFallback: mockRoute,
+  getEngine: mockGetEngine,
+}));
 vi.mock("@/lib/agent/log", () => ({ logDecision: mockLog, newRequestId: () => "req-1" }));
 vi.mock("@/lib/agent/tools", () => ({
   getRosterCached: mockRoster,
   getRecentPerformanceCached: mockPerf,
+  getMatchupStatsCached: mockMatchup,
 }));
 
 import { runAgentLoop } from "@/lib/agent/loop";
@@ -23,7 +31,7 @@ import { refreshFlags, resetFlagCache } from "@/lib/agent/config";
 import type { ActionId } from "@/lib/agent/types";
 
 const ACTIVE = [{ name: "Jalen Green", team: "Houston Rockets" }];
-const ENV_KEYS = ["MAX_AGENT_STEPS", "AGENT_LOOP_TIMEOUT_MS"];
+const ENV_KEYS = ["MAX_AGENT_STEPS", "AGENT_LOOP_TIMEOUT_MS", "DECISION_SHADOW"];
 
 function decision(action: ActionId) {
   return {
@@ -57,6 +65,12 @@ beforeEach(async () => {
     players: ACTIVE,
   });
   mockPerf.mockReset().mockResolvedValue("Jalen Green (Houston Rockets): last 10 21.3p/5.1r/3.4a");
+  mockMatchup.mockReset().mockResolvedValue("Houston Rockets: 4 games");
+  mockGetEngine.mockReset().mockReturnValue({
+    name: "gemini",
+    route: vi.fn().mockResolvedValue(decision("answer")),
+    verify: vi.fn(),
+  });
   vi.spyOn(console, "warn").mockImplementation(() => {});
   await refreshFlags();
 });
@@ -161,10 +175,45 @@ describe("the agent loop", () => {
     expect(mockLog.mock.calls[0][0]).toMatchObject({ requestId: "req-1", step: 0 });
   });
 
-  it("answers rather than stalling on a tool that is not built yet", async () => {
-    mockRoute.mockResolvedValue(decision("get_matchup_stats"));
-    const result = await run("Who plays four games this week?");
-    expect(result.steps).toHaveLength(0);
+  it("runs matchup stats for the teams of the players named", async () => {
+    mockRoute
+      .mockResolvedValueOnce(decision("get_matchup_stats"))
+      .mockResolvedValue(decision("answer"));
+    const result = await run("Does Jalen Green have four games this week?");
+    expect(mockMatchup).toHaveBeenCalledWith(["Houston Rockets"]);
+    expect(result.steps).toEqual([
+      { action: "get_matchup_stats", resultSummary: "Houston Rockets: 4 games" },
+    ]);
+  });
+
+  it("still runs matchup stats when no player is named", async () => {
+    mockRoute
+      .mockResolvedValueOnce(decision("get_matchup_stats"))
+      .mockResolvedValue(decision("answer"));
+    const result = await run("Which teams play four games this week?", null);
+    expect(mockMatchup).toHaveBeenCalledWith([]);
     expect(result.clarify).toBe(false);
+  });
+
+  it("logs a shadow decision without acting on it", async () => {
+    process.env.DECISION_SHADOW = "gemini";
+    await refreshFlags();
+    mockRoute.mockResolvedValue(decision("answer"));
+
+    const result = await run("Should I start Jalen Green?");
+
+    // The shadow log is fire and forget, so let its microtasks settle
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const shadowLogs = mockLog.mock.calls.filter(([arg]) => arg.isShadow);
+    expect(shadowLogs).toHaveLength(1);
+    expect(mockGetEngine).toHaveBeenCalledWith("gemini");
+    // The shadow engine picked `answer` too, but the loop never ran its pick
+    expect(result.steps).toHaveLength(0);
+  });
+
+  it("does not run a shadow engine when shadow mode is off", async () => {
+    mockRoute.mockResolvedValue(decision("answer"));
+    await run("Should I start Jalen Green?");
+    expect(mockGetEngine).not.toHaveBeenCalled();
   });
 });

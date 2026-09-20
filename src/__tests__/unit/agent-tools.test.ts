@@ -1,12 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const { mockGet, mockSet } = vi.hoisted(() => ({ mockGet: vi.fn(), mockSet: vi.fn() }));
+const { mockGet, mockSet, mockGames } = vi.hoisted(() => ({
+  mockGet: vi.fn(),
+  mockSet: vi.fn(),
+  mockGames: vi.fn(),
+}));
 
 vi.mock("@upstash/redis", () => ({
   Redis: { fromEnv: () => ({ hgetall: async () => null, get: mockGet, set: mockSet }) },
 }));
 
+// The schedule is not user-scoped, so the tool reads it through the service client
+vi.mock("@/lib/supabase", () => ({
+  createServerSupabaseClient: () => ({
+    from: () => ({ select: () => ({ gte: () => ({ lte: mockGames }) }) }),
+  }),
+}));
+
 import {
+  getMatchupStats,
   getRecentPerformance,
   getRecentPerformanceCached,
   getRoster,
@@ -50,6 +62,7 @@ function supabaseStub(result: { data?: unknown; error?: { message: string } }) {
 beforeEach(() => {
   resetFlagCache();
   mockGet.mockReset().mockResolvedValue(null);
+  mockGames.mockReset().mockResolvedValue({ data: [], error: null });
   mockSet.mockReset().mockResolvedValue("OK");
   vi.spyOn(console, "warn").mockImplementation(() => {});
 });
@@ -151,5 +164,57 @@ describe("get_recent_performance", () => {
     }));
     const summary = await getRecentPerformance(supabaseStub({ data: [] }), many);
     expect(summary.length).toBeLessThanOrEqual(2000);
+  });
+});
+
+describe("get_matchup_stats", () => {
+  const NOW = new Date("2026-01-05T12:00:00Z");
+
+  function games(rows: [string, string][]) {
+    return rows.map(([home_team, away_team]) => ({ home_team, away_team }));
+  }
+
+  it("counts games per team over the next seven days", async () => {
+    mockGames.mockResolvedValue({
+      data: games([
+        ["Houston Rockets", "Utah Jazz"],
+        ["Utah Jazz", "Houston Rockets"],
+        ["Houston Rockets", "Denver Nuggets"],
+      ]),
+      error: null,
+    });
+
+    const summary = await getMatchupStats(["Houston Rockets"], NOW);
+
+    expect(summary).toContain("2026-01-05 to 2026-01-11");
+    expect(summary).toContain("Houston Rockets: 3 games");
+    expect(summary).toContain("Most games league-wide");
+  });
+
+  it("still summarizes the league when no team is asked for", async () => {
+    mockGames.mockResolvedValue({
+      data: games([["Houston Rockets", "Utah Jazz"]]),
+      error: null,
+    });
+
+    const summary = await getMatchupStats([], NOW);
+    expect(summary).toContain("Most games league-wide");
+    expect(summary).not.toContain("games\nHouston");
+  });
+
+  it("ignores team names that are not real NBA teams", async () => {
+    mockGames.mockResolvedValue({
+      data: games([["Seattle SuperSonics", "Houston Rockets"]]),
+      error: null,
+    });
+
+    const summary = await getMatchupStats(["Seattle SuperSonics"], NOW);
+    expect(summary).not.toContain("Seattle");
+    expect(summary).toContain("Houston Rockets 1");
+  });
+
+  it("throws when the query fails", async () => {
+    mockGames.mockResolvedValue({ data: null, error: { message: "boom" } });
+    await expect(getMatchupStats([], NOW)).rejects.toThrow("get_matchup_stats failed: boom");
   });
 });

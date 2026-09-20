@@ -6,7 +6,8 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { chatRateLimiter } from "@/lib/rate-limiter";
 import { getConfig, refreshFlags } from "@/lib/agent/config";
 import { runAgentLoop } from "@/lib/agent/loop";
-import { newRequestId } from "@/lib/agent/log";
+import { verifyWithFallback } from "@/lib/agent/engines";
+import { logDecision, newRequestId } from "@/lib/agent/log";
 import { getActivePlayers } from "@/lib/nba-players";
 
 interface Message {
@@ -173,9 +174,44 @@ Your goal is to provide data-driven, actionable advice for:
                 : "";
 
             const responseStream = await model.stream(await buildMessages(extraContext));
+            let draft = "";
             for await (const chunk of responseStream) {
               const text = typeof chunk.content === "string" ? chunk.content : "";
-              if (text) send({ type: "text", delta: text });
+              if (text) {
+                draft += text;
+                send({ type: "text", delta: text });
+              }
+            }
+
+            // Verification runs on the answer the user has already read, so it
+            // can only add a note. A clarifying question has nothing to ground.
+            const config = getConfig();
+            if (!result.clarify && config.verifyEngine !== "off" && draft) {
+              try {
+                const verdict = await verifyWithFallback({
+                  message: userMessage,
+                  resultSummaries: result.summaries,
+                  draft,
+                });
+                void logDecision({
+                  requestId,
+                  userId,
+                  step: result.steps.length,
+                  message: userMessage,
+                  decision: verdict,
+                });
+                if (
+                  verdict.grounded !== null &&
+                  verdict.grounded < config.verifyMinProb
+                ) {
+                  send({
+                    type: "agent_warning",
+                    message: "Some numbers may not match the latest data.",
+                  });
+                }
+              } catch (err) {
+                console.warn("[agent] verification skipped:", err);
+              }
             }
           } catch (err) {
             // Headers are already sent, so the error is delivered as text

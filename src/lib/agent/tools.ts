@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createServerSupabaseClient } from "../supabase";
+import { NBA_TEAMS } from "../constants";
 import { getRedis } from "./config";
 import type { PlayerRef } from "./args";
 import type { PlayerStats, RosterPlayer } from "../types";
@@ -11,6 +13,7 @@ const MAX_SUMMARY_CHARS = 2000;
 export const TOOL_TTL_SECONDS = {
   get_roster: 60,
   get_recent_performance: 3600,
+  get_matchup_stats: 3600,
 } as const;
 
 function cap(summary: string): string {
@@ -147,4 +150,58 @@ export async function getRecentPerformanceCached(
   return cached(key, TOOL_TTL_SECONDS.get_recent_performance, () =>
     getRecentPerformance(supabase, players)
   );
+}
+
+function isoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Game counts for the next seven days, the same aggregation the Schedule
+ * Analyzer page shows. The schedule is not user-scoped, so this reads through
+ * the service-role client exactly as /api/games does.
+ */
+export async function getMatchupStats(
+  teams: string[],
+  now: Date = new Date()
+): Promise<string> {
+  const start = isoDate(now);
+  const end = isoDate(new Date(now.getTime() + 6 * 86_400_000));
+
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("games")
+    .select("home_team, away_team")
+    .gte("game_date", start)
+    .lte("game_date", end);
+
+  if (error) throw new Error(`get_matchup_stats failed: ${error.message}`);
+
+  const counts = new Map<string, number>(NBA_TEAMS.map((team) => [team, 0]));
+  for (const row of (data ?? []) as { home_team: string; away_team: string }[]) {
+    for (const team of [row.home_team, row.away_team]) {
+      if (counts.has(team)) counts.set(team, (counts.get(team) ?? 0) + 1);
+    }
+  }
+
+  const ranked = [...counts].sort((a, b) => b[1] - a[1]);
+  const lines = [`Games scheduled ${start} to ${end}:`];
+
+  const wanted = [...new Set(teams)].filter((team) => counts.has(team));
+  for (const team of wanted) lines.push(`${team}: ${counts.get(team)} games`);
+
+  const list = (entries: [string, number][]) =>
+    entries.map(([team, count]) => `${team} ${count}`).join(", ");
+  lines.push(`Most games league-wide: ${list(ranked.slice(0, 5))}.`);
+  lines.push(`Fewest: ${list(ranked.slice(-3).reverse())}.`);
+
+  return cap(lines.join("\n"));
+}
+
+export async function getMatchupStatsCached(
+  teams: string[],
+  now: Date = new Date()
+): Promise<string> {
+  const key = `agent:matchup:${isoDate(now)}:${[...new Set(teams)].sort().join("|")}`;
+  return cached(key, TOOL_TTL_SECONDS.get_matchup_stats, () => getMatchupStats(teams, now));
 }

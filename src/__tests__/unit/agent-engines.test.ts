@@ -29,12 +29,14 @@ import {
   resetJevWarning,
   routeWithFallback,
   rulesEngine,
+  verifyWithFallback,
 } from "@/lib/agent/engines";
 import { refreshFlags, resetFlagCache } from "@/lib/agent/config";
 import type { AgentState } from "@/lib/agent/types";
 
 const ENV_KEYS = [
   "DECISION_ENGINE",
+  "DECISION_ENGINE_VERIFY",
   "DECISION_ENGINE_ROUTE",
   "DECISION_FALLBACK",
   "ROUTE_MIN_PROB",
@@ -177,6 +179,19 @@ describe("the rules engine", () => {
     expect(decision.action).toBe("get_recent_performance");
   });
 
+  it.each(["help", "should I?", "start or sit", "trade advice", "what do you think"])(
+    "asks the user when the message is too vague: %s",
+    async (message) => {
+      const decision = await rules.route(state(message));
+      expect(decision.action).toBe("ask_user");
+    }
+  );
+
+  it("does not call a short message vague when it names a player", async () => {
+    const decision = await rules.route(state("Start Wagner?"));
+    expect(decision.action).toBe("get_recent_performance");
+  });
+
   it("asks the user when the message is too vague", async () => {
     const decision = await rules.route(state("help"));
     expect(decision.action).toBe("ask_user");
@@ -292,5 +307,50 @@ describe("routeWithFallback", () => {
     );
     expect(decision.engine).toBe("rules");
     expect(mockDoEvaluate).not.toHaveBeenCalled();
+  });
+});
+
+describe("verifyWithFallback", () => {
+  const input = {
+    message: "Should I start Jalen Green?",
+    resultSummaries: ["Jalen Green (Houston Rockets): last 10 21.3p"],
+    draft: "Start him, he is averaging 21.3 points over his last 10.",
+  };
+
+  it("refuses to run when verification is off", async () => {
+    process.env.DECISION_ENGINE_VERIFY = "off";
+    await refreshFlags();
+    await expect(verifyWithFallback(input)).rejects.toThrow("verification is off");
+  });
+
+  it("returns the probabilities the engine reported", async () => {
+    process.env.DECISION_ENGINE_VERIFY = "gemini";
+    await refreshFlags();
+    mockDoEvaluate.mockResolvedValue(
+      evaluationResult({
+        grounded: { type: "boolean", probability: 0.92 },
+        answers_question: { type: "boolean", probability: 0.88 },
+        quality: { type: "score", score: 0.75 },
+      })
+    );
+
+    const verdict = await verifyWithFallback(input);
+
+    expect(verdict.grounded).toBe(0.92);
+    expect(verdict.answersQuestion).toBe(0.88);
+    expect(verdict.quality).toBe(0.75);
+    expect(verdict.fellBack).toBe(false);
+  });
+
+  it("falls back to rules when the engine throws", async () => {
+    process.env.DECISION_ENGINE_VERIFY = "gemini";
+    process.env.DECISION_FALLBACK = "rules";
+    await refreshFlags();
+    mockDoEvaluate.mockRejectedValue(new Error("model exploded"));
+
+    const verdict = await verifyWithFallback(input);
+
+    // Rules cannot judge groundedness, so nothing is reported and no warning fires
+    expect(verdict).toMatchObject({ engine: "rules", fellBack: true, grounded: null });
   });
 });

@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const { mockRoute, mockStreamFn, mockGetUser, mockFrom, mockLogDecision } = vi.hoisted(() => ({
+const { mockRoute, mockVerify, mockStreamFn, mockGetUser, mockFrom, mockLogDecision } = vi.hoisted(() => ({
   mockRoute: vi.fn(),
+  mockVerify: vi.fn(),
   mockStreamFn: vi.fn(),
   mockGetUser: vi.fn(),
   mockFrom: vi.fn(),
@@ -26,7 +27,10 @@ vi.mock("@langchain/google-genai", () => ({
   },
 }));
 
-vi.mock("@/lib/agent/engines", () => ({ routeWithFallback: mockRoute }));
+vi.mock("@/lib/agent/engines", () => ({
+  routeWithFallback: mockRoute,
+  verifyWithFallback: mockVerify,
+}));
 vi.mock("@/lib/agent/log", () => ({ logDecision: mockLogDecision, newRequestId: () => "req-1" }));
 vi.mock("@/lib/nba-players", () => ({
   getActivePlayers: async () => [{ name: "Jalen Green", team: "Houston Rockets" }],
@@ -37,6 +41,7 @@ vi.mock("@/lib/agent/tools", () => ({
     players: [{ name: "Jalen Green", team: "Houston Rockets" }],
   }),
   getRecentPerformanceCached: async () => "Jalen Green (Houston Rockets): last 10 21.3p",
+  getMatchupStatsCached: async () => "Houston Rockets: 4 games",
 }));
 
 import { POST } from "@/app/api/chat/route";
@@ -46,6 +51,26 @@ function chunks(...texts: string[]) {
   return (async function* () {
     for (const text of texts) yield { content: text };
   })();
+}
+
+function answerDecision() {
+  return {
+    action: "answer",
+    probability: null,
+    confidence: null,
+    engine: "rules" as const,
+    fellBack: false,
+    latencyMs: 1,
+  };
+}
+
+/** Sends a message and returns the parsed SSE frames. */
+async function post(message: string) {
+  const response = await POST(request(message));
+  return (await response.text())
+    .split("\n\n")
+    .filter(Boolean)
+    .map((frame) => JSON.parse(frame.replace(/^data: /, "")));
 }
 
 function request(message: string) {
@@ -61,6 +86,7 @@ beforeEach(() => {
   delete process.env.AGENT_MODE;
   process.env.GEMINI_API_KEY = "test-key";
   mockRoute.mockReset();
+  mockVerify.mockReset().mockRejectedValue(new Error("verification is off"));
   mockLogDecision.mockReset();
   mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
   mockFrom.mockReturnValue({ select: () => ({ eq: async () => ({ data: [] }) }) });
@@ -71,6 +97,8 @@ beforeEach(() => {
 afterEach(() => {
   delete process.env.AGENT_MODE;
   delete process.env.GEMINI_API_KEY;
+  delete process.env.DECISION_ENGINE_VERIFY;
+  delete process.env.VERIFY_MIN_PROB;
   vi.restoreAllMocks();
 });
 
@@ -163,6 +191,58 @@ describe("AGENT_MODE=on", () => {
 
     const systemPrompt = mockStreamFn.mock.calls[0][0][0].content as string;
     expect(systemPrompt).toContain("clarifying question");
+  });
+
+  it("warns when the answer is not grounded in the tool results", async () => {
+    process.env.DECISION_ENGINE_VERIFY = "gemini";
+    process.env.VERIFY_MIN_PROB = "0.7";
+    mockRoute.mockResolvedValue(answerDecision());
+    mockVerify.mockResolvedValue({
+      grounded: 0.2,
+      answersQuestion: 0.9,
+      quality: 0.8,
+      engine: "gemini",
+      fellBack: false,
+      latencyMs: 5,
+    });
+
+    const events = await post("Should I start Jalen Green?");
+
+    // The warning lands after the answer, never before it
+    const warning = events[events.length - 1];
+    expect(warning.type).toBe("agent_warning");
+    expect(warning.message).toContain("may not match");
+    expect(events.filter((e) => e.type === "text").map((e) => e.delta).join("")).toBe(
+      "Start Green."
+    );
+    expect(
+      mockLogDecision.mock.calls.some(([arg]) => arg.decision.engine === "gemini")
+    ).toBe(true);
+  });
+
+  it("stays quiet when the answer is grounded", async () => {
+    process.env.DECISION_ENGINE_VERIFY = "gemini";
+    mockRoute.mockResolvedValue(answerDecision());
+    mockVerify.mockResolvedValue({
+      grounded: 0.95,
+      answersQuestion: 0.9,
+      quality: 0.9,
+      engine: "gemini",
+      fellBack: false,
+      latencyMs: 5,
+    });
+
+    const events = await post("Should I start Jalen Green?");
+    expect(events.some((e) => e.type === "agent_warning")).toBe(false);
+  });
+
+  it("never verifies when verification is off", async () => {
+    process.env.DECISION_ENGINE_VERIFY = "off";
+    mockRoute.mockResolvedValue(answerDecision());
+
+    const events = await post("Should I start Jalen Green?");
+    expect(mockVerify).not.toHaveBeenCalled();
+    expect(events.some((e) => e.type === "agent_warning")).toBe(false);
   });
 
   it("delivers an error as text once the stream has started", async () => {
