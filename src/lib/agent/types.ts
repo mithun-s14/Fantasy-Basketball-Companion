@@ -36,6 +36,7 @@ export interface RouteDecision {
   engine: EngineName;
   fellBack: boolean;
   latencyMs: number;
+  totalTokens?: number | null; // only when the provider reports usage
 }
 
 export interface VerifyInput {

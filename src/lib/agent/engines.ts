@@ -52,6 +52,7 @@ export function evaluationEngine(
         engine: name,
         fellBack: false,
         latencyMs: Date.now() - started,
+        totalTokens: result.usage.totalTokens ?? null,
       };
     },
 

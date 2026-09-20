@@ -1,0 +1,40 @@
+{"id":"roster-01","message":"Who should I start on my team tonight?","rosterFixture":"none","stepsSoFar":[],"expected":"get_roster","needs_review":true}
+{"id":"roster-02","message":"Is my roster too thin at center?","rosterFixture":"none","stepsSoFar":[],"expected":"get_roster","needs_review":true}
+{"id":"roster-03","message":"Give me a quick breakdown of my team's strengths and weaknesses","rosterFixture":"none","stepsSoFar":[],"expected":"get_roster","needs_review":true}
+{"id":"roster-04","message":"What does my roster look like heading into this week?","rosterFixture":"none","stepsSoFar":[],"expected":"get_roster","needs_review":true}
+{"id":"roster-05","message":"Which of my guys has the best schedule coming up?","rosterFixture":"none","stepsSoFar":[],"expected":"get_roster","needs_review":true}
+{"id":"roster-06","message":"Should I trade someone from my team for a real center?","rosterFixture":"none","stepsSoFar":[],"expected":"get_roster","needs_review":true}
+{"id":"roster-07","message":"My squad keeps losing every week, what is wrong with it?","rosterFixture":"none","stepsSoFar":[],"expected":"get_roster","needs_review":true}
+{"id":"perf-01","message":"Has Jalen Green been trending up lately?","rosterFixture":"standard","stepsSoFar":[],"expected":"get_recent_performance","needs_review":true}
+{"id":"perf-02","message":"How has Scoot Henderson played over his last 10 games?","rosterFixture":"deep","stepsSoFar":[],"expected":"get_recent_performance","needs_review":true}
+{"id":"perf-03","message":"Is Cam Thomas in a slump right now?","rosterFixture":"deep","stepsSoFar":[],"expected":"get_recent_performance","needs_review":true}
+{"id":"perf-04","message":"Should I drop Walker Kessler? He has looked ice cold.","rosterFixture":"standard","stepsSoFar":[],"expected":"get_recent_performance","needs_review":true}
+{"id":"perf-05","message":"Is SGA averaging more than he did last season?","rosterFixture":"standard","stepsSoFar":[],"expected":"get_recent_performance","needs_review":true}
+{"id":"perf-06","message":"Naz Reid or Jabari Smith Jr, who has been better recently?","rosterFixture":"deep","stepsSoFar":[],"expected":"get_recent_performance","needs_review":true}
+{"id":"perf-07","message":"Franz Wagner's numbers look off, what is going on with his form?","rosterFixture":"standard","stepsSoFar":[],"expected":"get_recent_performance","needs_review":true}
+{"id":"perf-08","message":"Is Tyrese Maxey still worth holding based on how he is playing?","rosterFixture":"deep","stepsSoFar":[],"expected":"get_recent_performance","needs_review":true}
+{"id":"matchup-01","message":"How many games do the Rockets play this week?","rosterFixture":"none","stepsSoFar":[],"expected":"get_matchup_stats","needs_review":true}
+{"id":"matchup-02","message":"Which teams have the best schedule next week for streaming?","rosterFixture":"none","stepsSoFar":[],"expected":"get_matchup_stats","needs_review":true}
+{"id":"matchup-03","message":"Should I stream a Jazz player for the back to back?","rosterFixture":"standard","stepsSoFar":[],"expected":"get_matchup_stats","needs_review":true}
+{"id":"matchup-04","message":"Which teams play four games this week?","rosterFixture":"none","stepsSoFar":[],"expected":"get_matchup_stats","needs_review":true}
+{"id":"matchup-05","message":"Is it worth grabbing a Nets player just for their schedule?","rosterFixture":"deep","stepsSoFar":[],"expected":"get_matchup_stats","needs_review":true}
+{"id":"matchup-06","message":"Do the Thunder have a light schedule coming up?","rosterFixture":"standard","stepsSoFar":[],"expected":"get_matchup_stats","needs_review":true}
+{"id":"matchup-07","message":"I need more games this week, which of my teams play the most?","rosterFixture":"standard","stepsSoFar":[],"expected":"get_matchup_stats","needs_review":true}
+{"id":"matchup-08","message":"Start Kessler or Sengun this week based on the schedule?","rosterFixture":"standard","stepsSoFar":[],"expected":"get_matchup_stats","needs_review":true}
+{"id":"answer-01","message":"Should I start Jalen Green this week?","rosterFixture":"standard","stepsSoFar":[{"action":"get_recent_performance","resultSummary":"Jalen Green last 10: 21.4 pts, 4.8 reb, 3.6 ast vs season 19.1 pts"},{"action":"get_matchup_stats","resultSummary":"Houston Rockets play 4 games Mon-Sun, including one back to back"}],"expected":"answer","needs_review":true}
+{"id":"answer-02","message":"Who should I sit this week?","rosterFixture":"none","stepsSoFar":[{"action":"get_roster","resultSummary":"5 players: SGA, Sengun, Green, Wagner, Kessler"},{"action":"get_matchup_stats","resultSummary":"OKC 4 games, HOU 4 games, ORL 3 games, UTA 2 games"}],"expected":"answer","needs_review":true}
+{"id":"answer-03","message":"Thanks, that helps a lot","rosterFixture":"standard","stepsSoFar":[],"expected":"answer","needs_review":true}
+{"id":"answer-04","message":"What does punting free throw percentage actually mean?","rosterFixture":"none","stepsSoFar":[],"expected":"answer","needs_review":true}
+{"id":"answer-05","message":"Explain the difference between 9-cat and points leagues","rosterFixture":"none","stepsSoFar":[],"expected":"answer","needs_review":true}
+{"id":"answer-06","message":"Who should I start tonight?","rosterFixture":"none","stepsSoFar":[{"action":"get_roster","resultSummary":"5 players: SGA, Sengun, Green, Wagner, Kessler"},{"action":"get_matchup_stats","resultSummary":"OKC and HOU both play tonight, ORL and UTA are off"}],"expected":"answer","needs_review":true}
+{"id":"answer-07","message":"In general, is it better to stream players or hold a deep bench?","rosterFixture":"standard","stepsSoFar":[],"expected":"answer","needs_review":true}
+{"id":"answer-08","message":"Should I drop Walker Kessler?","rosterFixture":"standard","stepsSoFar":[{"action":"get_recent_performance","resultSummary":"Kessler last 10: 7.2 pts, 9.1 reb, 2.1 blk vs season 9.4 pts, 10.8 reb"}],"expected":"answer","needs_review":true}
+{"id":"answer-09","message":"How many teams are in the NBA?","rosterFixture":"none","stepsSoFar":[],"expected":"answer","needs_review":true}
+{"id":"ask-01","message":"help","rosterFixture":"none","stepsSoFar":[],"expected":"ask_user","needs_review":true}
+{"id":"ask-02","message":"?","rosterFixture":"none","stepsSoFar":[],"expected":"ask_user","needs_review":true}
+{"id":"ask-03","message":"what do you think","rosterFixture":"standard","stepsSoFar":[],"expected":"ask_user","needs_review":true}
+{"id":"ask-04","message":"thoughts?","rosterFixture":"none","stepsSoFar":[],"expected":"ask_user","needs_review":true}
+{"id":"ask-05","message":"who?","rosterFixture":"standard","stepsSoFar":[],"expected":"ask_user","needs_review":true}
+{"id":"ask-06","message":"should I?","rosterFixture":"none","stepsSoFar":[],"expected":"ask_user","needs_review":true}
+{"id":"ask-07","message":"start or sit","rosterFixture":"standard","stepsSoFar":[],"expected":"ask_user","needs_review":true}
+{"id":"ask-08","message":"trade advice","rosterFixture":"none","stepsSoFar":[],"expected":"ask_user","needs_review":true}
