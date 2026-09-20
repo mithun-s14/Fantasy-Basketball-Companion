@@ -96,6 +96,17 @@ const SCHEDULE_WORDS = /\b(schedule|this week|next week|games?|back.?to.?back|b2
 const ROSTER_WORDS = /\b(my (team|roster|squad|guys)|our team)\b/i;
 const TREND_WORDS = /\b(recent|lately|last 10|trending|slump|hot|cold|form|stats?|averaging)\b/i;
 
+/**
+ * Vague: a few words with no player, team, or schedule to act on. A capital
+ * letter after the first word means a name worth looking up; "I" is not a name
+ * and the first word is capitalized by habit, not by meaning.
+ */
+function isVague(message: string): boolean {
+  const words = message.trim().split(/\s+/).filter(Boolean);
+  if (words.length >= 5 || SCHEDULE_WORDS.test(message)) return false;
+  return !words.slice(1).some((word) => /^[A-Z][a-z]/.test(word));
+}
+
 /** Deterministic, free, and the default fallback for every other engine. */
 export const rulesEngine = (): DecisionEngine => ({
   name: "rules",
@@ -107,7 +118,7 @@ export const rulesEngine = (): DecisionEngine => ({
 
     if (state.steps.length >= 2) {
       action = "answer";
-    } else if (message.trim().length < 12 && !PLAYER_WORDS.test(message)) {
+    } else if (isVague(message)) {
       action = "ask_user";
     } else if (
       ROSTER_WORDS.test(message) &&

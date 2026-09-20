@@ -177,6 +177,19 @@ describe("the rules engine", () => {
     expect(decision.action).toBe("get_recent_performance");
   });
 
+  it.each(["help", "should I?", "start or sit", "trade advice", "what do you think"])(
+    "asks the user when the message is too vague: %s",
+    async (message) => {
+      const decision = await rules.route(state(message));
+      expect(decision.action).toBe("ask_user");
+    }
+  );
+
+  it("does not call a short message vague when it names a player", async () => {
+    const decision = await rules.route(state("Start Wagner?"));
+    expect(decision.action).toBe("get_recent_performance");
+  });
+
   it("asks the user when the message is too vague", async () => {
     const decision = await rules.route(state("help"));
     expect(decision.action).toBe("ask_user");
