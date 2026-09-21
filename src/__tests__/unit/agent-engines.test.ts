@@ -106,7 +106,8 @@ describe("evaluation engines", () => {
             probabilities: distribution({ get_roster: 0.82, answer: 0.18 }),
           },
         },
-        { typesafe: { confidence: 0.91 } }
+        // Jev keys confidence by question id, as the live Gateway returns it
+        { typesafe: { confidence: { next_action: 0.91 } } }
       )
     );
 

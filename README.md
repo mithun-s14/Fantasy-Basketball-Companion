@@ -165,16 +165,44 @@ gets calibrated.
 | Engine | Accuracy | Errors | p50 / p95 | Tokens | Notes |
 |--------|----------|--------|-----------|--------|-------|
 | `rules` | **90%** (36/40) | 0 | 0 ms / 0 ms | — | Reports no probabilities, so no threshold calibration is possible |
-| `gemini` | 40% (16/40) | 23 | 0 ms / 914 ms | 7,322 | 23 cases hit the Gemini free-tier quota; **94% (16/17) of the cases that completed**. Re-run with `--rpm 5` |
-| `jev` | not run | — | — | — | Gateway returns "requires a valid credit card on file"; the trial ends 2026-09-25 |
+| `gemini` | 40% (16/40) | 23 | 0 ms / 914 ms | 7,322 | **94% (16/17) on the cases that completed**; the rest hit the Gemini free-tier quota (20 requests, `gemini-2.5-flash`). Needs a re-run on a day with quota left, or a billed key |
+| `jev` | **85%** (34/40) | 0 | 282 ms / 663 ms | 23,921 | Free on the Gateway (`cost: "0"`). Confidence 0.30–1.00 on every case |
+
+Jev latency is measured over the calls that were not throttled; the harness's own p95 counts
+retry backoff, so it reads far higher than the model is.
+
+Jev's coverage table, which is what `ROUTE_MIN_PROB` is calibrated from:
+
+| Threshold | 0.5 | 0.6 | 0.7 | 0.8 | 0.9 |
+|-----------|-----|-----|-----|-----|-----|
+| Coverage | 93% | 85% | 80% | 73% | 55% |
+| Accuracy above | 89% | 94% | 94% | 97% | 100% |
+
+`0.6` keeps 85% of decisions on the primary engine at 94% accuracy, which is where the
+default sits. `0.7` buys the same accuracy at 80% coverage, so there is no reason to raise it.
 
 `google.evaluationModel()` does not return `probabilities` on `choice` answers — only Jev
 does. So `ROUTE_MIN_PROB` never fires under `gemini`, and the coverage table only fills in
 for Jev. Rules reports no probabilities by design.
 
-The four `rules` misses are all the same shape: telling "look up his recent stats" apart from
-"you already know enough" is judgment a keyword cannot make, which is the point of having a
-model engine to compare against.
+The two engines fail differently, which is the useful result. The four `rules` misses are all
+the same shape: telling "look up his recent stats" apart from "you already know enough" is
+judgment a keyword cannot make. All six `jev` misses are the mirror image — it fetches one
+more tool result on questions the labels say it already had enough to answer.
+
+### Running the eval against Jev
+
+Two things about the Gateway that the harness works around:
+
+- **Zero Data Retention is a Pro-plan feature.** `engines.ts` sends
+  `zeroDataRetention: true` on every Jev call because Coach state contains real rosters. The
+  eval sends only the committed fixtures in `evals/routing.jsonl`, so it sets `JEV_ZDR=false`
+  to run on a hobby plan. Do not set that variable anywhere the Coach runs.
+- **The Gateway throttles.** Both providers return transient quota errors under load, so the
+  eval retries them (the Coach keeps `maxRetries: 1` so a decision can never stall a chat).
+
+Jev reports confidence per question, not per call — `providerMetadata.typesafe.confidence` is
+`{ next_action: 0.91 }`, not a bare number.
 
 ### Decision logging
 

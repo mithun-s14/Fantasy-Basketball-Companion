@@ -75,6 +75,22 @@ async function pool<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>
   return results;
 }
 
+/** Retries throttling errors. Anything else throws on the first try. */
+async function withRetry<R>(fn: () => Promise<R>, attempts = 4): Promise<R> {
+  for (let i = 1; ; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const text = String(err);
+      const throttled = /rate ?limit|high demand|overload|exceeded your current quota/i.test(text);
+      if (i >= attempts || !throttled) throw err;
+      // Gemini reports how long to wait; Jev does not, so back off linearly.
+      const suggested = Number(text.match(/retry in ([\d.]+)s/)?.[1]) * 1000;
+      await new Promise((r) => setTimeout(r, suggested || 3000 * i));
+    }
+  }
+}
+
 async function main() {
   const engineName = (arg("engine") ?? "rules") as EngineName;
   if (!["jev", "gemini", "rules"].includes(engineName)) {
@@ -94,6 +110,9 @@ async function main() {
     .map((line) => JSON.parse(line))
     .slice(0, limit);
 
+  // Fixtures only, no user data, and ZDR is a Pro-plan feature.
+  process.env.JEV_ZDR = "false";
+
   await refreshFlags();
   if (engineName === "jev" && !isJevAllowed()) {
     console.log("Jev is blocked by the cutoff guard — the fallback engine will answer instead.");
@@ -108,9 +127,13 @@ async function main() {
       steps: c.stepsSoFar,
       stepCount: c.stepsSoFar.length,
     };
+    // The engine caps retries at 1 to protect loop latency. The eval has no
+    // latency budget, so it retries the provider's transient rate limits.
     try {
-      await takeSlot();
-      const d = await engine.route(state);
+      const d = await withRetry(async () => {
+        await takeSlot();
+        return engine.route(state);
+      });
       return {
         ...c,
         actual: d.action,

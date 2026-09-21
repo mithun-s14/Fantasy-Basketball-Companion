@@ -43,7 +43,12 @@ export function evaluationEngine(
       if (!isActionId(answer.choice)) {
         throw new Error(`${name} returned unknown action "${answer.choice}"`);
       }
-      const confidence = result.providerMetadata?.typesafe?.confidence;
+      // Jev reports confidence per question, not per call: { next_action: 0.91 }
+      const confidence = (
+        result.providerMetadata?.typesafe?.confidence as
+          | Record<string, number>
+          | undefined
+      )?.next_action;
 
       return {
         action: answer.choice,
@@ -78,10 +83,12 @@ export function evaluationEngine(
   };
 }
 
+// ZDR needs a Vercel Pro plan. The eval sends only committed fixtures, so it
+// sets JEV_ZDR=false to run on hobby; the Coach path leaves it on because the
+// state there can contain real user data.
 export const jevEngine = (): DecisionEngine =>
   evaluationEngine("jev", () => "typesafe-ai/jev", {
-    // The state can contain real user data
-    gateway: { zeroDataRetention: true },
+    gateway: { zeroDataRetention: process.env.JEV_ZDR !== "false" },
   });
 
 export const geminiEngine = (): DecisionEngine => {
