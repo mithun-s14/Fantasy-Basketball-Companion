@@ -10,6 +10,11 @@ config({ path: ".env.local" });
 // answer generated. Ignores AGENT_MODE; the Jev cutoff guard still applies
 // because the engine comes from getEngine().
 //   npm run eval:routing -- --engine jev --limit 10 --concurrency 4
+// --ids reruns named cases only, and --merge folds a previous run's other
+// results into the report. Together they resume a run that a provider quota
+// cut short:
+//   npm run eval:routing -- --engine gemini --ids ask-01,ask-02 \
+//     --merge evals/results/routing-gemini-<stamp>.json
 // --rpm spaces calls out for providers with a request-per-minute quota
 // (the Gemini free tier allows 5/min on gemini-2.5-flash).
 
@@ -82,7 +87,13 @@ async function withRetry<R>(fn: () => Promise<R>, attempts = 4): Promise<R> {
       return await fn();
     } catch (err) {
       const text = String(err);
-      const throttled = /rate ?limit|high demand|overload|exceeded your current quota/i.test(text);
+      // A daily quota does not come back within a run, so retrying it just
+      // burns more of the next window's budget (4 attempts x the engine's own
+      // 2 = 8 wasted requests per case). Resume the survivors with --merge.
+      // ponytail: matches on message text; switch to the status//details code
+      // if Gemini's wording changes.
+      const exhausted = /exceeded your current quota|quota exceeded for metric/i.test(text);
+      const throttled = !exhausted && /rate ?limit|high demand|overload/i.test(text);
       if (i >= attempts || !throttled) throw err;
       // Gemini reports how long to wait; Jev does not, so back off linearly.
       const suggested = Number(text.match(/retry in ([\d.]+)s/)?.[1]) * 1000;
@@ -98,6 +109,8 @@ async function main() {
     process.exit(1);
   }
   const limit = Number(arg("limit") ?? Infinity);
+  const ids = arg("ids")?.split(",").map((s) => s.trim()).filter(Boolean);
+  const mergeFrom = arg("merge");
   const concurrency = Number(arg("concurrency") ?? 4);
   const takeSlot = throttle(Number(arg("rpm") ?? 0));
 
@@ -108,7 +121,13 @@ async function main() {
     .trim()
     .split("\n")
     .map((line) => JSON.parse(line))
+    .filter((c: EvalCase) => !ids || ids.includes(c.id))
     .slice(0, limit);
+  const missing = ids?.filter((id) => !cases.some((c) => c.id === id)) ?? [];
+  if (missing.length) {
+    console.error(`no such case in evals/routing.jsonl: ${missing.join(", ")}`);
+    process.exit(1);
+  }
 
   // Fixtures only, no user data, and ZDR is a Pro-plan feature.
   process.env.JEV_ZDR = "false";
@@ -157,6 +176,16 @@ async function main() {
       };
     }
   });
+
+  // A quota can cut a run short, so --merge carries the earlier run's other
+  // cases over. This run always wins for any id it covers.
+  if (mergeFrom) {
+    const prior: CaseResult[] = JSON.parse(readFileSync(mergeFrom, "utf8")).results;
+    const ran = new Set(results.map((r) => r.id));
+    const carried = prior.filter((r) => !ran.has(r.id));
+    results.push(...carried);
+    console.log(`merged ${carried.length} case(s) from ${mergeFrom}\n`);
+  }
 
   const reviewed = results.filter((r) => !r.needs_review);
   const correct = results.filter((r) => r.correct).length;
