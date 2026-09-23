@@ -160,16 +160,21 @@ reads — it can only add a note afterwards.
 percentiles, and a coverage table at thresholds 0.5–0.9 — the last is how `ROUTE_MIN_PROB`
 gets calibrated.
 
+`--ids a,b,c` reruns named cases only and `--merge <prior report>` folds an earlier run's
+other cases into the new one, the current run winning any id it covers. Together they resume
+a run that a provider quota cut short, which is how the `gemini` numbers below were finished.
+
 40 reviewed cases, covering all five actions including multi-step states:
 
 | Engine | Accuracy | Errors | p50 / p95 | Tokens | Notes |
 |--------|----------|--------|-----------|--------|-------|
 | `rules` | **90%** (36/40) | 0 | 0 ms / 0 ms | — | Reports no probabilities, so no threshold calibration is possible |
-| `gemini` | 40% (16/40) | 23 | 0 ms / 914 ms | 7,322 | **94% (16/17) on the cases that completed**; the rest hit the Gemini free-tier quota (20 requests, `gemini-2.5-flash`). Needs a re-run on a day with quota left, or a billed key |
+| `gemini` | 80% (32/40) | 0 | 715 ms / 4,279 ms | 17,358 | Returns no probabilities, so no threshold calibration is possible. Completed over two days on the free tier (20 requests/day, `gemini-2.5-flash`), stitched from four partial runs with `--ids` and `--merge` |
 | `jev` | **85%** (34/40) | 0 | 282 ms / 663 ms | 23,921 | Free on the Gateway (`cost: "0"`). Confidence 0.30–1.00 on every case |
 
 Jev latency is measured over the calls that were not throttled; the harness's own p95 counts
-retry backoff, so it reads far higher than the model is.
+retry backoff, so it reads far higher than the model is. The `gemini` percentiles are pooled
+across the four runs that `--merge` stitched together, so its p95 carries the same inflation.
 
 Jev's coverage table, which is what `ROUTE_MIN_PROB` is calibrated from:
 
@@ -185,10 +190,18 @@ default sits. `0.7` buys the same accuracy at 80% coverage, so there is no reaso
 does. So `ROUTE_MIN_PROB` never fires under `gemini`, and the coverage table only fills in
 for Jev. Rules reports no probabilities by design.
 
-The two engines fail differently, which is the useful result. The four `rules` misses are all
-the same shape: telling "look up his recent stats" apart from "you already know enough" is
-judgment a keyword cannot make. All six `jev` misses are the mirror image — it fetches one
-more tool result on questions the labels say it already had enough to answer.
+The three engines fail differently, which is the useful result — and the deterministic one
+wins. The four `rules` misses are all the same shape: telling "look up his recent stats" apart
+from "you already know enough" is judgment a keyword cannot make. All six `jev` misses are the
+mirror image — it fetches one more tool result on questions the labels say it already had
+enough to answer.
+
+The eight `gemini` misses are a third shape: it will not commit. Five of them fall through to
+`ask_user` (three cases it should have answered outright, two it should have looked up), which
+drags `answer` recall to 0.44 and leaves `ask_user` over-predicted — 12 predictions against a
+support of 8, precision 0.58. Pure tool routing is untouched by this: `get_roster` and
+`get_recent_performance` are 1.00 on both precision and recall. It is the judgment calls, not
+the lookups, where it trails the other two.
 
 ### Running the eval against Jev
 
