@@ -4,6 +4,11 @@ import { HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages
 import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { chatRateLimiter } from "@/lib/rate-limiter";
+import { getConfig, refreshFlags } from "@/lib/agent/config";
+import { runAgentLoop } from "@/lib/agent/loop";
+import { verifyWithFallback } from "@/lib/agent/engines";
+import { logDecision, newRequestId } from "@/lib/agent/log";
+import { getActivePlayers } from "@/lib/nba-players";
 
 interface Message {
   role: "user" | "assistant";
@@ -59,11 +64,13 @@ export async function POST(request: NextRequest) {
 
   // Fetch roster for personalized context if the user is authenticated
   let rosterContext = "";
+  let userId: string | null = null;
   try {
     const supabase = await createSupabaseServerClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    userId = user?.id ?? null;
 
     if (user) {
       const { data: roster } = await supabase
@@ -100,6 +107,11 @@ Your goal is to provide data-driven, actionable advice for:
 - **The "Why":** Don't just give a name. Briefly mention a metric (e.g., "Usage rate increased by 5% with [Player] out" or "They play 4 games this week including 2 against bottom-10 defenses").
 - **Conciseness:** Be direct and brief. Use bullet points for recommendations.`;
 
+  // Flags decide whether this request runs the agent loop. The read is cached
+  // for 30s, so a Redis kill switch takes effect without a redeploy.
+  await refreshFlags();
+  const agentMode = getConfig().agentMode;
+
   try {
     const model = new ChatGoogleGenerativeAI({
       model: "gemini-2.5-flash",
@@ -111,26 +123,119 @@ Your goal is to provide data-driven, actionable advice for:
     // This is the standard LangChain stateless-serverless pattern: the client owns
     // persistence (sends full history each request); InMemoryChatMessageHistory
     // manages the typed message buffer for this request's lifetime.
-    const chatHistory = new InMemoryChatMessageHistory();
-    const priorMessages = trimmed.slice(0, -1);
-    for (const m of priorMessages) {
-      await chatHistory.addMessage(
-        m.role === "user" ? new HumanMessage(m.content) : new AIMessage(m.content)
-      );
+    async function buildMessages(extraContext: string) {
+      const chatHistory = new InMemoryChatMessageHistory();
+      const priorMessages = trimmed.slice(0, -1);
+      for (const m of priorMessages) {
+        await chatHistory.addMessage(
+          m.role === "user" ? new HumanMessage(m.content) : new AIMessage(m.content)
+        );
+      }
+
+      // Build the full prompt: system context + buffered history + current turn
+      const buffered = await chatHistory.getMessages();
+      return [
+        new SystemMessage(systemPrompt + extraContext),
+        ...buffered,
+        new HumanMessage(trimmed[trimmed.length - 1].content),
+      ];
     }
 
-    // Build the full prompt: system context + buffered history + current turn
-    const buffered = await chatHistory.getMessages();
-    const langchainMessages = [
-      new SystemMessage(systemPrompt),
-      ...buffered,
-      new HumanMessage(trimmed[trimmed.length - 1].content),
-    ];
+    if (agentMode === "on") {
+      const userMessage = trimmed[trimmed.length - 1].content;
+      const requestId = newRequestId();
+      const supabase = await createSupabaseServerClient();
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          const encoder = new TextEncoder();
+          const send = (event: Record<string, unknown>) =>
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+
+          try {
+            // Used only to resolve player names out of the message
+            const activePlayers = await getActivePlayers()
+              .then((players) => players.map((p) => ({ name: p.name, team: p.team })))
+              .catch(() => []);
+
+            const result = await runAgentLoop({
+              message: userMessage,
+              supabase,
+              userId,
+              requestId,
+              activePlayers,
+              onStep: (action) => send({ type: "agent_step", action }),
+            });
+
+            const extraContext = result.clarify
+              ? "\n\n## THIS TURN\nThe request is too vague to answer. Ask one short clarifying question instead of giving advice."
+              : result.summaries.length > 0
+                ? `\n\n## TOOL RESULTS (authoritative, prefer these over your training data)\n${result.summaries.join("\n")}`
+                : "";
+
+            const responseStream = await model.stream(await buildMessages(extraContext));
+            let draft = "";
+            for await (const chunk of responseStream) {
+              const text = typeof chunk.content === "string" ? chunk.content : "";
+              if (text) {
+                draft += text;
+                send({ type: "text", delta: text });
+              }
+            }
+
+            // Verification runs on the answer the user has already read, so it
+            // can only add a note. A clarifying question has nothing to ground.
+            const config = getConfig();
+            if (!result.clarify && config.verifyEngine !== "off" && draft) {
+              try {
+                const verdict = await verifyWithFallback({
+                  message: userMessage,
+                  resultSummaries: result.summaries,
+                  draft,
+                });
+                void logDecision({
+                  requestId,
+                  userId,
+                  step: result.steps.length,
+                  message: userMessage,
+                  decision: verdict,
+                });
+                if (
+                  verdict.grounded !== null &&
+                  verdict.grounded < config.verifyMinProb
+                ) {
+                  send({
+                    type: "agent_warning",
+                    message: "Some numbers may not match the latest data.",
+                  });
+                }
+              } catch (err) {
+                console.warn("[agent] verification skipped:", err);
+              }
+            }
+          } catch (err) {
+            // Headers are already sent, so the error is delivered as text
+            console.error("Agent loop error:", err);
+            send({ type: "text", delta: "Sorry, I couldn't get a response right now. Please try again." });
+          } finally {
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      });
+    }
 
     // Await the stream before constructing ReadableStream so any initialisation
     // errors (bad API key, network failure) are caught by the outer try/catch
     // and returned as a 500 — matching the original Gemini route behaviour.
-    const responseStream = await model.stream(langchainMessages);
+    const responseStream = await model.stream(await buildMessages(""));
 
     const stream = new ReadableStream({
       async start(controller) {

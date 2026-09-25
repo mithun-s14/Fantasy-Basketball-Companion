@@ -17,6 +17,13 @@ vi.mock("@/lib/rate-limiter", () => ({
   chatRateLimiter: { limit: mockLimit },
 }));
 
+// The agent flag read must not reach the network in tests
+vi.mock("@upstash/redis", () => ({
+  Redis: {
+    fromEnv: () => ({ hgetall: async () => null, get: async () => null, set: async () => "OK" }),
+  },
+}));
+
 vi.mock("@/lib/supabase-server", () => ({
   createSupabaseServerClient: async () => ({
     auth: { getUser: mockGetUser },

@@ -67,6 +67,12 @@ npm run dev           # Start development server (localhost:3000)
 npm run build         # Production build
 npm run scrape        # Scrape 2025–26 NBA schedule into Supabase
 npm run seed-players  # Seed active NBA player roster into Supabase
+
+npm run flags:get                         # Print the live agent flags
+npm run flags:set DECISION_ENGINE rules   # Set one flag in Redis (instant, no redeploy)
+npm run flags:set DECISION_ENGINE --clear # Drop the override, fall back to env/default
+npm run agent:ping -- --engine jev        # One route call on a fixed state
+npm run eval:routing -- --engine rules    # Score an engine on evals/routing.jsonl
 ```
 
 ## Key Implementation Notes
@@ -77,6 +83,146 @@ npm run seed-players  # Seed active NBA player roster into Supabase
 - **Unicode names**: player names with diacritics (e.g. Jokić, Vučević) are handled via NFC normalization at both the search and validation layers.
 - **Rate limiting**: the `/api/chat` route uses Upstash Redis with a sliding window algorithm (3 req/min per IP). Redis is used instead of in-memory state because Next.js serverless functions each have isolated memory — Redis acts as a shared external store so limits are enforced globally across all instances.
 - **shadcn/ui**: use the shadcn CLI to add or update components — do not edit files in `src/components/ui/` directly.
+
+
+## Decision Engines
+
+The Coach is a tool-using agent. A **decision engine** picks the next tool, decides when to
+stop or ask a clarifying question, and checks the finished answer against the tool results.
+Gemini still writes every word the user reads — the engine only decides.
+
+Three engines answer the same questions, so they are interchangeable at runtime:
+
+| Engine | What it is | Cost |
+|--------|-----------|------|
+| `rules` | Deterministic keyword and state routing. The default, the fallback, and the eval baseline. | Free |
+| `gemini` | `google.evaluationModel()` answering the same questions through structured output. | Normal Gemini rates |
+| `jev` | TypeSafe AI's decision model via Vercel AI Gateway (`typesafe-ai/jev`). Returns calibrated probabilities. | Free until 2026-09-25, then blocked |
+
+Routing asks one `choice` question (`next_action`) over five actions: `get_roster`,
+`get_recent_performance`, `get_matchup_stats`, `answer`, `ask_user`. Verification asks two
+`boolean` questions (`grounded`, `answers_question`) and one `score` question (`quality`,
+logged but never acted on). Jev and Gemini share one question builder so the eval compares
+them on identical inputs.
+
+### Toggles
+
+Resolution order is **Redis override → env var → default**. The Redis read is cached in
+memory for 30 seconds, so `npm run flags:set` is an instant kill switch with no redeploy.
+
+| Key | Values | Default | Purpose |
+|-----|--------|---------|---------|
+| `AGENT_MODE` | `on`, `off` | `off` | `off` restores the original single-shot Coach exactly, with no loop and no evaluation call |
+| `DECISION_ENGINE` | `jev`, `gemini`, `rules` | `rules` | Engine for every decision |
+| `DECISION_ENGINE_ROUTE` | `jev`, `gemini`, `rules` | inherits | Per-capability override for routing |
+| `DECISION_ENGINE_VERIFY` | `jev`, `gemini`, `rules`, `off` | inherits | Per-capability override; `off` skips verification |
+| `DECISION_FALLBACK` | `gemini`, `rules` | `rules` | Used when the primary errors, lands below threshold, or is blocked |
+| `DECISION_SHADOW` | `jev`, `gemini`, `rules`, `off` | `off` | Runs a second engine in parallel for logging only. Never acts |
+| `JEV_CUTOFF` | ISO timestamp | `2026-09-25T00:00:00Z` | Jev is blocked at and after this time |
+| `JEV_ALLOW_PAID` | `true`, `false` | `false` | The only way to call Jev after the cutoff |
+| `ROUTE_MIN_PROB` | 0–1 | `0.6` | Below this the fallback picks the step |
+| `VERIFY_MIN_PROB` | 0–1 | `0.7` | Below this an `agent_warning` is emitted |
+| `MAX_AGENT_STEPS` | integer | `4` | Loop cap |
+| `AGENT_LOOP_TIMEOUT_MS` | integer | `8000` | Time budget before the loop answers with what it has |
+| `LOG_DECISION_STATE` | `true`, `false` | `false` | When false, `agent_decisions` stores a hash of the message instead of its text |
+
+The default is `rules` with `AGENT_MODE=off`, so a fresh deploy never calls a paid engine
+unless someone turns one on deliberately.
+
+### The cutoff guard
+
+`isJevAllowed()` in `src/lib/agent/config.ts` is the only gate on Jev spend, and every Jev
+path goes through it — the loop, shadow mode, `agent:ping`, and the eval harness. It returns
+false without `AI_GATEWAY_API_KEY`, false at or after `JEV_CUTOFF`, and true only when
+`JEV_ALLOW_PAID=true` overrides both. When Jev is blocked, `getEngine()` silently returns the
+fallback engine and warns once per process.
+
+### Streaming contract
+
+With `AGENT_MODE=off` the route streams plain `text/plain` chunks, byte for byte as before.
+With it on the response is SSE, and new event types are additive — a client that ignores them
+still renders the answer:
+
+| Event | When | UI |
+|-------|------|-----|
+| `{ type: "text", delta }` | Every answer token | The answer |
+| `{ type: "agent_step", action }` | Before a tool runs | A status line under the message ("Checking recent form...") |
+| `{ type: "agent_warning", message }` | After the answer, when `grounded` < `VERIFY_MIN_PROB` | A muted note under the answer |
+
+Verification runs *after* the answer has streamed, so it can never delay a word the user
+reads — it can only add a note afterwards.
+
+### Eval results
+
+`npm run eval:routing -- --engine <name> [--limit n] [--concurrency 4] [--rpm 5]` runs
+`route()` over `evals/routing.jsonl` with no tools executed, and writes a full report to
+`evals/results/`. It prints per-action precision and recall, a confusion matrix, latency
+percentiles, and a coverage table at thresholds 0.5–0.9 — the last is how `ROUTE_MIN_PROB`
+gets calibrated.
+
+`--ids a,b,c` reruns named cases only and `--merge <prior report>` folds an earlier run's
+other cases into the new one, the current run winning any id it covers. Together they resume
+a run that a provider quota cut short, which is how the `gemini` numbers below were finished.
+
+40 reviewed cases, covering all five actions including multi-step states:
+
+| Engine | Accuracy | Errors | p50 / p95 | Tokens | Notes |
+|--------|----------|--------|-----------|--------|-------|
+| `rules` | **90%** (36/40) | 0 | 0 ms / 0 ms | — | Reports no probabilities, so no threshold calibration is possible |
+| `gemini` | 80% (32/40) | 0 | 715 ms / 4,279 ms | 17,358 | Returns no probabilities, so no threshold calibration is possible. Completed over two days on the free tier (20 requests/day, `gemini-2.5-flash`), stitched from four partial runs with `--ids` and `--merge` |
+| `jev` | **85%** (34/40) | 0 | 282 ms / 663 ms | 23,921 | Free on the Gateway (`cost: "0"`). Confidence 0.30–1.00 on every case |
+
+Jev latency is measured over the calls that were not throttled; the harness's own p95 counts
+retry backoff, so it reads far higher than the model is. The `gemini` percentiles are pooled
+across the four runs that `--merge` stitched together, so its p95 carries the same inflation.
+
+Jev's coverage table, which is what `ROUTE_MIN_PROB` is calibrated from:
+
+| Threshold | 0.5 | 0.6 | 0.7 | 0.8 | 0.9 |
+|-----------|-----|-----|-----|-----|-----|
+| Coverage | 93% | 85% | 80% | 73% | 55% |
+| Accuracy above | 89% | 94% | 94% | 97% | 100% |
+
+`0.6` keeps 85% of decisions on the primary engine at 94% accuracy, which is where the
+default sits. `0.7` buys the same accuracy at 80% coverage, so there is no reason to raise it.
+
+`google.evaluationModel()` does not return `probabilities` on `choice` answers — only Jev
+does. So `ROUTE_MIN_PROB` never fires under `gemini`, and the coverage table only fills in
+for Jev. Rules reports no probabilities by design.
+
+The three engines fail differently, which is the useful result — and the deterministic one
+wins. The four `rules` misses are all the same shape: telling "look up his recent stats" apart
+from "you already know enough" is judgment a keyword cannot make. All six `jev` misses are the
+mirror image — it fetches one more tool result on questions the labels say it already had
+enough to answer.
+
+The eight `gemini` misses are a third shape: it will not commit. Five of them fall through to
+`ask_user` (three cases it should have answered outright, two it should have looked up), which
+drags `answer` recall to 0.44 and leaves `ask_user` over-predicted — 12 predictions against a
+support of 8, precision 0.58. Pure tool routing is untouched by this: `get_roster` and
+`get_recent_performance` are 1.00 on both precision and recall. It is the judgment calls, not
+the lookups, where it trails the other two.
+
+### Running the eval against Jev
+
+Two things about the Gateway that the harness works around:
+
+- **Zero Data Retention is a Pro-plan feature.** `engines.ts` sends
+  `zeroDataRetention: true` on every Jev call because Coach state contains real rosters. The
+  eval sends only the committed fixtures in `evals/routing.jsonl`, so it sets `JEV_ZDR=false`
+  to run on a hobby plan. Do not set that variable anywhere the Coach runs.
+- **The Gateway throttles.** Both providers return transient quota errors under load, so the
+  eval retries them (the Coach keeps `maxRetries: 1` so a decision can never stall a chat).
+
+Jev reports confidence per question, not per call — `providerMetadata.typesafe.confidence` is
+`{ next_action: 0.91 }`, not a bare number.
+
+### Decision logging
+
+Every route and verify decision is inserted into the `agent_decisions` table
+(`sql/agent_decisions.sql`) with the engine, action, probabilities, confidence, latency, and
+whether it fell back. Inserts are server-only and no client reads them. Shadow decisions are
+logged with `is_shadow = true`. A failed insert never breaks a chat.
 
 ## Testing
 
@@ -96,6 +242,12 @@ Tests live in `src/__tests__/` and run in a **happy-dom** environment (no real b
 |------|---------------|
 | `unit/constants.test.ts` | NBA team constants |
 | `unit/games-api.test.ts` | `/api/games` route handler logic |
+| `unit/agent-config.test.ts` | Flag resolution order, the 30s cache, and the Jev cutoff guard |
+| `unit/agent-engines.test.ts` | All three engines against a mock evaluation model, threshold fallback, verification |
+| `unit/agent-loop.test.ts` | Step cap, timeout, repeated tools, `ask_user`, shadow logging |
+| `unit/agent-tools.test.ts` | Roster, recent performance, and matchup summaries plus their caching |
+| `unit/agent-args.test.ts` | Player resolution from names, initials, and the roster |
+| `unit/agent-chat-route.test.ts` | `AGENT_MODE` on and off, SSE framing, `agent_warning` |
 | `components/AuthButton.test.tsx` | Auth button render states |
 | `components/MobileNav.test.tsx` | Mobile navigation component |
 | `components/TeamScheduleTable.test.tsx` | Table sorting, filtering, and badge colours |

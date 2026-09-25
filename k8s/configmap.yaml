@@ -13,3 +13,19 @@ data:
   AI_SERVICE_URL: "http://ai-service:3001"
 
   NODE_ENV: "production"
+
+  # Coach agent flags (docs/agent/jev-agent-spec.md). These are the defaults,
+  # spelled out so a cluster edit is a one-line change. Redis overrides them at
+  # runtime: `npm run flags:set DECISION_ENGINE rules`.
+  AGENT_MODE: "off"
+  DECISION_ENGINE: "rules"
+  DECISION_ENGINE_VERIFY: "off"
+  DECISION_FALLBACK: "rules"
+  DECISION_SHADOW: "off"
+  JEV_CUTOFF: "2026-09-25T00:00:00Z"
+  JEV_ALLOW_PAID: "false"
+  ROUTE_MIN_PROB: "0.6"
+  VERIFY_MIN_PROB: "0.7"
+  MAX_AGENT_STEPS: "4"
+  AGENT_LOOP_TIMEOUT_MS: "8000"
+  LOG_DECISION_STATE: "false"
