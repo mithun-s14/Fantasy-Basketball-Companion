@@ -3,14 +3,14 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { BASES, type Basis, fetchWeekMatchups, loadKickerStats, rankKickers } from "@/nfl/kickers";
-
-const kickoffFmt = new Intl.DateTimeFormat("en-US", {
-  weekday: "short",
-  hour: "numeric",
-  minute: "2-digit",
-  timeZone: "America/New_York",
-});
+import {
+  BASES,
+  type Basis,
+  LAST_REGULAR_SEASON_WEEK,
+  fetchWeekMatchups,
+  loadKickerStats,
+  rankKickers,
+} from "@/nfl/kickers";
 
 // Sortable numeric columns. Default is edge, highest first.
 const SORTS = ["teamFga", "oppFgmAllowed", "edge"] as const;
@@ -19,26 +19,35 @@ type Sort = (typeof SORTS)[number];
 export default async function KickersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ basis?: string; sort?: string; dir?: string }>;
+  searchParams: Promise<{ basis?: string; sort?: string; dir?: string; week?: string }>;
 }) {
   const params = await searchParams;
   const basis: Basis = params.basis && params.basis in BASES ? (params.basis as Basis) : "season_avg";
   const sort: Sort = SORTS.includes(params.sort as Sort) ? (params.sort as Sort) : "edge";
   const dir = params.dir === "asc" ? "asc" : "desc";
-  const href = (p: { basis?: Basis; sort?: Sort; dir?: string }) =>
-    `?${new URLSearchParams({ basis, sort, dir, ...p })}`;
 
+  let currentWeek = 0;
   let week = 0;
   let picks: ReturnType<typeof rankKickers> = [];
   let error: string | null = null;
   try {
-    const [{ week: w, matchups }, stats] = await Promise.all([fetchWeekMatchups(), loadKickerStats()]);
-    week = w;
+    const [current, stats] = await Promise.all([fetchWeekMatchups(), loadKickerStats()]);
+    currentWeek = current.week;
+    // Only this week through the end of the regular season can be picked.
+    const requested = Number(params.week);
+    week =
+      Number.isInteger(requested) && requested > currentWeek && requested <= LAST_REGULAR_SEASON_WEEK
+        ? requested
+        : currentWeek;
+    const { matchups } = week === currentWeek ? current : await fetchWeekMatchups(week);
     picks = rankKickers(matchups, stats, basis).sort((a, b) => (dir === "asc" ? 1 : -1) * (a[sort] - b[sort]));
     if (!stats.length) error = "No kicker stats yet. Run npm run nfl:scrape-team-stats.";
   } catch (e) {
     error = e instanceof Error ? e.message : "Could not load kicker data.";
   }
+
+  const href = (p: { basis?: Basis; sort?: Sort; dir?: string; week?: string }) =>
+    `?${new URLSearchParams({ basis, sort, dir, week: String(week), ...p })}`;
 
   return (
     <div className="w-full space-y-6 px-4 py-6 sm:px-6">
@@ -66,6 +75,23 @@ export default async function KickersPage({
         <p className="rounded-lg border border-border bg-card px-5 py-10 text-center text-sm text-muted-foreground">{error}</p>
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-card">
+          <nav aria-label="NFL week" className="flex flex-wrap items-center gap-1 border-b border-border px-4 py-2">
+            <span className="mr-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Week</span>
+            {Array.from({ length: LAST_REGULAR_SEASON_WEEK - currentWeek + 1 }, (_, i) => currentWeek + i).map((w) => (
+              <Link
+                key={w}
+                href={href({ week: String(w) })}
+                scroll={false}
+                aria-current={w === week ? "page" : undefined}
+                className={cn(
+                  "rounded px-2.5 py-1 text-sm tabular-nums",
+                  w === week ? "bg-[var(--accent-soft)] text-foreground" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {w}
+              </Link>
+            ))}
+          </nav>
           <div className="border-b border-border px-4 py-3 text-xs text-muted-foreground">
             Week {week} · Edge = opponent FG made allowed/game − team FG attempts/game ({BASES[basis].toLowerCase()})
           </div>
@@ -107,7 +133,7 @@ export default async function KickersPage({
                     <TableCell className="whitespace-nowrap">
                       <p className="font-medium">{p.team}</p>
                       <p className="text-xs text-muted-foreground">
-                        {p.home ? "vs" : "@"} {p.opponent} · {kickoffFmt.format(new Date(p.kickoff))} ET
+                        {p.home ? "vs" : "@"} {p.opponent}
                       </p>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{p.teamFga.toFixed(2)}</TableCell>

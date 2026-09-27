@@ -1,7 +1,7 @@
 import { it, expect } from "vitest";
 import { rankKickers } from "./kickers";
 
-const m = (team: string, opponent: string) => ({ team, opponent, home: true, kickoff: "" });
+const m = (team: string, opponent: string) => ({ team, opponent, home: true });
 const s = (team: string, stat: string, season_avg: number | null) => ({
   team,
   stat,

@@ -17,7 +17,6 @@ export interface Matchup {
   team: string;
   opponent: string;
   home: boolean;
-  kickoff: string; // ISO
 }
 
 export interface KickerPick extends Matchup {
@@ -62,15 +61,19 @@ interface EspnScoreboard {
   }[];
 }
 
-// ESPN's public scoreboard returns the current NFL week. Each game yields two
-// matchups, one per kicker. Teams on bye simply don't appear, and games that
-// have kicked off are dropped since picking up that kicker is too late.
-export async function fetchWeekMatchups(): Promise<{
+export const LAST_REGULAR_SEASON_WEEK = 18;
+
+// ESPN's public scoreboard: no week returns the current NFL week, otherwise
+// that regular-season week (seasontype=2) of the current season. Each game
+// yields two matchups, one per kicker. Teams on bye simply don't appear, and
+// games that have kicked off are dropped since picking up that kicker is too late.
+export async function fetchWeekMatchups(week?: number): Promise<{
   week: number;
   matchups: Matchup[];
 }> {
   const res = await fetch(
-    "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard",
+    "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard" +
+      (week ? `?seasontype=2&week=${week}` : ""),
     {
       next: { revalidate: 3600 },
     },
@@ -86,7 +89,6 @@ export async function fetchWeekMatchups(): Promise<{
         team: c.team.displayName,
         opponent: (c === a ? b : a).team.displayName,
         home: c.homeAway === "home",
-        kickoff: e.date,
       }));
     });
   return { week: data.week.number, matchups };
