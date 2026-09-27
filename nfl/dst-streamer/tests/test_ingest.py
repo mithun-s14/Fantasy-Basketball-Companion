@@ -65,7 +65,8 @@ def test_ingest_writes_caches_and_appends_snapshots(tmp_path, monkeypatch):
     monkeypatch.setattr(sleeper, "fetch_players", lambda: player_fetches.append(1) or {})
 
     now = datetime(2026, 9, 26, 12, tzinfo=UTC)
-    assert run.ingest(now=now) == (2026, 3)
+    season, week, odds = run.ingest(now=now)
+    assert (season, week, odds.height) == (2026, 3, 0)
     assert set(loads) == {
         ("schedules", 2025), ("pbp", 2025),
         ("schedules", 2026), ("pbp", 2026), ("injuries", 2026), ("depth_charts", 2026),

@@ -142,7 +142,6 @@ def build_table(
         )
         .join(next_week, on="team", how="left")
         .join(next_lines, on="team", how="left")
-        .with_columns(available=pl.lit(None, pl.Boolean))
     )
     table = add_ranks(table)
     table = apply_flags(table, flags_cfg, now)

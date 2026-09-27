@@ -12,7 +12,7 @@ def retry[T](
     is_transient: Callable[[Exception], bool],
     *,
     what: str,
-    sleep: Callable[[float], None] = time.sleep,
+    sleep: Callable[[float], None] | None = None,
 ) -> T:
     """Call fn, retrying transient errors with exponential backoff (1s, 2s, 4s)."""
     for attempt in range(TRIES):
@@ -21,7 +21,7 @@ def retry[T](
         except Exception as e:
             if not is_transient(e) or attempt == TRIES - 1:
                 raise RuntimeError(f"{what} failed after {attempt + 1} tries: {e}") from e
-            sleep(2**attempt)
+            (sleep or time.sleep)(2**attempt)
     raise AssertionError("unreachable")
 
 
@@ -29,7 +29,7 @@ class TransientHTTPError(Exception):
     pass
 
 
-def get_json(url: str, *, session: Any = requests, sleep: Callable[[float], None] = time.sleep):
+def get_json(url: str, *, session: Any = requests, sleep: Callable[[float], None] | None = None):
     """GET JSON. Retries 429, 5xx and network errors; any other non-2xx fails at once."""
 
     def attempt():

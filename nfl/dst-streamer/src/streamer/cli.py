@@ -3,7 +3,6 @@ import argparse
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="streamer", description="D/ST streamer stats pipeline")
-    # refresh arrives with M4.
     sub = parser.add_subparsers(dest="command", required=True)
 
     ingest = sub.add_parser("ingest", help="cache nflverse/Sleeper data and snapshot odds")
@@ -21,6 +20,11 @@ def main(argv: list[str] | None = None) -> None:
     build.add_argument("--stage", default="manual", help="early | daily | final | manual")
     build.add_argument("--publish", action="store_true", help="upsert into Supabase")
 
+    refresh = sub.add_parser("refresh", help="scheduled run: ingest + build --publish")
+    refresh.add_argument("--stage", required=True, choices=["early", "daily", "final"])
+    refresh.add_argument("--season", type=int, help="season start year (default: current)")
+    refresh.add_argument("--week", type=int, help="target week (default: next week with games)")
+
     validate = sub.add_parser("validate-points", help="check D/ST points against Sleeper's stats")
     validate.add_argument("--season", type=int, required=True)
     validate.add_argument("--scoring", default="sleeper_default", help="preset in config/scoring")
@@ -34,6 +38,10 @@ def main(argv: list[str] | None = None) -> None:
         from streamer.build import build as run_build
 
         run_build(args.season, args.week, args.scoring, args.stage, args.publish)
+    elif args.command == "refresh":
+        from streamer.refresh import refresh as run_refresh
+
+        run_refresh(args.stage, args.season, args.week)
     elif args.command == "validate-points":
         import polars as pl
 

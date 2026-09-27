@@ -40,7 +40,6 @@ export interface DstTeam {
   };
   next_week: { opponent: string | null; is_home: boolean | null; opp_implied_total: number | null };
   flags: string[];
-  available: boolean | null;
 }
 
 export interface DstDoc {

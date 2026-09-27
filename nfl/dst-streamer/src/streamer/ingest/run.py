@@ -27,7 +27,10 @@ def _write(df: pl.DataFrame, path: Path) -> None:
     print(f"  wrote {path} ({df.height} rows)")
 
 
-def ingest(season: int | None = None, week: int | None = None, now: datetime | None = None):
+def ingest(
+    season: int | None = None, week: int | None = None, now: datetime | None = None
+) -> tuple[int, int, pl.DataFrame]:
+    """Returns (season, target week, this run's odds snapshot)."""
     now = now or datetime.now(UTC)
     season = season or nflverse.current_season()
     print(f"Ingesting season {season} (previous season {season - 1} for early-season context)")
@@ -55,4 +58,4 @@ def ingest(season: int | None = None, week: int | None = None, now: datetime | N
         _write(sleeper.fill_gsis_ids(parsed, nflverse.load_player_ids()), players)
 
     print(f"Done: season {season}, target week {week}, odds for weeks {weeks}")
-    return season, week
+    return season, week, odds

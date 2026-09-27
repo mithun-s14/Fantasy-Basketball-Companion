@@ -1,0 +1,90 @@
+name: NFL D/ST refresh
+
+# Cron is UTC. Times are safe under both EDT (UTC-4) and EST (UTC-5) and avoid the top of the
+# hour, when GitHub delays scheduled runs. Schedules only run from the default branch, and
+# GitHub disables them after 60 days without repository activity (re-enable in the Actions tab).
+on:
+  schedule:
+    - cron: "7 11 * * 2" # Tue after MNF: early (next week's table for waivers)
+    - cron: "7 14 * * 3-6" # Wed-Sat morning: daily (odds, injuries)
+    - cron: "37 21 * * 4" # Thu before TNF: final
+    - cron: "37 15 * * 0" # Sun before the 1pm games: final QB statuses
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: Stage recorded on the published tables
+        type: choice
+        options: [early, daily, final]
+        default: daily
+      week:
+        description: Override the target week (blank = next week with games)
+        required: false
+
+concurrency:
+  group: nfl-dst-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: nfl/dst-streamer
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+
+      # data/ holds the Parquet caches and this season's odds snapshots, which line movement
+      # needs across runs. Each run restores the newest entry and saves a new one on success.
+      # The permanent copy of the snapshots is Supabase nfl_odds_snapshots.
+      - uses: actions/cache@v6
+        with:
+          path: nfl/dst-streamer/data
+          key: nfl-dst-data-${{ github.run_id }}
+          restore-keys: nfl-dst-data-
+
+      - run: uv sync --frozen
+
+      - name: Resolve stage
+        id: stage
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_STAGE: ${{ inputs.stage }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            stage="$INPUT_STAGE"
+          else
+            case "$SCHEDULE" in
+              "7 11 * * 2") stage=early ;;
+              "7 14 * * 3-6") stage=daily ;;
+              *) stage=final ;;
+            esac
+          fi
+          echo "stage=$stage" >> "$GITHUB_OUTPUT"
+
+      - name: Refresh
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          STAGE: ${{ steps.stage.outputs.stage }}
+          WEEK: ${{ inputs.week }}
+        run: uv run streamer refresh --stage "$STAGE" ${WEEK:+--week "$WEEK"}
+
+      - name: Failure summary
+        if: failure()
+        env:
+          STAGE: ${{ steps.stage.outputs.stage }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "### D/ST refresh failed (stage: ${STAGE:-unknown})"
+            echo
+            echo "Nothing was published for this run; /nfl/dst still shows the last good build."
+            echo "See the Refresh step log: $RUN_URL"
+          } >> "$GITHUB_STEP_SUMMARY"
