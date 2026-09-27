@@ -1,0 +1,30 @@
+[project]
+name = "dst-streamer"
+version = "0.1.0"
+description = "D/ST streamer stats pipeline (see docs/nfl/DST_STREAMER_PRD.MD)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "nflreadpy>=0.1.5",
+    "polars>=1.44.2",
+    "requests>=2.34.2",
+]
+
+[project.scripts]
+streamer = "streamer.cli:main"
+
+[dependency-groups]
+dev = ["pytest", "ruff"]
+
+[build-system]
+requires = ["uv_build>=0.8,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "streamer"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
