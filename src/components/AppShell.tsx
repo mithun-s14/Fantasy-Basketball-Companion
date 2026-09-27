@@ -11,6 +11,7 @@ import {
   Users,
   Bot,
   ChevronLeft,
+  Target,
   type LucideIcon,
 } from "lucide-react";
 import { AuthButton } from "@/components/AuthButton";
@@ -33,8 +34,10 @@ interface NavItem {
   gated?: boolean;
 }
 
+type Section = { heading: string; items: NavItem[] };
+
 // Nav order and grouping per spec section 2.
-const SECTIONS: { heading: string; items: NavItem[] }[] = [
+const NBA_SECTIONS: Section[] = [
   {
     heading: "Overview",
     items: [{ label: "Dashboard", short: "Home", path: "/", Icon: LayoutDashboard }],
@@ -56,9 +59,21 @@ const SECTIONS: { heading: string; items: NavItem[] }[] = [
   },
 ];
 
-const ALL_ITEMS = SECTIONS.flatMap((s) => s.items);
-// Five tabs on mobile, per spec.
-const TAB_PATHS = ["/", "/analyzer", "/matchup", "/roster", "/chat"];
+// NFL pages all live under /nfl; the sport switch in the topbar flips between
+// the two nav sets. This shell is the only place NBA and NFL meet.
+const NFL_SECTIONS: Section[] = [
+  {
+    heading: "NFL",
+    items: [{ label: "Kicker streamer", short: "Kickers", path: "/nfl/kickers", Icon: Target }],
+  },
+];
+
+const SPORTS = {
+  nba: { label: "NBA", home: "/", sections: NBA_SECTIONS, tabs: ["/", "/analyzer", "/matchup", "/roster", "/chat"] },
+  nfl: { label: "NFL", home: "/nfl/kickers", sections: NFL_SECTIONS, tabs: ["/nfl/kickers"] },
+};
+
+const ALL_ITEMS = [...NBA_SECTIONS, ...NFL_SECTIONS].flatMap((s) => s.items);
 
 // Page title and subtitle live in the topbar (spec section 5).
 const TITLES: Record<string, [string, string]> = {
@@ -68,11 +83,14 @@ const TITLES: Record<string, [string, string]> = {
   "/matchup": ["Matchup", "Category projections for this week"],
   "/roster": ["My roster", "Your players, games and category value"],
   "/chat": ["AI coach", "Trades, waivers and lineup calls"],
+  "/nfl/kickers": ["Kicker streamer", "Best kicker pickups for this NFL week"],
 };
 
 export function AppShell({ userEmail, weekLabel, children }: Props) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const sport = pathname.startsWith("/nfl") ? "nfl" : "nba";
+  const { sections, tabs } = SPORTS[sport];
 
   const isActive = (path: string) => (path === "/" ? pathname === "/" : pathname.startsWith(path));
   const hrefFor = (item: NavItem) =>
@@ -103,7 +121,7 @@ export function AppShell({ userEmail, weekLabel, children }: Props) {
         </Link>
 
         <nav aria-label="Tools" className="flex-1 overflow-y-auto p-2">
-          {SECTIONS.map(({ heading, items }, sectionIndex) => (
+          {sections.map(({ heading, items }, sectionIndex) => (
             <div key={heading}>
               <p
                 className={cn(
@@ -185,6 +203,23 @@ export function AppShell({ userEmail, weekLabel, children }: Props) {
             )}
           </div>
           <div className="flex-1" />
+          <div role="group" aria-label="Sport" className="flex flex-none rounded-md border border-[var(--border)] p-0.5">
+            {(Object.keys(SPORTS) as (keyof typeof SPORTS)[]).map((key) => (
+              <Link
+                key={key}
+                href={SPORTS[key].home}
+                aria-current={key === sport ? "page" : undefined}
+                className={cn(
+                  "rounded px-2.5 py-0.5 text-xs font-semibold",
+                  key === sport
+                    ? "bg-[var(--accent-soft)] text-[var(--text)]"
+                    : "text-[var(--text-3)] hover:text-[var(--text)]",
+                )}
+              >
+                {SPORTS[key].label}
+              </Link>
+            ))}
+          </div>
           <ThemeToggle />
           <AuthButton userEmail={userEmail} />
         </header>
@@ -197,7 +232,7 @@ export function AppShell({ userEmail, weekLabel, children }: Props) {
         aria-label="Tools (mobile)"
         className="fixed inset-x-0 bottom-0 z-30 hidden h-[60px] border-t border-[var(--border)] bg-[var(--surface)] max-[900px]:flex"
       >
-        {TAB_PATHS.map((path) => {
+        {tabs.map((path) => {
           const item = ALL_ITEMS.find((i) => i.path === path)!;
           const active = isActive(path);
           return (
