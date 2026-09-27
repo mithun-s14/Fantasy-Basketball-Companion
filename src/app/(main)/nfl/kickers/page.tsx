@@ -76,7 +76,7 @@ export default async function KickersPage({
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           <nav aria-label="NFL week" className="flex flex-wrap items-center gap-1 border-b border-border px-4 py-2">
-            <span className="mr-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Week</span>
+            <span className="mr-1 mt-0.5 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Week</span>
             {Array.from({ length: LAST_REGULAR_SEASON_WEEK - currentWeek + 1 }, (_, i) => currentWeek + i).map((w) => (
               <Link
                 key={w}
