@@ -28,6 +28,22 @@ def load(dataset: str, season: int) -> pl.DataFrame:
     )
 
 
+def load_all_schedules() -> pl.DataFrame:
+    """Every season since 1999 (small); used for QB career starts."""
+    return retry(
+        lambda: nfl.load_schedules(True),
+        lambda e: isinstance(e, ConnectionError),
+        what="nflverse schedules (all seasons)",
+    )
+
+
+def load_player_ids() -> pl.DataFrame:
+    """nflverse/DynastyProcess ID map across platforms (sleeper_id, gsis_id, espn_id, ...)."""
+    return retry(
+        nfl.load_ff_playerids, lambda e: isinstance(e, ConnectionError), what="nflverse player ids"
+    )
+
+
 def kickoffs_utc(schedules: pl.DataFrame) -> pl.Series:
     # nflverse gameday/gametime are US Eastern local time.
     return (

@@ -2,6 +2,7 @@
 
 Layout (relative to the working directory, git-ignored):
   data/cache/{dataset}_{season}.parquet   overwritten each run (previous season: written once)
+  data/cache/schedules_all.parquet        every season since 1999, for QB career starts
   data/cache/sleeper_players.parquet      refetched at most once per 24 hours
   data/snapshots/odds/{season}/{utc timestamp}.parquet   append-only
 """
@@ -38,6 +39,7 @@ def ingest(season: int | None = None, week: int | None = None, now: datetime | N
             _write(nflverse.load(dataset, season - 1), prev)
     for dataset in ("schedules", "pbp", "injuries", "depth_charts"):
         _write(nflverse.load(dataset, season), CACHE / f"{dataset}_{season}.parquet")
+    _write(nflverse.load_all_schedules(), CACHE / "schedules_all.parquet")
 
     schedules = pl.read_parquet(CACHE / f"schedules_{season}.parquet")
     week = week or nflverse.target_week(schedules, now)
@@ -49,7 +51,8 @@ def ingest(season: int | None = None, week: int | None = None, now: datetime | N
 
     players = CACHE / "sleeper_players.parquet"
     if not players.exists() or time.time() - players.stat().st_mtime > DAY:
-        _write(sleeper.parse_players(sleeper.fetch_players()), players)
+        parsed = sleeper.parse_players(sleeper.fetch_players())
+        _write(sleeper.fill_gsis_ids(parsed, nflverse.load_player_ids()), players)
 
     print(f"Done: season {season}, target week {week}, odds for weeks {weeks}")
     return season, week

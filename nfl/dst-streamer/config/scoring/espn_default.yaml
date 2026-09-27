@@ -1,0 +1,34 @@
+# ESPN D/ST scoring, as shown in the owner's ESPN league settings (provided 2026-09-27).
+# Tiers the settings page leaves out score 0: 18-27 points allowed, 300-349 yards allowed.
+# ESPN: pick-six / fumble-return TD points against the offense don't count against the D/ST;
+# special teams points do. Not scored here (rare, not derived from play-by-play yet):
+# 2pt return (2) and 1pt safety (1).
+pa_basis: offense_only
+points:
+  sack: 1
+  interception: 2
+  fumble_recovery: 2
+  st_fumble_recovery: 2
+  safety: 2
+  blocked_kick: 2
+  def_td: 6
+  st_td: 6
+points_allowed_tiers:
+  - {max: 0, points: 5}
+  - {max: 6, points: 4}
+  - {max: 13, points: 3}
+  - {max: 17, points: 1}
+  - {max: 27, points: 0}
+  - {max: 34, points: -1}
+  - {max: 45, points: -3}
+  - {points: -5}
+yards_allowed_tiers:
+  - {max: 99, points: 5}
+  - {max: 199, points: 3}
+  - {max: 299, points: 2}
+  - {max: 349, points: 0}
+  - {max: 399, points: -1}
+  - {max: 449, points: -3}
+  - {max: 499, points: -5}
+  - {max: 549, points: -6}
+  - {points: -7}

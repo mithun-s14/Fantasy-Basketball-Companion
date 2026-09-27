@@ -1,0 +1,31 @@
+# Rule-based flags (FR3). Informational only: they never change sort order.
+# `description` is shown in the page legend; {placeholders} are filled from the same entry.
+BACKUP_QB:
+  description: Opponent's expected starter isn't their Week 1 starter
+ROOKIE_QB:
+  min_career_starts: 8
+  description: Opponent QB has fewer than {min_career_starts} career starts
+LOW_IMPLIED:
+  bottom_n: 5
+  description: Opponent implied total is among the {bottom_n} lowest this week
+BIG_FAVORITE:
+  min_favored_by: 7
+  description: D/ST team is favored by {min_favored_by}+ points
+SACK_PRONE_QB:
+  top_n: 8
+  description: Opponent QB sack rate is top {top_n} this week
+TURNOVER_PRONE:
+  top_n: 8
+  description: Opponent giveaways per game are top {top_n} this week
+OL_INJURY:
+  min_linemen: 2
+  description: Opponent has {min_linemen}+ offensive linemen listed Out or Doubtful
+WIND:
+  min_mph: 15
+  description: Wind {min_mph}+ mph at an outdoor stadium
+LOW_SAMPLE:
+  min_games: 3
+  description: Fewer than {min_games} games of data this season
+STALE_LINES:
+  max_age_hours: 24
+  description: Betting lines are more than {max_age_hours} hours old

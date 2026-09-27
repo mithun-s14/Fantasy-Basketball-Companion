@@ -46,3 +46,26 @@ def parse_players(players: dict) -> pl.DataFrame:
         if p.get("position") in POSITIONS and p.get("team")
     ]
     return pl.DataFrame(rows, schema=SCHEMA)
+
+
+def fill_gsis_ids(players: pl.DataFrame, id_map: pl.DataFrame) -> pl.DataFrame:
+    """Fill missing gsis_id from nflverse's player ID map (sleeper_id -> gsis_id).
+
+    Sleeper leaves gsis_id empty for many players (15 of 32 starting QBs on 2026-09-27),
+    and gsis_id is the key into nflverse play-by-play and schedules.
+    """
+    bridge = (
+        id_map.select(player_id=pl.col("sleeper_id").cast(pl.String), bridge_gsis=pl.col("gsis_id"))
+        .drop_nulls()
+        .unique("player_id")
+    )
+    return (
+        players.join(bridge, on="player_id", how="left")
+        .with_columns(gsis_id=pl.coalesce("gsis_id", "bridge_gsis"))
+        .drop("bridge_gsis")
+    )
+
+
+def fetch_week_stats(season: int, week: int) -> dict:
+    """Per-player regular-season stats for one week; D/ST rows are keyed by team abbreviation."""
+    return get_json(f"https://api.sleeper.app/v1/stats/nfl/regular/{season}/{week}")

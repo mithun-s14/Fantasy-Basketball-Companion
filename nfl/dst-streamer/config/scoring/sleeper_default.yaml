@@ -1,0 +1,25 @@
+# Sleeper default D/ST scoring, 2026 season.
+# Verified 2026-09-27 by fitting Sleeper's own pts_std against its per-stat D/ST counts
+# (api.sleeper.app/v1/stats/nfl/regular/{season}/{week}): these weights reproduce pts_std on
+# 540 of 544 team-weeks of 2025 and every 2026 team-week through week 3, with one change:
+# the 14-20 points-allowed tier was 0 in 2025 and is +1 in 2026. Yardage tiers are not scored.
+pa_basis: offense_only # pick-six / fumble-return TDs and safeties against the offense excluded
+points:
+  sack: 1
+  interception: 2
+  fumble_recovery: 2
+  forced_fumble: 1
+  st_fumble_recovery: 1
+  st_forced_fumble: 1
+  safety: 2
+  blocked_kick: 2
+  def_td: 6
+  st_td: 6
+points_allowed_tiers:
+  - {max: 0, points: 10}
+  - {max: 6, points: 7}
+  - {max: 13, points: 4}
+  - {max: 20, points: 1} # 0 in 2025
+  - {max: 27, points: 0}
+  - {max: 34, points: -1}
+  - {points: -4}

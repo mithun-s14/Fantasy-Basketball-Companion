@@ -16,6 +16,7 @@ def schedule(*games):
     )
 
 
+IDS = pl.DataFrame({"sleeper_id": ["1"], "gsis_id": ["00-1"]})
 SCHED = schedule(
     (3, "2026-09-24", "20:15"),  # TNF
     (3, "2026-09-27", "13:00"),
@@ -56,6 +57,8 @@ def test_ingest_writes_caches_and_appends_snapshots(tmp_path, monkeypatch):
     fetched_weeks, player_fetches = [], []
     monkeypatch.setattr(nflverse, "load", fake_load)
     monkeypatch.setattr(nflverse, "current_season", lambda: 2026)
+    monkeypatch.setattr(nflverse, "load_all_schedules", lambda: SCHED)
+    monkeypatch.setattr(nflverse, "load_player_ids", lambda: IDS)
     monkeypatch.setattr(
         espn, "fetch_scoreboard", lambda s, w: fetched_weeks.append(w) or {"events": []}
     )
@@ -82,6 +85,8 @@ def test_week_18_has_no_lookahead(tmp_path, monkeypatch):
     monkeypatch.setattr(
         nflverse, "load", lambda d, s: SCHED if d == "schedules" else pl.DataFrame()
     )
+    monkeypatch.setattr(nflverse, "load_all_schedules", lambda: SCHED)
+    monkeypatch.setattr(nflverse, "load_player_ids", lambda: IDS)
     weeks = []
     monkeypatch.setattr(espn, "fetch_scoreboard", lambda s, w: weeks.append(w) or {"events": []})
     monkeypatch.setattr(sleeper, "fetch_players", lambda: {})
