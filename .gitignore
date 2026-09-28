@@ -12,3 +12,4 @@ KUBERNETES_MIGRATION.md
 tsconfig.tsbuildinfo
 dist/
 docs
+nfl/dst-streamer/STATUS.md

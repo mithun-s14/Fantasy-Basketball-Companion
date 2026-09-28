@@ -1,0 +1,93 @@
+{
+ "3294": {
+  "player_id": "3294",
+  "gsis_id": "00-0033077",
+  "full_name": "Dak Prescott",
+  "first_name": "Dak",
+  "last_name": "Prescott",
+  "team": "DAL",
+  "position": "QB",
+  "status": "Active",
+  "injury_status": null,
+  "depth_chart_order": 1,
+  "years_exp": 10
+ },
+ "8162": {
+  "player_id": "8162",
+  "gsis_id": null,
+  "full_name": "Sam Howell",
+  "first_name": "Sam",
+  "last_name": "Howell",
+  "team": "DAL",
+  "position": "QB",
+  "status": "Active",
+  "injury_status": null,
+  "depth_chart_order": 2,
+  "years_exp": 4
+ },
+ "4574": {
+  "player_id": "4574",
+  "gsis_id": "00-0033662",
+  "full_name": "Cooper Rush",
+  "first_name": "Cooper",
+  "last_name": "Rush",
+  "team": "ATL",
+  "position": "QB",
+  "status": "Active",
+  "injury_status": "Out",
+  "depth_chart_order": 2,
+  "years_exp": 9
+ },
+ "LAR": {
+  "player_id": "LAR",
+  "gsis_id": null,
+  "full_name": null,
+  "first_name": "Los Angeles",
+  "last_name": "Rams",
+  "team": "LAR",
+  "position": "DEF",
+  "status": null,
+  "injury_status": null,
+  "depth_chart_order": null,
+  "years_exp": null
+ },
+ "WAS": {
+  "player_id": "WAS",
+  "gsis_id": null,
+  "full_name": null,
+  "first_name": "Washington",
+  "last_name": "Commanders",
+  "team": "WAS",
+  "position": "DEF",
+  "status": null,
+  "injury_status": null,
+  "depth_chart_order": null,
+  "years_exp": null
+ },
+ "9487": {
+  "player_id": "9487",
+  "gsis_id": null,
+  "full_name": "Parker Washington",
+  "first_name": "Parker",
+  "last_name": "Washington",
+  "team": "JAX",
+  "position": "WR",
+  "status": "Active",
+  "injury_status": null,
+  "depth_chart_order": 1,
+  "years_exp": 3
+ },
+ "13175": {
+  "player_id": "13175",
+  "gsis_id": null,
+  "full_name": "Kinkead Dent",
+  "first_name": "Kinkead",
+  "last_name": "Dent",
+  "team": null,
+  "position": "QB",
+  "status": "Inactive",
+  "injury_status": null,
+  "depth_chart_order": null,
+  "years_exp": 0
+ }
+}

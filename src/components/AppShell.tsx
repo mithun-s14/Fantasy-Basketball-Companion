@@ -12,6 +12,7 @@ import {
   Bot,
   ChevronLeft,
   Target,
+  Shield,
   type LucideIcon,
 } from "lucide-react";
 import { AuthButton } from "@/components/AuthButton";
@@ -64,13 +65,16 @@ const NBA_SECTIONS: Section[] = [
 const NFL_SECTIONS: Section[] = [
   {
     heading: "NFL",
-    items: [{ label: "Kicker streamer", short: "Kickers", path: "/nfl/kickers", Icon: Target }],
+    items: [
+      { label: "Kicker streamer", short: "Kickers", path: "/nfl/kickers", Icon: Target },
+      { label: "D/ST streamer", short: "D/ST", path: "/nfl/dst", Icon: Shield },
+    ],
   },
 ];
 
 const SPORTS = {
   nba: { label: "NBA", home: "/", sections: NBA_SECTIONS, tabs: ["/", "/analyzer", "/matchup", "/roster", "/chat"] },
-  nfl: { label: "NFL", home: "/nfl/kickers", sections: NFL_SECTIONS, tabs: ["/nfl/kickers"] },
+  nfl: { label: "NFL", home: "/nfl/kickers", sections: NFL_SECTIONS, tabs: ["/nfl/kickers", "/nfl/dst"] },
 };
 
 const ALL_ITEMS = [...NBA_SECTIONS, ...NFL_SECTIONS].flatMap((s) => s.items);
@@ -84,6 +88,7 @@ const TITLES: Record<string, [string, string]> = {
   "/roster": ["My roster", "Your players, games and category value"],
   "/chat": ["AI coach", "Trades, waivers and lineup calls"],
   "/nfl/kickers": ["Kicker streamer", "Best kicker pickups for this NFL week"],
+  "/nfl/dst": ["D/ST streamer", "Every D/ST matchup this week, sorted by opponent implied total"],
 };
 
 export function AppShell({ userEmail, weekLabel, children }: Props) {
@@ -194,15 +199,14 @@ export function AppShell({ userEmail, weekLabel, children }: Props) {
         <header className="sticky top-0 z-20 flex h-14 flex-none items-center gap-3 border-b border-[var(--border)] bg-[var(--surface)] px-6 max-[900px]:gap-2 max-[900px]:px-4">
           {/* Baseline-aligned: the title and subtitle are different sizes, so
               centring them would leave their text sitting at different heights. */}
-          <div className="flex min-w-0 items-baseline gap-3">
-            <h1 className="flex-none whitespace-nowrap text-base font-semibold">{title}</h1>
+          <div className="flex min-w-0 flex-1 items-baseline gap-3">
+            <h1 className="truncate text-base font-semibold">{title}</h1>
             {subtitle && (
               <span className="truncate text-[13px] text-[var(--text-3)] max-[900px]:hidden">
                 {subtitle}
               </span>
             )}
           </div>
-          <div className="flex-1" />
           <div role="group" aria-label="Sport" className="flex flex-none rounded-md border border-[var(--border)] p-0.5">
             {(Object.keys(SPORTS) as (keyof typeof SPORTS)[]).map((key) => (
               <Link

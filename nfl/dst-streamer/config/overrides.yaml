@@ -1,0 +1,5 @@
+# Manual expected-starter overrides, applied on top of Sleeper depth + injury reports.
+# Map a team (any abbreviation) to the QB's full name as Sleeper spells it, e.g.
+#   WAS: Marcus Mariota
+# Remove entries once the week is over.
+{}

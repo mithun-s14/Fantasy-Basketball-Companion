@@ -1,0 +1,26 @@
+name: NFL D/ST streamer CI
+
+on:
+  push:
+    paths: ["nfl/dst-streamer/**", ".github/workflows/nfl-dst-ci.yml"]
+  pull_request:
+    paths: ["nfl/dst-streamer/**", ".github/workflows/nfl-dst-ci.yml"]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: nfl/dst-streamer
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+      - run: uv sync --frozen
+      - run: uv run ruff check
+      - run: uv run ruff format --check
+      - run: uv run pytest

@@ -1,0 +1,159 @@
+{
+ "_note": "ESPN NFL scoreboard, trimmed. Recorded 2026-09-26: week 3 ATL@GB (final, no odds) + first 3 week 4 games.",
+ "events": [
+  {
+   "id": "401872948",
+   "shortName": "ATL @ GB",
+   "competitions": [
+    {
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "abbreviation": "GB"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "abbreviation": "ATL"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401872964",
+   "shortName": "PIT @ CLE",
+   "competitions": [
+    {
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "abbreviation": "CLE"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "abbreviation": "PIT"
+       }
+      }
+     ],
+     "odds": [
+      {
+       "provider": {
+        "name": "DraftKings"
+       },
+       "details": "PIT -3",
+       "spread": 3.0,
+       "overUnder": 38.5,
+       "moneyline": {
+        "home": {
+         "close": {
+          "odds": "+124"
+         }
+        },
+        "away": {
+         "close": {
+          "odds": "-148"
+         }
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401872965",
+   "shortName": "IND VS WSH",
+   "competitions": [
+    {
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "abbreviation": "WSH"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "abbreviation": "IND"
+       }
+      }
+     ],
+     "odds": [
+      {
+       "provider": {
+        "name": "DraftKings"
+       },
+       "details": "IND -4.5",
+       "spread": 4.5,
+       "overUnder": 46.5,
+       "moneyline": {
+        "home": {
+         "close": {
+          "odds": "+170"
+         }
+        },
+        "away": {
+         "close": {
+          "odds": "-205"
+         }
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401872971",
+   "shortName": "NE @ BUF",
+   "competitions": [
+    {
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "abbreviation": "BUF"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "abbreviation": "NE"
+       }
+      }
+     ],
+     "odds": [
+      {
+       "provider": {
+        "name": "DraftKings"
+       },
+       "details": "BUF -5.5",
+       "spread": -5.5,
+       "overUnder": 49.5,
+       "moneyline": {
+        "home": {
+         "close": {
+          "odds": "-250"
+         }
+        },
+        "away": {
+         "close": {
+          "odds": "+205"
+         }
+        }
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
