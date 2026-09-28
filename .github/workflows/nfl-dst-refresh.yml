@@ -37,7 +37,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.2.0
 
       # data/ holds the Parquet caches and this season's odds snapshots, which line movement
       # needs across runs. Each run restores the newest entry and saves a new one on success.
