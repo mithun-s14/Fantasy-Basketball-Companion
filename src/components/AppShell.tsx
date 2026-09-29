@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition, useOptimistic, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -18,6 +18,7 @@ import {
 import { AuthButton } from "@/components/AuthButton";
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Tabs, TabsList, TabsTrigger } from "@/@components/motion/tabs";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -96,6 +97,14 @@ export function AppShell({ userEmail, weekLabel, children }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const sport = pathname.startsWith("/nfl") ? "nfl" : "nba";
   const { sections, tabs } = SPORTS[sport];
+  const router = useRouter();
+  // Move the pill on click, not when the new route finishes loading.
+  const [shownSport, setShownSport] = useOptimistic(sport);
+  const chooseSport = (next: keyof typeof SPORTS) =>
+    startTransition(() => {
+      setShownSport(next);
+      router.push(SPORTS[next].home);
+    });
 
   const isActive = (path: string) => (path === "/" ? pathname === "/" : pathname.startsWith(path));
   const hrefFor = (item: NavItem) =>
@@ -207,23 +216,15 @@ export function AppShell({ userEmail, weekLabel, children }: Props) {
               </span>
             )}
           </div>
-          <div role="group" aria-label="Sport" className="flex flex-none rounded-md border border-[var(--border)] p-0.5">
-            {(Object.keys(SPORTS) as (keyof typeof SPORTS)[]).map((key) => (
-              <Link
-                key={key}
-                href={SPORTS[key].home}
-                aria-current={key === sport ? "page" : undefined}
-                className={cn(
-                  "rounded px-2.5 py-0.5 text-xs font-semibold",
-                  key === sport
-                    ? "bg-[var(--accent-soft)] text-[var(--text)]"
-                    : "text-[var(--text-3)] hover:text-[var(--text)]",
-                )}
-              >
-                {SPORTS[key].label}
-              </Link>
-            ))}
-          </div>
+          <Tabs value={shownSport} onValueChange={(v) => chooseSport(v as keyof typeof SPORTS)} variant="segment">
+            <TabsList>
+              {(Object.keys(SPORTS) as (keyof typeof SPORTS)[]).map((key) => (
+                <TabsTrigger key={key} value={key} className="h-[30px] px-2.5 text-xs">
+                  {SPORTS[key].label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
           <ThemeToggle />
           <AuthButton userEmail={userEmail} />
         </header>
