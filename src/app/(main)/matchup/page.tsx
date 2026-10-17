@@ -33,6 +33,8 @@ export default async function MatchupPage() {
           .from("player_stats")
           .select("*")
           .in("player_name", allPlayerNames)
+          // Oldest first: computeMatchup keeps the last row per player, so the newest season wins.
+          .order("season")
       : { data: [] };
 
   return (

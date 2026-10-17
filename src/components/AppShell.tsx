@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   Target,
   Shield,
+  ListOrdered,
   type LucideIcon,
 } from "lucide-react";
 import { AuthButton } from "@/components/AuthButton";
@@ -55,6 +56,7 @@ const NBA_SECTIONS: Section[] = [
   {
     heading: "Manage",
     items: [
+      { label: "Draft assistant", short: "Draft", path: "/draft", Icon: ListOrdered },
       { label: "My roster", short: "Roster", path: "/roster", Icon: Users, gated: true },
       { label: "AI coach", short: "Coach", path: "/chat", Icon: Bot },
     ],
@@ -86,6 +88,7 @@ const TITLES: Record<string, [string, string]> = {
   "/analyzer": ["Schedule analyzer", "Games per NBA team in a date range"],
   "/projections": ["Projections", "2026–27 season averages · all players"],
   "/matchup": ["Matchup", "Category projections for this week"],
+  "/draft": ["Draft assistant", "Rankings tuned to your league settings and punts"],
   "/roster": ["My roster", "Your players, games and category value"],
   "/chat": ["AI coach", "Trades, waivers and lineup calls"],
   "/nfl/kickers": ["Kicker streamer", "Best kicker pickups for this NFL week"],

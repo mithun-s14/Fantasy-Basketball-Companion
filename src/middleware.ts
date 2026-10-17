@@ -32,8 +32,11 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Protect /roster and /matchup — redirect to /auth if not logged in
-  if ((pathname.startsWith("/roster") || pathname.startsWith("/matchup")) && !user) {
+  // Protect /roster, /matchup and live drafts (/draft itself is public rankings)
+  if (
+    (pathname.startsWith("/roster") || pathname.startsWith("/matchup") || pathname.startsWith("/draft/")) &&
+    !user
+  ) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/auth";
     redirectUrl.searchParams.set("next", pathname);

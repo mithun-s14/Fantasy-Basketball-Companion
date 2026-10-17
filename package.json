@@ -9,6 +9,7 @@
     "scrape": "npx tsx src/scripts/scrape.ts",
     "seed-players": "npx tsx src/scripts/seed-players.ts",
     "scrape-stats": "npx tsx src/scripts/scrape-stats.ts",
+    "load-adp": "npx tsx src/scripts/load-adp.ts",
     "flags:get": "npx tsx src/scripts/flags.ts get",
     "flags:set": "npx tsx src/scripts/flags.ts set",
     "agent:ping": "npx tsx src/scripts/agent-ping.ts",

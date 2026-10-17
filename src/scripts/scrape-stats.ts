@@ -2,7 +2,16 @@ import * as cheerio from "cheerio";
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
 
+import { currentSeason, bbrefSeasonYear, playerNameKey } from "../lib/constants";
+
 config({ path: ".env.local" });
+
+// Usage: npm run scrape-stats [-- 2025-26]. Defaults to the current season.
+const SEASON = process.argv[2] ?? currentSeason();
+if (!/^\d{4}-\d{2}$/.test(SEASON)) {
+  console.error(`[scrape-stats] Season must look like 2025-26, got "${SEASON}"`);
+  process.exit(1);
+}
 
 // ---------------------------------------------------------------------------
 // Team abbreviation → full name map (NBA.com and BBRef use abbreviations)
@@ -50,6 +59,8 @@ interface StatRow {
   player_name: string;
   nba_team: string;
   stat_type: "season" | "last10";
+  season: string;
+  gp: number;
   pts: number;
   reb: number;
   ast: number;
@@ -85,7 +96,7 @@ async function fetchNbaStats(lastNGames: 0 | 10): Promise<StatRow[] | null> {
     `&LastNGames=${lastNGames}&LeagueID=00&Location=&MeasureType=Base` +
     `&Month=0&OpponentTeamID=0&PORound=0&PaceAdjust=N&PerMode=PerGame` +
     `&Playoffs=N&PlayerExperience=&PlayerPosition=&PlusMinus=N&Rank=N` +
-    `&Season=2025-26&SeasonSegment=&SeasonType=Regular+Season` +
+    `&Season=${SEASON}&SeasonSegment=&SeasonType=Regular+Season` +
     `&ShotClockRange=&StarterBench=&TeamID=0&TwoWay=0` +
     `&VsConference=&VsDivision=&Weight=`;
 
@@ -117,6 +128,7 @@ async function fetchNbaStats(lastNGames: 0 | 10): Promise<StatRow[] | null> {
 
     const iPlayerName = idx("PLAYER_NAME");
     const iTeamAbr   = idx("TEAM_ABBREVIATION");
+    const iGp   = idx("GP");
     const iPts  = idx("PTS");
     const iReb  = idx("REB");
     const iAst  = idx("AST");
@@ -129,7 +141,7 @@ async function fetchNbaStats(lastNGames: 0 | 10): Promise<StatRow[] | null> {
     const iFtm  = idx("FTM");
     const iFta  = idx("FTA");
 
-    if ([iPlayerName, iTeamAbr, iPts, iReb, iAst, iStl, iBlk, iTov, i3pm, iFgm, iFga, iFtm, iFta].some(i => i === -1)) {
+    if ([iPlayerName, iTeamAbr, iGp, iPts, iReb, iAst, iStl, iBlk, iTov, i3pm, iFgm, iFga, iFtm, iFta].some(i => i === -1)) {
       console.warn("[scrape-stats] NBA.com response missing expected columns");
       return null;
     }
@@ -141,6 +153,8 @@ async function fetchNbaStats(lastNGames: 0 | 10): Promise<StatRow[] | null> {
       player_name: String(row[iPlayerName]).normalize("NFC"),
       nba_team:    TEAM_ABR_TO_FULL[row[iTeamAbr]] ?? String(row[iTeamAbr]),
       stat_type:   statType,
+      season:      SEASON,
+      gp:       Number(row[iGp])   || 0,
       pts:      Number(row[iPts])  || 0,
       reb:      Number(row[iReb])  || 0,
       ast:      Number(row[iAst])  || 0,
@@ -163,7 +177,7 @@ async function fetchNbaStats(lastNGames: 0 | 10): Promise<StatRow[] | null> {
 // Basketball-Reference fallback — plain fetch, season averages only
 // ---------------------------------------------------------------------------
 async function fetchBbrefStats(): Promise<StatRow[] | null> {
-  const url = "https://www.basketball-reference.com/leagues/NBA_2026_per_game.html";
+  const url = `https://www.basketball-reference.com/leagues/NBA_${bbrefSeasonYear(SEASON)}_per_game.html`;
   console.log(`[scrape-stats] Fetching BBRef fallback: ${url}`);
 
   try {
@@ -182,6 +196,8 @@ async function fetchBbrefStats(): Promise<StatRow[] | null> {
     // subsequent per-team row, the final map entry per player is their current team.
     // Assumption: BBRef per-team rows are in chronological order (consistent since 2010s).
     const playerMap = new Map<string, StatRow>();
+    // Traded players: games played comes from the xTM combined row, not the last team.
+    const totalGp = new Map<string, number>();
 
     $("#per_game_stats tbody tr").each((_, el) => {
       const tds = $(el).find("td");
@@ -190,15 +206,18 @@ async function fetchBbrefStats(): Promise<StatRow[] | null> {
       const playerName = $(el).find('[data-stat="name_display"]').text().trim();
       const teamAbr    = $(el).find('[data-stat="team_name_abbr"]').text().trim();
 
-      // Skip xTM combined rows (2TM, 3TM) — we want per-team rows only
-      if (!playerName || teamAbr.endsWith("TM")) return;
-
       const g = (key: string) => parseFloat($(el).find(`[data-stat="${key}"]`).text()) || 0;
+
+      // Skip xTM combined rows (2TM, 3TM) — we want per-team rows only
+      if (playerName && teamAbr.endsWith("TM")) totalGp.set(playerName.normalize("NFC"), g("games"));
+      if (!playerName || teamAbr.endsWith("TM")) return;
 
       playerMap.set(playerName.normalize("NFC"), {
         player_name: playerName.normalize("NFC"),
         nba_team:    BBREF_ABR_TO_FULL[teamAbr] ?? teamAbr,
         stat_type:   "season",
+        season:      SEASON,
+        gp:       g("games"),
         pts:      g("pts_per_g"),
         reb:      g("trb_per_g"),
         ast:      g("ast_per_g"),
@@ -213,7 +232,7 @@ async function fetchBbrefStats(): Promise<StatRow[] | null> {
       });
     });
 
-    const rows = Array.from(playerMap.values());
+    const rows = Array.from(playerMap.values()).map((r) => ({ ...r, gp: totalGp.get(r.player_name) ?? r.gp }));
     console.log(`[scrape-stats] BBRef: parsed ${rows.length} player rows`);
     return rows.length > 0 ? rows : null;
   } catch (err) {
@@ -236,6 +255,7 @@ async function main() {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  console.log(`[scrape-stats] Season ${SEASON}`);
   console.log("[scrape-stats] Trying NBA.com for season averages…");
   const nbaSeasonRows = await fetchNbaStats(0);
 
@@ -270,6 +290,24 @@ async function main() {
     process.exit(1);
   }
 
+  // Store names as nba_players spells them (NBA.com), so stats join to positions,
+  // ADP and rosters even when they came from the BBRef fallback.
+  const { data: nbaPlayers, error: playersError } = await supabase.from("nba_players").select("name");
+  if (playersError) {
+    console.warn("[scrape-stats] nba_players read failed; keeping source spellings:", playersError.message);
+  } else {
+    const canonical = new Map((nbaPlayers ?? []).map((p) => [playerNameKey(p.name), p.name as string]));
+    let renamed = 0;
+    for (const row of allRows) {
+      const name = canonical.get(playerNameKey(row.player_name));
+      if (name && name !== row.player_name) {
+        row.player_name = name;
+        renamed++;
+      }
+    }
+    console.log(`[scrape-stats] Renamed ${renamed} players to their nba_players spelling.`);
+  }
+
   const BATCH = 200;
   let upserted = 0;
   let hadError = false;
@@ -277,7 +315,7 @@ async function main() {
     const batch = allRows.slice(i, i + BATCH);
     const { error } = await supabase
       .from("player_stats")
-      .upsert(batch, { onConflict: "player_name,stat_type" });
+      .upsert(batch, { onConflict: "player_name,stat_type,season" });
 
     if (error) {
       console.error(`[scrape-stats] Upsert error at batch ${i}:`, error.message);

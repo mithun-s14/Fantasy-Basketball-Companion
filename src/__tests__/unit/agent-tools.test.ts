@@ -32,6 +32,8 @@ const GREEN: PlayerStats = {
   player_name: "Jalen Green",
   nba_team: "Houston Rockets",
   stat_type: "last10",
+  season: "2025-26",
+  gp: 10,
   pts: 21.3,
   reb: 5,
   ast: 3.4,
@@ -53,7 +55,7 @@ function supabaseStub(result: { data?: unknown; error?: { message: string } }) {
     from: () => ({
       select: () => ({
         eq: () => terminal,
-        in: () => terminal,
+        in: () => ({ order: () => terminal }),
       }),
     }),
   } as never;

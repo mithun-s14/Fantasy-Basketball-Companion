@@ -1,5 +1,7 @@
+import * as cheerio from "cheerio";
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
+import { currentSeason, bbrefSeasonYear, playerNameKey } from "../lib/constants";
 
 // Load .env.local for standalone script execution
 config({ path: ".env.local" });
@@ -37,7 +39,39 @@ const TEAM_ABBR_TO_NAME: Record<string, string> = {
   WAS: "Washington Wizards",
 };
 
+/**
+ * Positions by player from Basketball-Reference's per-game pages for `season`
+ * and the one before it (so players are covered before the new season has
+ * rows). A player listed at different positions, e.g. after a trade, gets
+ * all of them. BBRef lists one of PG/SG/SF/PF/C per row. Keyed by playerNameKey,
+ * since BBRef spells some names differently from NBA.com.
+ */
+async function fetchPositions(season: string): Promise<Map<string, Set<string>>> {
+  const positions = new Map<string, Set<string>>();
+  const endYear = bbrefSeasonYear(season);
+  for (const year of [endYear - 1, endYear]) {
+    const res = await fetch(`https://www.basketball-reference.com/leagues/NBA_${year}_per_game.html`);
+    if (!res.ok) {
+      console.warn(`BBRef ${year} returned ${res.status}; skipping.`);
+      continue;
+    }
+    const $ = cheerio.load(await res.text());
+    $("#per_game_stats tbody tr").each((_, el) => {
+      const name = playerNameKey($(el).find('[data-stat="name_display"]').text());
+      const pos = $(el).find('[data-stat="pos"]').text().trim();
+      if (!name || !pos) return;
+      if (!positions.has(name)) positions.set(name, new Set());
+      for (const p of pos.split("-")) positions.get(name)!.add(p);
+    });
+  }
+  return positions;
+}
+
 async function seedPlayers() {
+  // Usage: npm run seed-players [-- 2025-26]. Defaults to the current season.
+  const season = process.argv[2] ?? currentSeason();
+  if (!/^\d{4}-\d{2}$/.test(season)) throw new Error(`Season must look like 2025-26, got "${season}"`);
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -50,7 +84,7 @@ async function seedPlayers() {
   console.log("Fetching active players from NBA Stats API...");
 
   const res = await fetch(
-    "https://stats.nba.com/stats/commonallplayers?LeagueID=00&Season=2025-26&IsOnlyCurrentSeason=1",
+    `https://stats.nba.com/stats/commonallplayers?LeagueID=00&Season=${season}&IsOnlyCurrentSeason=1`,
     {
       headers: {
         "User-Agent":
@@ -92,6 +126,14 @@ async function seedPlayers() {
 
   console.log(`Found ${players.length} active players.`);
 
+  console.log("Fetching positions from Basketball-Reference...");
+  const positions = await fetchPositions(season);
+  const withPositions = players.map((p) => ({ ...p, positions: [...(positions.get(playerNameKey(p.name)) ?? [])] }));
+  const missing = withPositions.filter((r) => r.positions.length === 0).map((r) => r.name);
+  if (missing.length > 0) {
+    console.warn(`No position for ${missing.length} players (rookies or name mismatches): ${missing.join(", ")}`);
+  }
+
   // Clear existing rows then insert fresh
   const { error: deleteError } = await supabase
     .from("nba_players")
@@ -102,7 +144,7 @@ async function seedPlayers() {
 
   const { error: insertError } = await supabase
     .from("nba_players")
-    .insert(players);
+    .insert(withPositions);
 
   if (insertError) throw new Error(`Insert failed: ${insertError.message}`);
 

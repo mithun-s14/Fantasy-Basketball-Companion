@@ -16,6 +16,8 @@ function makeStats(
     player_name: name,
     nba_team: team,
     stat_type: "season",
+    season: "2025-26",
+    gp: 70,
     pts: 20,
     reb: 5,
     ast: 4,
