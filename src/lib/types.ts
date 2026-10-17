@@ -11,6 +11,8 @@ export interface PlayerStats {
   player_name: string;
   nba_team: string;
   stat_type: 'season' | 'last10';
+  season: string; // e.g. '2025-26'
+  gp: number | null;
   pts: number;
   reb: number;
   ast: number;

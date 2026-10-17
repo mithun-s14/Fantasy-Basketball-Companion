@@ -22,15 +22,15 @@ function cap(summary: string): string {
     : `${summary.slice(0, MAX_SUMMARY_CHARS - 1)}…`;
 }
 
-/** Redis-cached tool result. A cache failure just means the tool runs again. */
-async function cached<T>(key: string, ttlSeconds: number, run: () => Promise<T>): Promise<T> {
+/** Redis-cached result (agent tools, draft pool). A cache failure just means `run` runs again. */
+export async function cached<T>(key: string, ttlSeconds: number, run: () => Promise<T>): Promise<T> {
   const redis = getRedis();
   if (redis) {
     try {
       const hit = await redis.get<T>(key);
       if (hit != null) return hit;
     } catch (err) {
-      console.warn("[agent] tool cache read failed:", err);
+      console.warn("[cache] read failed:", err);
     }
   }
 
@@ -40,7 +40,7 @@ async function cached<T>(key: string, ttlSeconds: number, run: () => Promise<T>)
     try {
       await redis.set(key, result, { ex: ttlSeconds });
     } catch (err) {
-      console.warn("[agent] tool cache write failed:", err);
+      console.warn("[cache] write failed:", err);
     }
   }
   return result;
@@ -115,7 +115,9 @@ export async function getRecentPerformance(
   const { data, error } = await supabase
     .from("player_stats")
     .select("*")
-    .in("player_name", names);
+    .in("player_name", names)
+    // Newest first: .find() below takes the first row, so the newest season wins.
+    .order("season", { ascending: false });
 
   if (error) throw new Error(`get_recent_performance failed: ${error.message}`);
 
