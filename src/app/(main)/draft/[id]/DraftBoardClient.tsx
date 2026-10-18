@@ -57,6 +57,14 @@ function oddsClass(p: number | null) {
   return "text-[var(--amber)]";
 }
 
+function RbRank({ rb }: { rb?: { rank: number; tier: number } }) {
+  return (
+    <span className="w-10 text-right text-xs tabular-nums text-muted-foreground" title={rb ? `RotoBaller rank, tier ${rb.tier}` : "RotoBaller rank"}>
+      {rb?.rank ?? "–"}
+    </span>
+  );
+}
+
 export function DraftBoardClient({ draftId, pool, settings, initialPunts, initialPicks }: Props) {
   const router = useRouter();
   const [picks, setPicks] = useState(initialPicks);
@@ -360,7 +368,7 @@ export function DraftBoardClient({ draftId, pool, settings, initialPunts, initia
 
               <p className="text-xs text-muted-foreground">
                 Tap a player to mark him drafted by {myTurn ? "you" : teamLabel(onClock)}. Odds = chance he&apos;s still there at
-                your next pick{oddsPick ? ` (#${oddsPick})` : ""}, from ESPN ADP.
+                your next pick{oddsPick ? ` (#${oddsPick})` : ""}, from ESPN ADP. RB = RotoBaller projected rank.
               </p>
 
               <ol className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Best available players">
@@ -376,7 +384,7 @@ export function DraftBoardClient({ draftId, pool, settings, initialPunts, initia
                       <button
                         type="button"
                         onClick={() => draftPlayer(r.player.name)}
-                        className="grid w-full grid-cols-[2.25rem_1fr_auto_auto_auto] items-center gap-3 border-b border-border px-4 py-2.5 text-left last:border-0 hover:bg-accent active:bg-accent"
+                        className="grid w-full grid-cols-[2.25rem_1fr_auto_auto_auto_auto] items-center gap-3 border-b border-border px-4 py-2.5 text-left last:border-0 hover:bg-accent active:bg-accent"
                       >
                         <span className="text-sm font-bold tabular-nums text-muted-foreground">{r.rank}</span>
                         <span className="min-w-0">
@@ -393,6 +401,7 @@ export function DraftBoardClient({ draftId, pool, settings, initialPunts, initia
                         <span className="w-12 text-right text-xs tabular-nums text-muted-foreground" title="ESPN ADP">
                           {r.player.adp?.toFixed(0) ?? "–"}
                         </span>
+                        <RbRank rb={pool.rotoballer[r.player.name]} />
                         <span className={cn("w-11 text-right text-sm tabular-nums", oddsClass(odds))} title="Chance he's there at your next pick">
                           {pct(odds)}
                         </span>
@@ -407,7 +416,7 @@ export function DraftBoardClient({ draftId, pool, settings, initialPunts, initia
                       <button
                         type="button"
                         onClick={() => draftPlayer(u.name)}
-                        className="grid w-full grid-cols-[2.25rem_1fr_auto_auto_auto] items-center gap-3 border-b border-border px-4 py-2.5 text-left last:border-0 hover:bg-accent"
+                        className="grid w-full grid-cols-[2.25rem_1fr_auto_auto_auto_auto] items-center gap-3 border-b border-border px-4 py-2.5 text-left last:border-0 hover:bg-accent"
                       >
                         <span className="text-sm text-muted-foreground">–</span>
                         <span className="min-w-0">
@@ -418,6 +427,7 @@ export function DraftBoardClient({ draftId, pool, settings, initialPunts, initia
                         </span>
                         <span className="w-12 text-right text-sm text-muted-foreground">–</span>
                         <span className="w-12 text-right text-xs tabular-nums text-muted-foreground">{u.adp?.toFixed(0) ?? "–"}</span>
+                        <RbRank rb={pool.rotoballer[u.name]} />
                         <span className={cn("w-11 text-right text-sm tabular-nums", oddsClass(odds))}>{pct(odds)}</span>
                       </button>
                     </li>

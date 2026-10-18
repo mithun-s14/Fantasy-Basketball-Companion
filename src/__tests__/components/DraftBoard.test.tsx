@@ -22,6 +22,7 @@ function player(name: string, overrides: Partial<PoolPlayer> = {}): PoolPlayer {
 const pool = {
   draftSeason: "2026-27",
   statSeason: "2025-26",
+  rotoballer: {},
   unranked: [{ name: "Rookie Phenom", team: "Utah Jazz", positions: [], adp: 20 }],
   players: [
     player("Star Guard", { positions: ["PG"], pts: 30, ast: 9, adp: 1 }),

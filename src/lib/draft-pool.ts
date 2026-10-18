@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { createServerSupabaseClient } from "./supabase";
-import { currentSeason, previousSeason } from "./constants";
+import { currentSeason, playerNameKey, previousSeason } from "./constants";
 import { cached } from "./agent/tools";
 import type { PoolPlayer } from "./valuation";
 
@@ -7,6 +9,9 @@ const POOL_TTL_SECONDS = 60 * 60; // stats change at most daily
 const ADP_SOURCE = "espn";
 const MAX_ROWS = 2000; // Supabase returns 1000 rows unless asked for more
 const DAY_MS = 24 * 60 * 60 * 1000;
+// RotoBaller 9-cat projected rankings, checked in by hand. Shown beside ADP as a
+// second opinion; not part of our valuation (it has no attempts or GP).
+const ROTOBALLER_CSV = path.join(process.cwd(), "public", "rotoballer-nba-Overall-9cat-proj-rankings.csv");
 
 /**
  * The season being drafted. Drafts run August to October, before the
@@ -31,6 +36,25 @@ export interface DraftPool {
   statSeason: string;
   players: PoolPlayer[];
   unranked: UnrankedPlayer[];
+  /** RotoBaller overall rank and tier by nba_players name. */
+  rotoballer: Record<string, { rank: number; tier: number }>;
+}
+
+// RotoBaller spelling → nba_players spelling, where playerNameKey alone misses.
+const ROTOBALLER_ALIASES: Record<string, string> = {
+  "Nicolas Claxton": "Nic Claxton",
+  "Ron Holland II": "Ronald Holland II",
+};
+
+/** Name key → RotoBaller rank/tier. Columns: Rank,Player,...,Tier (last). */
+function loadRotoballer(): Map<string, { rank: number; tier: number }> {
+  const lines = readFileSync(ROTOBALLER_CSV, "utf8").trim().split(/\r?\n/).slice(1);
+  return new Map(
+    lines.map((line) => {
+      const cols = line.split(","); // no quoted fields in this file
+      return [playerNameKey(ROTOBALLER_ALIASES[cols[1]] ?? cols[1]), { rank: Number(cols[0]), tier: Number(cols[cols.length - 1]) }];
+    }),
+  );
 }
 
 /**
@@ -101,9 +125,15 @@ async function loadPool(draftSeason: string): Promise<DraftPool> {
   const unranked = players
     .data!.filter((p) => !ranked.has(p.name))
     .map((p) => ({ name: p.name, team: p.team, positions: p.positions ?? [], adp: adpByName.get(p.name) ?? null }));
-  return { draftSeason, statSeason, players: pool, unranked };
+  const rb = loadRotoballer();
+  const rotoballer: DraftPool["rotoballer"] = {};
+  for (const p of players.data!) {
+    const r = rb.get(playerNameKey(p.name));
+    if (r) rotoballer[p.name] = r;
+  }
+  return { draftSeason, statSeason, players: pool, unranked, rotoballer };
 }
 
 export function getDraftPool(draftSeason: string): Promise<DraftPool> {
-  return cached(`draft:pool:v2:${draftSeason}`, POOL_TTL_SECONDS, () => loadPool(draftSeason));
+  return cached(`draft:pool:v3:${draftSeason}`, POOL_TTL_SECONDS, () => loadPool(draftSeason));
 }

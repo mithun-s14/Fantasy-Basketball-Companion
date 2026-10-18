@@ -32,6 +32,14 @@ function zClass(z: number) {
   return "text-muted-foreground";
 }
 
+function RbCell({ rb }: { rb?: { rank: number; tier: number } }) {
+  return (
+    <TableCell className="text-right tabular-nums" title={rb ? `RotoBaller tier ${rb.tier}` : undefined}>
+      {rb?.rank ?? "–"}
+    </TableCell>
+  );
+}
+
 export function DraftRankingsClient({ pool, initialSettings, signedIn, activeDraftId }: Props) {
   const router = useRouter();
   const [starting, startStarting] = useTransition();
@@ -84,8 +92,8 @@ export function DraftRankingsClient({ pool, initialSettings, signedIn, activeDra
   const togglePunt = (c: Category) =>
     setPunts((p) => (p.includes(c) ? p.filter((x) => x !== c) : [...p, c]));
 
-  // # · player · value · per game · GP · ADP · one per category
-  const columnCount = 6 + shownCategories.length;
+  // # · player · value · per game · GP · ADP · RB · one per category
+  const columnCount = 7 + shownCategories.length;
 
   return (
     <div className="w-full space-y-4 px-4 py-6 sm:px-6">
@@ -172,7 +180,7 @@ export function DraftRankingsClient({ pool, initialSettings, signedIn, activeDra
 
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="border-b border-border px-4 py-3 text-xs text-muted-foreground">
-          {pool.statSeason} per-game stats · ADP from ESPN {pool.draftSeason} · Value is over replacement, discounted
+          {pool.statSeason} per-game stats · ADP from ESPN {pool.draftSeason} · RB = RotoBaller 9-cat projected rank · Value is over replacement, discounted
           for games missed · {visible.length} of {ranked.length} players
         </div>
         <div className="max-h-[70vh] overflow-auto">
@@ -187,6 +195,9 @@ export function DraftRankingsClient({ pool, initialSettings, signedIn, activeDra
                 </TableHead>
                 <TableHead className="text-right text-xs uppercase tracking-wider">GP</TableHead>
                 <TableHead className="text-right text-xs uppercase tracking-wider">ADP</TableHead>
+                <TableHead className="text-right text-xs uppercase tracking-wider" title="RotoBaller 9-cat projected rank">
+                  RB
+                </TableHead>
                 {shownCategories.map((c) => (
                   <TableHead key={c} className="text-right text-xs uppercase tracking-wider">
                     {c}
@@ -230,6 +241,7 @@ export function DraftRankingsClient({ pool, initialSettings, signedIn, activeDra
                     <TableCell className="text-right tabular-nums text-muted-foreground">{r.perGameValue.toFixed(2)}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.player.gp}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.player.adp?.toFixed(1) ?? "–"}</TableCell>
+                    <RbCell rb={pool.rotoballer[r.player.name]} />
                     {shownCategories.map((c) => (
                       <TableCell key={c} className={cn("text-right tabular-nums", zClass(r.z[c]!))}>
                         {r.z[c]!.toFixed(2)}
