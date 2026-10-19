@@ -31,7 +31,7 @@ export const DEFAULT_SETTINGS: LeagueSettings = {
   teamCount: 12,
   format: "h2h_cat",
   categories: CATEGORY_PRESETS["9-cat"],
-  rosterSlots: { PG: 1, SG: 1, G: 1, SF: 1, PF: 1, F: 1, C: 2, UTIL: 2, BENCH: 3 },
+  rosterSlots: { PG: 1, SG: 1, G: 1, SF: 1, PF: 1, F: 1, C: 1, UTIL: 3, BENCH: 3 },
   draftSlot: 1,
 };
 

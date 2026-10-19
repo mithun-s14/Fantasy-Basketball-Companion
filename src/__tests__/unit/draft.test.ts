@@ -94,7 +94,7 @@ describe("openSlots", () => {
       { positions: ["C"] },
       { positions: [] },
     ]);
-    expect(open).toMatchObject({ PG: 0, G: 0, C: 1, UTIL: 0, SG: 1, BENCH: 3 });
+    expect(open).toMatchObject({ PG: 0, G: 0, C: 0, UTIL: 1, SG: 1, BENCH: 3 });
   });
 
   it("sends extra players to the bench and stops at zero", () => {
