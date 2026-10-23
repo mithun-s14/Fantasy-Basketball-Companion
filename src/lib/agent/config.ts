@@ -37,7 +37,9 @@ let redis: Redis | null | undefined;
 export function getRedis(): Redis | null {
   if (redis === undefined) {
     try {
-      redis = Redis.fromEnv();
+      // No retries: the default 5 back off ~4s per call, and every caller
+      // already treats a failed read/write as a cache miss.
+      redis = Redis.fromEnv({ retry: false });
     } catch {
       redis = null; // no Upstash env — env vars and defaults still work
     }
