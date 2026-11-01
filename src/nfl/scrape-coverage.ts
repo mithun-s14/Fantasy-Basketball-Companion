@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
-import { COVERAGE_URL, parseCoverage } from "./coverage";
+import { COVERAGE_COLUMNS, COVERAGE_URL, parseCoverage, TENDENCIES_URL, TENDENCY_COLUMNS } from "./coverage";
 
 config({ path: ".env.local" });
 
@@ -12,10 +12,20 @@ async function main() {
     process.exit(1);
   }
 
-  const res = await fetch(COVERAGE_URL, { headers: { "User-Agent": "Mozilla/5.0" } });
-  if (!res.ok) throw new Error(`fetch failed ${res.status}`);
-  const rows = parseCoverage(await res.text());
-  if (rows.length !== 32) throw new Error(`expected 32 teams, got ${rows.length}`);
+  const scrape = async (url: string, columns: Parameters<typeof parseCoverage>[1]) => {
+    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+    if (!res.ok) throw new Error(`fetch ${url} failed ${res.status}`);
+    const rows = parseCoverage(await res.text(), columns);
+    if (rows.length !== 32) throw new Error(`expected 32 teams from ${url}, got ${rows.length}`);
+    return rows;
+  };
+  const coverage = await scrape(COVERAGE_URL, COVERAGE_COLUMNS);
+  const tendencies = new Map((await scrape(TENDENCIES_URL, TENDENCY_COLUMNS)).map((r) => [r.team, r]));
+  const rows = coverage.map((r) => {
+    const t = tendencies.get(r.team);
+    if (!t) throw new Error(`no defensive tendencies row for ${r.team}`);
+    return { ...r, ...t };
+  });
 
   const scraped_at = new Date().toISOString();
   const { error } = await createClient(supabaseUrl, supabaseKey)

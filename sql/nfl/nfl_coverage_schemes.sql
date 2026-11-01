@@ -10,5 +10,12 @@ create table if not exists public.nfl_coverage_schemes (
   scraped_at         timestamptz not null default now()
 );
 
+-- Defensive tendencies (nfl-defensive-tendencies page), same row per team.
+alter table public.nfl_coverage_schemes
+  add column if not exists blitz_rate       double precision,
+  add column if not exists light_box_rate   double precision,
+  add column if not exists heavy_box_rate   double precision,
+  add column if not exists sub_package_rate double precision;
+
 -- Server-side writes only (service role bypasses RLS).
 alter table public.nfl_coverage_schemes enable row level security;

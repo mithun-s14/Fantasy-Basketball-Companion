@@ -1,5 +1,5 @@
 import { it, expect } from "vitest";
-import { parseCoverage } from "./coverage";
+import { parseCoverage, TENDENCY_COLUMNS } from "./coverage";
 
 const html = `
 <table id="table_1" class="responsive display wpDataTable wpDataTableID-91">
@@ -12,5 +12,12 @@ const html = `
 it("parses the Sharp coverage schemes table", () => {
   expect(parseCoverage(html)).toEqual([
     { team: "Arizona Cardinals", man_rate: 9.1, zone_rate: 70.9, middle_closed_rate: 21.9, middle_open_rate: null },
+  ]);
+});
+
+it("parses the Sharp defensive tendencies table", () => {
+  const t = html.replace("<td style=\"\">-</td>", "<td>37.0</td>");
+  expect(parseCoverage(t, TENDENCY_COLUMNS)).toEqual([
+    { team: "Arizona Cardinals", blitz_rate: 9.1, light_box_rate: 70.9, heavy_box_rate: 21.9, sub_package_rate: 37.0 },
   ]);
 });

@@ -3,7 +3,7 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { COLUMNS, COVERAGE_URL, type CoverageKey, loadCoverage } from "@/nfl/coverage";
+import { COLUMNS, COVERAGE_URL, type CoverageKey, loadCoverage, TENDENCIES_URL } from "@/nfl/coverage";
 
 export default async function CoveragePage({
   searchParams,
@@ -38,7 +38,11 @@ export default async function CoveragePage({
           <div className="border-b border-border px-4 py-3 text-xs text-muted-foreground">
             Share of defensive snaps, this season ·{" "}
             <a href={COVERAGE_URL} target="_blank" rel="noreferrer" className="underline hover:text-foreground">
-              Sharp Football Analysis
+              Sharp coverage schemes
+            </a>{" "}
+            &amp;{" "}
+            <a href={TENDENCIES_URL} target="_blank" rel="noreferrer" className="underline hover:text-foreground">
+              defensive tendencies
             </a>
             {scrapedAt && ` · scraped ${new Date(scrapedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
           </div>

@@ -95,7 +95,7 @@ const TITLES: Record<string, [string, string]> = {
   "/chat": ["AI coach", "Trades, waivers and lineup calls"],
   "/nfl/kickers": ["Kicker streamer", "Best kicker pickups for this NFL week"],
   "/nfl/dst": ["D/ST streamer", "Every D/ST matchup this week, sorted by opponent implied total"],
-  "/nfl/coverage": ["Coverage schemes", "Man vs zone and middle open vs closed rates by defense"],
+  "/nfl/coverage": ["Coverage schemes", "Man/zone, middle open/closed, blitz, box and sub package rates by defense"],
 };
 
 export function AppShell({ userEmail, weekLabel, children }: Props) {
