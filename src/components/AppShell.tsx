@@ -212,10 +212,10 @@ export function AppShell({ userEmail, weekLabel, children }: Props) {
       {/* ── Main column ─────────────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-col">
         <header className="sticky top-0 z-20 flex h-14 flex-none items-center gap-3 border-b border-[var(--border)] bg-[var(--surface)] px-4 max-[900px]:gap-2 sm:px-6">
-          {/* Inset by the cards' border + px-4 so the title lines up with table content.
+          {/* Padding matches the pages' px-4 sm:px-6 so the title lines up with the table's edge.
               Baseline-aligned: the title and subtitle are different sizes, so
               centring them would leave their text sitting at different heights. */}
-          <div className="flex min-w-0 flex-1 items-baseline gap-3 pl-[calc(1rem+1px)]">
+          <div className="flex min-w-0 flex-1 items-baseline gap-3">
             <h1 className="truncate text-base font-semibold">{title}</h1>
             {subtitle && (
               <span className="truncate text-[13px] text-[var(--text-3)] max-[900px]:hidden">
