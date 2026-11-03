@@ -121,7 +121,7 @@ export default async function DashboardPage() {
           <Panel title="Streaming targets">
             <TeamList rows={hasGames ? teams.slice(0, 5) : []} />
           </Panel>
-          <Panel title="Fewest games · consider sitting">
+          <Panel title="Fewest games · consider dropping">
             <TeamList rows={hasGames ? fewest : []} />
           </Panel>
         </div>
