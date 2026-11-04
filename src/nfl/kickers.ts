@@ -91,6 +91,10 @@ export async function fetchWeekMatchups(week?: number): Promise<{
         home: c.homeAway === "home",
       }));
     });
+  // Midweek ESPN still reports the finished week; roll forward to the next one.
+  if (!week && !matchups.length && data.week.number < LAST_REGULAR_SEASON_WEEK) {
+    return fetchWeekMatchups(data.week.number + 1);
+  }
   return { week: data.week.number, matchups };
 }
 

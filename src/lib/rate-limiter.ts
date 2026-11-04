@@ -39,6 +39,13 @@ export const chatRateLimiter = new Ratelimit({
   prefix: "fantasy_chat", // namespaces the Redis keys for this limiter
 });
 
+// Public NFL MCP endpoint (/api/nfl/mcp). An LLM makes several tool calls per answer.
+export const mcpRateLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(60, "60 s"),
+  prefix: "nfl_mcp",
+});
+
 /**
  * Usage in an API route:
  *
