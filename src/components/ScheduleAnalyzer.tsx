@@ -7,12 +7,12 @@ import { TeamScheduleTable } from "@/components/TeamScheduleTable";
 import { NBA_TEAMS } from "@/lib/constants";
 import { Loader2 } from "lucide-react";
 import { PageHeader, StatTile } from "@/components/PageHeader";
-import { format } from "date-fns";
+import { format, startOfWeek, endOfWeek } from "date-fns";
 
 export default function ScheduleAnalyzer() {
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date()); // Grab today's date as default start
-  // Set end date to 7 days from today
-  const [endDate, setEndDate] = useState<Date | undefined>(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+  // Default to the current fantasy week: Monday through Sunday
+  const [startDate, setStartDate] = useState<Date | undefined>(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [endDate, setEndDate] = useState<Date | undefined>(() => endOfWeek(new Date(), { weekStartsOn: 1 }));
   const [gameCounts, setGameCounts] = useState<Map<string, number>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

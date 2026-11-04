@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useActionState, useRef, useMemo, useId } from "react";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
+import { format, startOfWeek, endOfWeek } from "date-fns";
 import { Trash2, AlertTriangle } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -317,10 +317,9 @@ interface Props {
 
 export function MatchupClient({ userPlayers, opponentPlayers, allStats }: Props) {
   const router = useRouter();
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
-  const [endDate, setEndDate] = useState<Date | undefined>(
-    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-  );
+  // Default to the current fantasy week: Monday through Sunday
+  const [startDate, setStartDate] = useState<Date | undefined>(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [endDate, setEndDate] = useState<Date | undefined>(() => endOfWeek(new Date(), { weekStartsOn: 1 }));
   const [statType, setStatType] = useState<"season" | "last10">("season");
   const [gameCounts, setGameCounts] = useState<Record<string, number>>({});
   const [isLoadingGames, setIsLoadingGames] = useState(false);
