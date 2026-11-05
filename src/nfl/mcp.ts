@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { BASES, type Basis, LAST_REGULAR_SEASON_WEEK, fetchWeekMatchups, loadKickerStats, rankKickers } from "./kickers";
-import { DEFAULT_SORT, PRESETS, type Preset, loadDstDoc, sortTeams } from "./dst";
+import { PRESETS, type Preset, loadDstDoc } from "./dst";
 import { loadCoverage } from "./coverage";
 
 const json = (data: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(data) }] });
@@ -33,10 +33,15 @@ export function createNflMcpServer() {
   );
 
   server.registerTool(
-    "get_dst_rankings",
+    "get_dst_stats",
     {
       description:
-        "D/ST streaming data for the latest published NFL week: betting lines, opposing QB and offense rates, the defense's own rates, game context, flags. Sorted by opponent implied total, lowest (best for the D/ST) first.",
+        "Raw D/ST matchup stats for the latest published NFL week, one row per defense, alphabetical by team. Weigh them yourself to pick a D/ST: " +
+        "lines (opp_implied_total, spread, d_win_prob, implied_total_move), opp_qb (sack/INT/fumble rates, career starts, dropbacks), " +
+        "opp_offense (sack rate allowed, giveaways, points, yards/play, fpa_to_dst = avg fantasy points D/STs scored vs them), " +
+        "defense (sacks, sack rate, takeaways, points and yards/play allowed, dst_fpts_per_game under the chosen scoring, return TDs), " +
+        "context (rest, divisional, roof, wind, temp), next_week, and flags (see flag_legend). " +
+        "Rates are fractions (0.06 = 6%). Each *_rank is the league rank, 1 = most favorable for the D/ST. 'games' fields give sample size.",
       inputSchema: {
         scoring: z
           .enum(Object.keys(PRESETS) as [Preset, ...Preset[]])
@@ -49,7 +54,10 @@ export function createNflMcpServer() {
     async ({ scoring, team }) => {
       const doc = await loadDstDoc(scoring);
       if (!doc) return json({ error: "No D/ST rankings published yet." });
-      const teams = sortTeams(doc.teams, DEFAULT_SORT, "asc").filter((t) => !team || t.team === team.toUpperCase());
+      // Alphabetical, so the order doesn't hint at a pick.
+      const teams = doc.teams
+        .filter((t) => !team || t.team === team.toUpperCase())
+        .sort((a, b) => a.team.localeCompare(b.team));
       return json({ ...doc, teams });
     },
   );
