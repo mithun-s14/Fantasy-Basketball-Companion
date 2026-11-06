@@ -8,12 +8,12 @@ import {
   type Basis,
   LAST_REGULAR_SEASON_WEEK,
   fetchWeekMatchups,
+  kickerStats,
   loadKickerStats,
-  rankKickers,
 } from "@/nfl/kickers";
 
-// Sortable numeric columns. Default is edge, highest first.
-const SORTS = ["teamFga", "oppFgmAllowed", "edge"] as const;
+// Sortable numeric columns. Default is team FG attempts, highest first.
+const SORTS = ["teamFga", "oppFgmAllowed"] as const;
 type Sort = (typeof SORTS)[number];
 
 export default async function KickersPage({
@@ -23,12 +23,12 @@ export default async function KickersPage({
 }) {
   const params = await searchParams;
   const basis: Basis = params.basis && params.basis in BASES ? (params.basis as Basis) : "season_avg";
-  const sort: Sort = SORTS.includes(params.sort as Sort) ? (params.sort as Sort) : "edge";
+  const sort: Sort = SORTS.includes(params.sort as Sort) ? (params.sort as Sort) : "teamFga";
   const dir = params.dir === "asc" ? "asc" : "desc";
 
   let currentWeek = 0;
   let week = 0;
-  let picks: ReturnType<typeof rankKickers> = [];
+  let picks: ReturnType<typeof kickerStats> = [];
   let error: string | null = null;
   try {
     const [current, stats] = await Promise.all([fetchWeekMatchups(), loadKickerStats()]);
@@ -40,7 +40,7 @@ export default async function KickersPage({
         ? requested
         : currentWeek;
     const { matchups } = week === currentWeek ? current : await fetchWeekMatchups(week);
-    picks = rankKickers(matchups, stats, basis).sort((a, b) => (dir === "asc" ? 1 : -1) * (a[sort] - b[sort]));
+    picks = kickerStats(matchups, stats, basis).sort((a, b) => (dir === "asc" ? 1 : -1) * (a[sort] - b[sort]));
     if (!stats.length) error = "No kicker stats yet. Run npm run nfl:scrape-team-stats.";
   } catch (e) {
     error = e instanceof Error ? e.message : "Could not load kicker data.";
@@ -93,7 +93,7 @@ export default async function KickersPage({
             ))}
           </nav>
           <div className="border-b border-border px-4 py-3 text-xs text-muted-foreground">
-            Week {week} · Edge = opponent FG made allowed/game − team FG attempts/game ({BASES[basis].toLowerCase()})
+            Week {week} · Team FG attempts/game and opponent FG made allowed/game ({BASES[basis].toLowerCase()})
           </div>
           <div className="overflow-x-auto">
             <Table>
@@ -105,8 +105,7 @@ export default async function KickersPage({
                   {(
                     [
                       ["teamFga", "Team FGA", ""],
-                      ["oppFgmAllowed", "Opp FGM allowed", ""],
-                      ["edge", "Edge", "pr-5"],
+                      ["oppFgmAllowed", "Opp FGM allowed", "pr-5"],
                     ] as const
                   ).map(([key, label, pad]) => (
                     <TableHead
@@ -143,16 +142,7 @@ export default async function KickersPage({
                       {!p.indoor && p.weather && <p className="text-xs text-muted-foreground">{p.weather}</p>}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{p.teamFga.toFixed(2)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{p.oppFgmAllowed.toFixed(2)}</TableCell>
-                    <TableCell
-                      className={cn(
-                        "pr-5 text-right font-semibold tabular-nums",
-                        p.edge > 0 ? "text-[var(--green)]" : p.edge < 0 ? "text-[var(--red)]" : "text-muted-foreground",
-                      )}
-                    >
-                      {p.edge > 0 ? "+" : ""}
-                      {p.edge.toFixed(2)}
-                    </TableCell>
+                    <TableCell className="pr-5 text-right tabular-nums">{p.oppFgmAllowed.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

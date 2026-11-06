@@ -1,5 +1,5 @@
 import { it, expect } from "vitest";
-import { rankKickers } from "./kickers";
+import { kickerStats } from "./kickers";
 
 const m = (team: string, opponent: string) => ({ team, opponent, home: true, indoor: false });
 const s = (team: string, stat: string, season_avg: number | null) => ({
@@ -10,7 +10,7 @@ const s = (team: string, stat: string, season_avg: number | null) => ({
   prev_season_avg: null,
 });
 
-it("ranks kickers by opponent FG allowed minus own FG attempts", () => {
+it("attaches team FGA and opponent FGM allowed, dropping teams missing data", () => {
   const stats = [
     s("A", "field-goal-attempts-per-game", 2),
     s("B", "field-goal-attempts-per-game", 1),
@@ -18,9 +18,9 @@ it("ranks kickers by opponent FG allowed minus own FG attempts", () => {
     s("B", "opponent-field-goals-made-per-game", 3),
     s("C", "field-goal-attempts-per-game", null), // missing data -> dropped
   ];
-  const ranked = rankKickers([m("A", "B"), m("B", "A"), m("C", "A")], stats, "season_avg");
-  expect(ranked.map((r) => [r.team, r.edge])).toEqual([
-    ["A", 1], // B allows 3, A attempts 2
-    ["B", 0.5], // A allows 1.5, B attempts 1
+  const rows = kickerStats([m("A", "B"), m("B", "A"), m("C", "A")], stats, "season_avg");
+  expect(rows.map((r) => [r.team, r.teamFga, r.oppFgmAllowed])).toEqual([
+    ["A", 2, 3],
+    ["B", 1, 1.5],
   ]);
 });

@@ -26,14 +26,11 @@ export interface Matchup {
 export interface KickerPick extends Matchup {
   teamFga: number;
   oppFgmAllowed: number;
-  /** Opponent FG made allowed/game minus this team's FG attempts/game. */
-  edge: number;
 }
 
-// ponytail: edge is a plain difference, so a low-volume offense facing a leaky
-// defense outranks a high-volume one facing the same defense. Blend in raw
-// volume (e.g. rank on teamFga + oppFgmAllowed) if that bites.
-export function rankKickers(
+// Attaches the two raw kicker stats to each matchup. No combined score on
+// purpose: two stats aren't enough for a projection, so the reader weighs them.
+export function kickerStats(
   matchups: Matchup[],
   stats: Pick<TeamStatRow, "team" | "stat" | Basis>[],
   basis: Basis,
@@ -46,9 +43,8 @@ export function rankKickers(
       const teamFga = get(m.team, FGA);
       const oppFgmAllowed = get(m.opponent, OPP_FGM);
       if (teamFga === null || oppFgmAllowed === null) return [];
-      return [{ ...m, teamFga, oppFgmAllowed, edge: oppFgmAllowed - teamFga }];
-    })
-    .sort((a, b) => b.edge - a.edge);
+      return [{ ...m, teamFga, oppFgmAllowed }];
+    });
 }
 
 interface EspnScoreboard {

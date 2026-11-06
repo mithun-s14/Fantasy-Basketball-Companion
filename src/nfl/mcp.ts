@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { BASES, type Basis, LAST_REGULAR_SEASON_WEEK, fetchWeekMatchups, loadKickerStats, rankKickers } from "./kickers";
+import { BASES, type Basis, LAST_REGULAR_SEASON_WEEK, fetchWeekMatchups, kickerStats, loadKickerStats } from "./kickers";
 import { PRESETS, type Preset, loadDstDoc } from "./dst";
 import { loadCoverage } from "./coverage";
 
@@ -16,7 +16,7 @@ export function createNflMcpServer() {
     "get_kicker_streamers",
     {
       description:
-        "Fantasy kicker streaming ranks for an NFL week. edge = opponent FG made allowed/game minus the team's FG attempts/game; higher is better. Games already kicked off are excluded.",
+        "Raw kicker matchup stats for an NFL week, one row per kicker, alphabetical by team: teamFga = the team's FG attempts/game, oppFgmAllowed = FG made/game the opponent's defense allows, home, indoor (dome or retractable roof), weather (forecast, only a few days out). Weigh them yourself; there is no combined score. Games already kicked off are excluded.",
       inputSchema: {
         week: z.number().int().min(1).max(LAST_REGULAR_SEASON_WEEK).optional().describe("Regular-season week; omit for the current week"),
         basis: z
@@ -28,7 +28,7 @@ export function createNflMcpServer() {
     },
     async ({ week, basis }) => {
       const [current, stats] = await Promise.all([fetchWeekMatchups(week), loadKickerStats()]);
-      return json({ week: current.week, basis, picks: rankKickers(current.matchups, stats, basis) });
+      return json({ week: current.week, basis, picks: kickerStats(current.matchups, stats, basis).sort((a, b) => a.team.localeCompare(b.team)) });
     },
   );
 
