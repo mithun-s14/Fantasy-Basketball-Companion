@@ -17,6 +17,10 @@ export interface Matchup {
   team: string;
   opponent: string;
   home: boolean;
+  /** ESPN marks domes and retractable roofs alike as indoor. */
+  indoor: boolean;
+  /** ESPN/AccuWeather forecast, e.g. "62° Sunny"; only present a few days out. */
+  weather?: string;
 }
 
 export interface KickerPick extends Matchup {
@@ -52,7 +56,9 @@ interface EspnScoreboard {
   events: {
     date: string;
     status: { type: { state: "pre" | "in" | "post" } };
+    weather?: { displayValue: string; temperature: number };
     competitions: {
+      venue?: { indoor?: boolean };
       competitors: {
         homeAway: "home" | "away";
         team: { displayName: string };
@@ -85,10 +91,14 @@ export async function fetchWeekMatchups(week?: number): Promise<{
     .filter((e) => e.status.type.state === "pre")
     .flatMap((e) => {
       const [a, b] = e.competitions[0].competitors;
+      const indoor = e.competitions[0].venue?.indoor ?? false;
+      const weather = e.weather && `${e.weather.temperature}° ${e.weather.displayValue}`;
       return [a, b].map((c) => ({
         team: c.team.displayName,
         opponent: (c === a ? b : a).team.displayName,
         home: c.homeAway === "home",
+        indoor,
+        weather,
       }));
     });
   // Midweek ESPN still reports the finished week; roll forward to the next one.

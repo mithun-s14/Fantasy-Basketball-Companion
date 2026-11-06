@@ -101,6 +101,7 @@ export default async function KickersPage({
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-12 pl-5 text-xs uppercase tracking-wider">#</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider">Kicker (team)</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider">Conditions</TableHead>
                   {(
                     [
                       ["teamFga", "Team FGA", ""],
@@ -135,6 +136,11 @@ export default async function KickersPage({
                       <p className="text-xs text-muted-foreground">
                         {p.home ? "vs" : "@"} {p.opponent}
                       </p>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-sm">
+                      {/* Forecast only shows up a few days out; domes don't need one. */}
+                      <p>{p.indoor ? "Dome" : "Outdoors"}</p>
+                      {!p.indoor && p.weather && <p className="text-xs text-muted-foreground">{p.weather}</p>}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{p.teamFga.toFixed(2)}</TableCell>
                     <TableCell className="text-right tabular-nums">{p.oppFgmAllowed.toFixed(2)}</TableCell>
