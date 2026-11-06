@@ -4,6 +4,8 @@ import * as cheerio from "cheerio";
 export const STATS = [
   "opponent-field-goals-made-per-game",
   "field-goal-attempts-per-game",
+  "red-zone-scoring-pct",
+  "opponent-red-zone-scoring-pct",
 ];
 
 export const statUrl = (stat: string) =>

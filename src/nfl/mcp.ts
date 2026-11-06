@@ -16,7 +16,7 @@ export function createNflMcpServer() {
     "get_kicker_streamers",
     {
       description:
-        "Raw kicker matchup stats for an NFL week, one row per kicker, alphabetical by team: teamFga = the team's FG attempts/game, oppFgmAllowed = FG made/game the opponent's defense allows, home, indoor (dome or retractable roof), weather (forecast, only a few days out). Weigh them yourself; there is no combined score. Games already kicked off are excluded.",
+        "Raw kicker matchup stats for an NFL week, one row per kicker, alphabetical by team: teamFga = the team's FG attempts/game, oppFgmAllowed = FG made/game the opponent's defense allows, teamRzTd = the team's red zone TD rate, oppRzTdAllowed = red zone TD rate the opponent's defense allows (0-1 fractions, null if not scraped; lower means more drives end in FGs), impliedTotal = Vegas implied points for the team (null until a line is posted), home, indoor (dome or retractable roof), weather (forecast, only a few days out). Weigh them yourself; there is no combined score. Games already kicked off are excluded.",
       inputSchema: {
         week: z.number().int().min(1).max(LAST_REGULAR_SEASON_WEEK).optional().describe("Regular-season week; omit for the current week"),
         basis: z

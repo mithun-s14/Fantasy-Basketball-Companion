@@ -13,7 +13,8 @@ import {
 } from "@/nfl/kickers";
 
 // Sortable numeric columns. Default is team FG attempts, highest first.
-const SORTS = ["teamFga", "oppFgmAllowed"] as const;
+const SORTS = ["impliedTotal", "teamFga", "oppFgmAllowed", "teamRzTd", "oppRzTdAllowed"] as const;
+const pct = (n: number | null) => (n === null ? "—" : `${(n * 100).toFixed(0)}%`);
 type Sort = (typeof SORTS)[number];
 
 export default async function KickersPage({
@@ -40,7 +41,10 @@ export default async function KickersPage({
         ? requested
         : currentWeek;
     const { matchups } = week === currentWeek ? current : await fetchWeekMatchups(week);
-    picks = kickerStats(matchups, stats, basis).sort((a, b) => (dir === "asc" ? 1 : -1) * (a[sort] - b[sort]));
+    // Missing values (no line yet, red zone not scraped) sort last either way.
+    picks = kickerStats(matchups, stats, basis).sort((a, b) =>
+      a[sort] === null ? 1 : b[sort] === null ? -1 : (dir === "asc" ? 1 : -1) * (a[sort] - b[sort]),
+    );
     if (!stats.length) error = "No kicker stats yet. Run npm run nfl:scrape-team-stats.";
   } catch (e) {
     error = e instanceof Error ? e.message : "Could not load kicker data.";
@@ -93,7 +97,7 @@ export default async function KickersPage({
             ))}
           </nav>
           <div className="border-b border-border px-4 py-3 text-xs text-muted-foreground">
-            Week {week} · Team FG attempts/game and opponent FG made allowed/game ({BASES[basis].toLowerCase()})
+            Week {week} · Implied = Vegas team total · FG and red zone TD rates ({BASES[basis].toLowerCase()}); low red zone TD% means more drives end in FGs
           </div>
           <div className="overflow-x-auto">
             <Table>
@@ -104,8 +108,11 @@ export default async function KickersPage({
                   <TableHead className="text-xs uppercase tracking-wider">Conditions</TableHead>
                   {(
                     [
+                      ["impliedTotal", "Implied", ""],
                       ["teamFga", "Team FGA", ""],
-                      ["oppFgmAllowed", "Opp FGM allowed", "pr-5"],
+                      ["oppFgmAllowed", "Opp FGM allowed", ""],
+                      ["teamRzTd", "RZ TD%", ""],
+                      ["oppRzTdAllowed", "Opp RZ TD% allowed", "pr-5"],
                     ] as const
                   ).map(([key, label, pad]) => (
                     <TableHead
@@ -141,8 +148,11 @@ export default async function KickersPage({
                       <p>{p.indoor ? "Dome" : "Outdoors"}</p>
                       {!p.indoor && p.weather && <p className="text-xs text-muted-foreground">{p.weather}</p>}
                     </TableCell>
+                    <TableCell className="text-right tabular-nums">{p.impliedTotal?.toFixed(1) ?? "—"}</TableCell>
                     <TableCell className="text-right tabular-nums">{p.teamFga.toFixed(2)}</TableCell>
-                    <TableCell className="pr-5 text-right tabular-nums">{p.oppFgmAllowed.toFixed(2)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{p.oppFgmAllowed.toFixed(2)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{pct(p.teamRzTd)}</TableCell>
+                    <TableCell className="pr-5 text-right tabular-nums">{pct(p.oppRzTdAllowed)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
