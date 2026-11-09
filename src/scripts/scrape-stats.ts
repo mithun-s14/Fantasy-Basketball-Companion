@@ -103,6 +103,9 @@ async function fetchNbaStats(lastNGames: 0 | 10): Promise<StatRow[] | null> {
   try {
     const res = await curlReq.get(url, {
       impersonate: "chrome136",
+      // stats.nba.com hangs (never responds) for cloud IPs like GitHub's runners;
+      // without this the job hits its 10m cap before the BBRef fallback runs.
+      timeout: 60_000,
       headers: {
         Accept: "application/json, text/plain, */*",
         "Accept-Language": "en-US,en;q=0.9",
