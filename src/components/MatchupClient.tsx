@@ -320,7 +320,6 @@ export function MatchupClient({ userPlayers, opponentPlayers, allStats }: Props)
   // Default to the current fantasy week: Monday through Sunday
   const [startDate, setStartDate] = useState<Date | undefined>(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [endDate, setEndDate] = useState<Date | undefined>(() => endOfWeek(new Date(), { weekStartsOn: 1 }));
-  const [statType, setStatType] = useState<"season" | "last10">("season");
   const [gameCounts, setGameCounts] = useState<Record<string, number>>({});
   const [isLoadingGames, setIsLoadingGames] = useState(false);
   const [gameError, setGameError] = useState<string | null>(null);
@@ -355,9 +354,8 @@ export function MatchupClient({ userPlayers, opponentPlayers, allStats }: Props)
     return () => controller.abort();
   }, [startDate, endDate]);
 
-  // Compute projection
-  const hasLast10Stats = allStats.some((s) => s.stat_type === "last10");
-  const effectiveStatType = statType === "last10" && !hasLast10Stats ? "season" : statType;
+  // Compute projection (season averages only; the scraper doesn't collect last-10)
+  const effectiveStatType = "season";
 
   const result: MatchupResult | null =
     userPlayers.length > 0 && oppPlayers.length > 0 && !isLoadingGames
@@ -404,25 +402,6 @@ export function MatchupClient({ userPlayers, opponentPlayers, allStats }: Props)
                 onStartDateChange={setStartDate}
                 onEndDateChange={setEndDate}
               />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Stats</p>
-              <div className="flex h-9 rounded-md border border-border overflow-hidden text-sm font-medium">
-                <button
-                  onClick={() => setStatType("season")}
-                  className={`px-4 py-2 transition-colors ${statType === "season" ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-accent"}`}
-                >
-                  Season
-                </button>
-                <button
-                  onClick={() => setStatType("last10")}
-                  className={`px-4 py-2 transition-colors ${statType === "last10" ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-accent"}`}
-                  title={!hasLast10Stats ? "Last 10 stats not yet available \u2014 using season averages" : undefined}
-                >
-                  Last 10
-                  {!hasLast10Stats && <span className="ml-1 text-xs opacity-60">(N/A)</span>}
-                </button>
-              </div>
             </div>
           </div>
 
