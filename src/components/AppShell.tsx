@@ -50,7 +50,7 @@ const NBA_SECTIONS: Section[] = [
     heading: "Analyze",
     items: [
       { label: "Schedule analyzer", short: "Schedule", path: "/analyzer", Icon: CalendarDays },
-      { label: "Projections", short: "Projections", path: "/projections", Icon: TrendingUp },
+      { label: "Pre-Season Projections", short: "Projections", path: "/projections", Icon: TrendingUp },
       { label: "Matchup", short: "Matchup", path: "/matchup", Icon: Swords, gated: true },
     ],
   },
@@ -88,7 +88,7 @@ const ALL_ITEMS = [...NBA_SECTIONS, ...NFL_SECTIONS].flatMap((s) => s.items);
 const TITLES: Record<string, [string, string]> = {
   "/": ["Dashboard", ""], // subtitle is the week label, passed in
   "/analyzer": ["Schedule analyzer", "Games per NBA team in a date range"],
-  "/projections": ["Projections", "2026–27 season averages · all players"],
+  "/projections": ["Pre-Season Projections", "2026–27 season averages · all players"],
   "/matchup": ["Matchup", "Category projections for this week"],
   "/draft": ["Draft assistant", "Rankings tuned to your league settings and punts"],
   "/roster": ["My roster", "Your players, games and category value"],

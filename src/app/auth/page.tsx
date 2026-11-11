@@ -227,7 +227,7 @@ function AuthContent() {
 
 const SELLING_POINTS = [
   { Icon: CalendarDays, title: "Schedule analyzer", body: "Game counts per team over any date range." },
-  { Icon: TrendingUp, title: "Projections", body: "2026–27 season averages with category value." },
+  { Icon: TrendingUp, title: "Pre-Season Projections", body: "2026–27 season averages with category value." },
   { Icon: Swords, title: "Matchup analysis", body: "Project all nine categories against your opponent." },
 ];
 
