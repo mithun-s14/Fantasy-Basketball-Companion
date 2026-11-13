@@ -16,6 +16,7 @@ import {
   Grid3x3,
   Columns3,
   ListOrdered,
+  Plug,
   type LucideIcon,
 } from "lucide-react";
 import { AuthButton } from "@/components/AuthButton";
@@ -75,13 +76,14 @@ const NFL_SECTIONS: Section[] = [
       { label: "D/ST streamer", short: "D/ST", path: "/nfl/dst", Icon: Shield },
       { label: "Coverage schemes", short: "Coverage", path: "/nfl/coverage", Icon: Grid3x3 },
       { label: "Receiver alignment", short: "WR slot", path: "/nfl/receivers", Icon: Columns3 },
+      { label: "MCP access", short: "MCP", path: "/nfl/mcp", Icon: Plug },
     ],
   },
 ];
 
 const SPORTS = {
   nba: { label: "NBA", home: "/", sections: NBA_SECTIONS, tabs: ["/", "/analyzer", "/matchup", "/roster", "/chat"] },
-  nfl: { label: "NFL", home: "/nfl/kickers", sections: NFL_SECTIONS, tabs: ["/nfl/kickers", "/nfl/dst", "/nfl/coverage", "/nfl/receivers"] },
+  nfl: { label: "NFL", home: "/nfl/kickers", sections: NFL_SECTIONS, tabs: ["/nfl/kickers", "/nfl/dst", "/nfl/coverage", "/nfl/receivers", "/nfl/mcp"] },
 };
 
 const ALL_ITEMS = [...NBA_SECTIONS, ...NFL_SECTIONS].flatMap((s) => s.items);
@@ -99,6 +101,7 @@ const TITLES: Record<string, [string, string]> = {
   "/nfl/dst": ["D/ST streamer", "Every D/ST matchup this week, sorted by opponent implied total"],
   "/nfl/coverage": ["Coverage schemes", "Man/zone, middle open/closed, blitz, box and sub package rates by defense"],
   "/nfl/receivers": ["Receiver alignment", "WR fantasy points from the slot vs out wide"],
+  "/nfl/mcp": ["MCP access", "Use this site's NFL data from Claude, ChatGPT or any MCP client"],
 };
 
 export function AppShell({ userEmail, weekLabel, children }: Props) {
