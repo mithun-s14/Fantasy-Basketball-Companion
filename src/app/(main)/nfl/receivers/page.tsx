@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { COLUMNS, loadReceivers, RECEIVERS_URL, type ReceiverKey } from "@/nfl/receivers";
@@ -11,11 +12,12 @@ const fmt = (key: ReceiverKey, v: number | null) =>
 export default async function ReceiversPage({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string; dir?: string }>;
+  searchParams: Promise<{ sort?: string; dir?: string; q?: string }>;
 }) {
   const params = await searchParams;
   const sort: ReceiverKey = COLUMNS.find(([k]) => k === params.sort)?.[0] ?? "slot_pct";
   const dir = params.dir === "asc" ? "asc" : "desc";
+  const q = params.q?.trim() ?? "";
 
   let rows: Awaited<ReturnType<typeof loadReceivers>> = [];
   let error: string | null = null;
@@ -29,6 +31,8 @@ export default async function ReceiversPage({
       : msg;
   }
   const scrapedAt = rows.map((r) => r.scraped_at).sort().pop();
+  // Keep each player's overall rank while filtering.
+  const shown = rows.map((r, i) => ({ ...r, rank: i + 1 })).filter((r) => r.player.toLowerCase().includes(q.toLowerCase()));
 
   return (
     <div className="w-full space-y-6 px-4 py-6 sm:px-6">
@@ -46,6 +50,11 @@ export default async function ReceiversPage({
             </a>
             {scrapedAt && ` · scraped ${new Date(scrapedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
           </div>
+          <form className="border-b border-border px-4 py-3">
+            <input type="hidden" name="sort" value={sort} />
+            <input type="hidden" name="dir" value={dir} />
+            <Input type="search" name="q" defaultValue={q} placeholder="Search player…" aria-label="Search players" className="sm:w-60" />
+          </form>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -61,7 +70,7 @@ export default async function ReceiversPage({
                     >
                       {/* First click sorts highest first; clicking the active column flips it. */}
                       <Link
-                        href={`?${new URLSearchParams({ sort: key, dir: sort === key && dir === "desc" ? "asc" : "desc" })}`}
+                        href={`?${new URLSearchParams({ sort: key, dir: sort === key && dir === "desc" ? "asc" : "desc", ...(q && { q }) })}`}
                         scroll={false}
                         className={cn("inline-flex items-center gap-1 hover:text-foreground", sort === key && "text-primary")}
                       >
@@ -73,9 +82,16 @@ export default async function ReceiversPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((r, i) => (
+                {!shown.length && (
+                  <TableRow>
+                    <TableCell colSpan={COLUMNS.length + 3} className="py-8 text-center text-sm text-muted-foreground">
+                      No players match &ldquo;{q}&rdquo;.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {shown.map((r) => (
                   <TableRow key={r.player}>
-                    <TableCell className="pl-5 font-display text-base font-bold text-muted-foreground tabular-nums">{i + 1}</TableCell>
+                    <TableCell className="pl-5 font-display text-base font-bold text-muted-foreground tabular-nums">{r.rank}</TableCell>
                     <TableCell className="whitespace-nowrap font-medium">{r.player}</TableCell>
                     <TableCell className="text-muted-foreground">{r.team}</TableCell>
                     {COLUMNS.map(([key], j) => (
