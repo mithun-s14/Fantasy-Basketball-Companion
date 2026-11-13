@@ -16,3 +16,15 @@ create table if not exists public.nfl_receiver_alignment (
 
 -- Server-side writes only (service role bypasses RLS).
 alter table public.nfl_receiver_alignment enable row level security;
+
+-- Usage + next-game matchup from nflverse (stats_player_week, snap_counts, nfldata games.csv).
+-- Shares are percents of team targets / air yards; opp is nflverse's code, '@' prefix = away.
+alter table public.nfl_receiver_alignment
+  add column if not exists snap_pct   double precision,  -- avg offensive snap %, games played
+  add column if not exists tgt_pg     double precision,
+  add column if not exists tgt_pct    double precision,  -- avg weekly target share
+  add column if not exists tgt_l3_pct double precision,  -- same, last 3 games played
+  add column if not exists air_pct    double precision,  -- avg weekly air yards share
+  add column if not exists opp        text,              -- next unplayed game, e.g. 'DEN' or '@DEN'; null on bye/season end
+  add column if not exists team_total double precision,  -- Vegas implied points for the player's team in that game
+  add column if not exists opp_wr_ppg double precision;  -- PPR points that defense allows to WRs per game

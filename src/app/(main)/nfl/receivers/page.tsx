@@ -4,9 +4,12 @@ import { PageHeader } from "@/components/PageHeader";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { COLUMNS, loadReceivers, RECEIVERS_URL, type ReceiverKey } from "@/nfl/receivers";
+import { COLUMNS as ALIGN_COLUMNS, loadReceivers, RECEIVERS_URL, USAGE_COLUMNS, type ReceiverKey, type UsageKey } from "@/nfl/receivers";
 
-const fmt = (key: ReceiverKey, v: number | null) =>
+const COLUMNS = [...ALIGN_COLUMNS, ...USAGE_COLUMNS];
+type Key = ReceiverKey | UsageKey;
+
+const fmt = (key: Key, v: number | null) =>
   v == null ? "—" : key.endsWith("_pct") ? `${v.toFixed(0)}%` : key === "games" ? v.toFixed(0) : v.toFixed(1);
 
 export default async function ReceiversPage({
@@ -15,7 +18,7 @@ export default async function ReceiversPage({
   searchParams: Promise<{ sort?: string; dir?: string; q?: string }>;
 }) {
   const params = await searchParams;
-  const sort: ReceiverKey = COLUMNS.find(([k]) => k === params.sort)?.[0] ?? "slot_pct";
+  const sort: Key = COLUMNS.find(([k]) => k === params.sort)?.[0] ?? "slot_pct";
   const dir = params.dir === "asc" ? "asc" : "desc";
   const q = params.q?.trim() ?? "";
 
@@ -27,7 +30,7 @@ export default async function ReceiversPage({
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     error = /nfl_receiver_alignment/.test(msg)
-      ? "The nfl_receiver_alignment table doesn't exist yet. Run sql/nfl/nfl_receiver_alignment.sql in Supabase."
+      ? "The nfl_receiver_alignment table or its columns are missing. Run sql/nfl/nfl_receiver_alignment.sql in Supabase, then npm run nfl:scrape-receivers."
       : msg;
   }
   const scrapedAt = rows.map((r) => r.scraped_at).sort().pop();
@@ -43,8 +46,13 @@ export default async function ReceiversPage({
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           <div className="border-b border-border px-4 py-3 text-xs text-muted-foreground">
-            Fantasy points per game from the slot vs out wide, this season. Share = share of the player&apos;s points, not
-            snaps ·{" "}
+            Fantasy points per game from the slot vs out wide, this season. Slot/wide share = share of the player&apos;s
+            points, not snaps. Usage (snap %, targets, target and air yards share) and this week&apos;s matchup (Vegas
+            implied team total, PPR points the defense allows to WRs per game) from{" "}
+            <a href="https://github.com/nflverse" target="_blank" rel="noreferrer" className="underline hover:text-foreground">
+              nflverse
+            </a>{" "}
+            ·{" "}
             <a href={RECEIVERS_URL} target="_blank" rel="noreferrer" className="underline hover:text-foreground">
               Razzball
             </a>
@@ -62,6 +70,7 @@ export default async function ReceiversPage({
                   <TableHead className="w-12 pl-5 text-xs uppercase tracking-wider">#</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider">Player</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider">Team</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider">Opp</TableHead>
                   {COLUMNS.map(([key, label], i) => (
                     <TableHead
                       key={key}
@@ -84,7 +93,7 @@ export default async function ReceiversPage({
               <TableBody>
                 {!shown.length && (
                   <TableRow>
-                    <TableCell colSpan={COLUMNS.length + 3} className="py-8 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={COLUMNS.length + 4} className="py-8 text-center text-sm text-muted-foreground">
                       No players match &ldquo;{q}&rdquo;.
                     </TableCell>
                   </TableRow>
@@ -94,6 +103,7 @@ export default async function ReceiversPage({
                     <TableCell className="pl-5 font-display text-base font-bold text-muted-foreground tabular-nums">{r.rank}</TableCell>
                     <TableCell className="whitespace-nowrap font-medium">{r.player}</TableCell>
                     <TableCell className="text-muted-foreground">{r.team}</TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">{r.opp ?? (r.tgt_pg == null ? "—" : "BYE")}</TableCell>
                     {COLUMNS.map(([key], j) => (
                       <TableCell
                         key={key}
