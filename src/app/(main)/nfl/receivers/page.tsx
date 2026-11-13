@@ -6,7 +6,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { COLUMNS as ALIGN_COLUMNS, loadReceivers, RECEIVERS_URL, USAGE_COLUMNS, type ReceiverKey, type UsageKey } from "@/nfl/receivers";
 
-const COLUMNS = [...ALIGN_COLUMNS, ...USAGE_COLUMNS];
+// Each "Opp ... allowed" alignment column sits right after the player's own PPG for that alignment.
+const OPP_ALIGN = { slot_ppg: "opp_slot_ppg", wide_ppg: "opp_wide_ppg" } as const;
+const COLUMNS = [
+  ...ALIGN_COLUMNS.flatMap((c) => {
+    const opp = USAGE_COLUMNS.find(([k]) => k === OPP_ALIGN[c[0] as keyof typeof OPP_ALIGN]);
+    return opp ? [c, opp] : [c];
+  }),
+  ...USAGE_COLUMNS.filter(([k]) => !Object.values(OPP_ALIGN).includes(k as never)),
+];
 type Key = ReceiverKey | UsageKey;
 
 const fmt = (key: Key, v: number | null) =>
@@ -47,7 +55,8 @@ export default async function ReceiversPage({
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           <div className="border-b border-border px-4 py-3 text-xs text-muted-foreground">
             Fantasy points per game from the slot vs out wide, this season. Slot/wide share = share of the player&apos;s
-            points, not snaps. Usage (snap %, targets, target and air yards share) and this week&apos;s matchup (Vegas
+            points, not snaps. Opp slot/wide allowed = PPR points per game this week&apos;s opponent allows to WRs from
+            that alignment (Razzball). Usage (snap %, targets, target and air yards share) and this week&apos;s matchup (Vegas
             implied team total, PPR points the defense allows to WRs per game) from{" "}
             <a href="https://github.com/nflverse" target="_blank" rel="noreferrer" className="underline hover:text-foreground">
               nflverse

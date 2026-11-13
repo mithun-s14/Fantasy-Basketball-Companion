@@ -36,6 +36,24 @@ export function parseReceivers(html: string): ReceiverRow[] {
     });
 }
 
+// What each defense allows to WRs from the slot vs out wide (Razzball, PPR PPG), keyed by nflverse team code.
+export const DEFENSE_URL = "https://football.razzball.com/defensive-slot-vs-wide-ppg-allowed/";
+const RAZZ_TO_NFLVERSE: Record<string, string> = { ARZ: "ARI", BLT: "BAL", CLV: "CLE", HST: "HOU" };
+export function parseDefenseAlignment(html: string): Map<string, { slot: number | null; wide: number | null }> {
+  const $ = cheerio.load(html);
+  const num = (s: string) => (Number.isFinite(parseFloat(s)) ? parseFloat(s) : null);
+  return new Map(
+    $("#neorazzstatstable tr")
+      .toArray()
+      .map((tr) => $(tr).find("td"))
+      .filter((td) => td.length >= 8)
+      .map((td) => {
+        const code = td.eq(1).text().trim();
+        return [RAZZ_TO_NFLVERSE[code] ?? code, { slot: num(td.eq(3).text()), wide: num(td.eq(4).text()) }] as const;
+      }),
+  );
+}
+
 export async function loadReceivers() {
   const { data, error } = await createServerSupabaseClient()
     .from("nfl_receiver_alignment")
@@ -60,6 +78,8 @@ export const USAGE_COLUMNS = [
   ["air_pct", "Air yd share"],
   ["team_total", "Team total"],
   ["opp_wr_ppg", "Opp WR PPG allowed"],
+  ["opp_slot_ppg", "Opp slot PPG allowed"],
+  ["opp_wide_ppg", "Opp wide PPG allowed"],
 ] as const;
 export type UsageKey = (typeof USAGE_COLUMNS)[number][0];
 export type Usage = { opp: string | null } & Record<UsageKey, number | null>;
@@ -104,7 +124,7 @@ const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.le
 const pct = (x: number | null) => (x == null ? null : x * 100);
 
 /** Per-WR usage keyed by normName, plus the matchup for each player's next unplayed regular-season game. */
-export function buildUsage(stats: Rec[], snaps: Rec[], games: Rec[], season: number): Map<string, Usage> {
+export function buildUsage(stats: Rec[], snaps: Rec[], games: Rec[], season: number) {
   // Razzball lists some players nflverse files as TE (e.g. Jackson Meeks), so match both.
   const wr = stats.filter((r) => (r.position === "WR" || r.position === "TE") && r.season_type === "REG");
 
@@ -143,7 +163,8 @@ export function buildUsage(stats: Rec[], snaps: Rec[], games: Rec[], season: num
     byPlayer.set(k, [...(byPlayer.get(k) ?? []), r]);
   }
 
-  const out = new Map<string, Usage>();
+  // Slot/wide allowed come from Razzball's defense page; the scrape fills them in.
+  const out = new Map<string, Omit<Usage, "opp_slot_ppg" | "opp_wide_ppg">>();
   for (const [k, rows] of byPlayer) {
     rows.sort((a, b) => Number(a.week) - Number(b.week));
     const n = (r: Rec, f: string) => Number(r[f]) || 0;

@@ -1,5 +1,5 @@
 import { it, expect } from "vitest";
-import { buildUsage, parseCsv, parseReceivers } from "./receivers";
+import { buildUsage, parseCsv, parseDefenseAlignment, parseReceivers } from "./receivers";
 
 const html = `
 <table id="neorazzstatstable" class="tablesorter">
@@ -48,4 +48,14 @@ it("builds WR usage and this week's matchup from nflverse CSVs", () => {
     opp_wr_ppg: 10, // SF allowed 8 + 12 WR points over 2 games; RB points don't count
   });
   expect(u.get("some guy")?.opp).toBeNull(); // DAL's game is week 4, so it's on bye in week 3
+});
+
+it("parses Razzball's defensive slot vs wide table into nflverse codes", () => {
+  const d = parseDefenseAlignment(`<table id="neorazzstatstable"><tr><th>#</th></tr>
+    <tr><td></td><td>ARZ</td><td>24.7</td><td>9.5</td><td>15.2</td><td>33%</td><td>56%</td><td>LA</td></tr>
+    <tr><td></td><td>KC</td><td>22.6</td><td>11.2</td><td>-</td><td>45%</td><td>44%</td><td>ATL</td></tr></table>`);
+  expect([...d]).toEqual([
+    ["ARI", { slot: 9.5, wide: 15.2 }],
+    ["KC", { slot: 11.2, wide: null }],
+  ]);
 });

@@ -28,3 +28,8 @@ alter table public.nfl_receiver_alignment
   add column if not exists opp        text,              -- next unplayed game, e.g. 'DEN' or '@DEN'; null on bye/season end
   add column if not exists team_total double precision,  -- Vegas implied points for the player's team in that game
   add column if not exists opp_wr_ppg double precision;  -- PPR points that defense allows to WRs per game
+
+-- What the next opponent allows to WRs from the slot / out wide (Razzball defensive-slot-vs-wide-ppg-allowed).
+alter table public.nfl_receiver_alignment
+  add column if not exists opp_slot_ppg double precision,
+  add column if not exists opp_wide_ppg double precision;

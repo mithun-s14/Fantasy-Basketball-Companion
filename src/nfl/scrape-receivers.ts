@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
-import { buildUsage, NFLVERSE, normName, parseCsv, parseReceivers, RECEIVERS_URL, USAGE_COLUMNS } from "./receivers";
+import { buildUsage, DEFENSE_URL, NFLVERSE, normName, parseCsv, parseDefenseAlignment, parseReceivers, RECEIVERS_URL, USAGE_COLUMNS } from "./receivers";
 
 config({ path: ".env.local" });
 
@@ -12,9 +12,14 @@ async function main() {
     process.exit(1);
   }
 
-  const res = await fetch(RECEIVERS_URL, { headers: { "User-Agent": "Mozilla/5.0" } });
-  if (!res.ok) throw new Error(`fetch ${RECEIVERS_URL} failed ${res.status}`);
-  const rows = parseReceivers(await res.text());
+  const page = async (url: string) => {
+    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+    if (!res.ok) throw new Error(`fetch ${url} failed ${res.status}`);
+    return res.text();
+  };
+  const rows = parseReceivers(await page(RECEIVERS_URL));
+  const defense = parseDefenseAlignment(await page(DEFENSE_URL));
+  if (defense.size < 32) throw new Error(`expected 32 defenses, got ${defense.size}`);
   if (rows.length < 50) throw new Error(`expected a full WR table, got ${rows.length} rows`);
 
   // NFL season starts in September; Jan/Feb games still belong to the prior year's season.
@@ -28,7 +33,11 @@ async function main() {
   const [stats, snaps, games] = await Promise.all([csv(NFLVERSE.stats(season)), csv(NFLVERSE.snaps(season)), csv(NFLVERSE.games)]);
   const usage = buildUsage(stats, snaps, games, season);
   const empty = { opp: null, ...Object.fromEntries(USAGE_COLUMNS.map(([k]) => [k, null])) };
-  const merged = rows.map((r) => ({ ...r, ...empty, ...usage.get(normName(r.player)) }));
+  const merged = rows.map((r) => {
+    const m = { ...r, ...empty, ...usage.get(normName(r.player)) };
+    const d = m.opp ? defense.get(m.opp.replace("@", "")) : undefined;
+    return { ...m, opp_slot_ppg: d?.slot ?? null, opp_wide_ppg: d?.wide ?? null };
+  });
   const unmatched = merged.filter((r) => r.tgt_pg == null).map((r) => r.player);
   if (unmatched.length) console.warn(`[nfl:receivers] no nflverse match for ${unmatched.length}: ${unmatched.join(", ")}`);
 
