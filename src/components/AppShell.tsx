@@ -126,6 +126,18 @@ export function AppShell({ userEmail, weekLabel, children }: Props) {
   const [title, staticSub] = TITLES[activeItem?.path ?? ""] ?? ["", ""];
   const subtitle = activeItem?.path === "/" ? `Week of ${weekLabel}` : staticSub;
 
+  const sportSwitch = (fullWidth = false) => (
+    <Tabs value={shownSport} onValueChange={(v) => chooseSport(v as keyof typeof SPORTS)} variant="segment">
+      <TabsList className={fullWidth ? "grid w-full grid-cols-2" : undefined}>
+        {(Object.keys(SPORTS) as (keyof typeof SPORTS)[]).map((key) => (
+          <TabsTrigger key={key} value={key} className={cn("h-[30px] px-2.5 text-xs", fullWidth && "w-full")}>
+            {SPORTS[key].label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
+  );
+
   return (
     <div
       className="grid min-h-screen transition-[grid-template-columns] duration-200 ease-in-out max-[900px]:grid-cols-1"
@@ -145,6 +157,8 @@ export function AppShell({ userEmail, weekLabel, children }: Props) {
             </span>
           )}
         </Link>
+
+        {!collapsed && <div className="flex-none border-b border-[var(--border)] p-2">{sportSwitch(true)}</div>}
 
         <nav aria-label="Tools" className="flex-1 overflow-y-auto p-2">
           {sections.map(({ heading, items }, sectionIndex) => (
@@ -229,15 +243,8 @@ export function AppShell({ userEmail, weekLabel, children }: Props) {
               </span>
             )}
           </div>
-          <Tabs value={shownSport} onValueChange={(v) => chooseSport(v as keyof typeof SPORTS)} variant="segment">
-            <TabsList>
-              {(Object.keys(SPORTS) as (keyof typeof SPORTS)[]).map((key) => (
-                <TabsTrigger key={key} value={key} className="h-[30px] px-2.5 text-xs">
-                  {SPORTS[key].label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          {/* The sidebar hides on mobile and is too narrow when collapsed, so the switch falls back here. */}
+          <div className={collapsed ? undefined : "min-[901px]:hidden"}>{sportSwitch()}</div>
           <ThemeToggle />
           <AuthButton userEmail={userEmail} />
         </header>
