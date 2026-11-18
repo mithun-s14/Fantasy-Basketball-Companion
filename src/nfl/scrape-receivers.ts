@@ -12,7 +12,22 @@ async function main() {
     process.exit(1);
   }
 
+  // Razzball's Cloudflare 403s GitHub Actions IPs, so CI goes through Firecrawl; local runs fetch directly.
+  const firecrawlKey = process.env.FIRECRAWL_API_KEY;
   const page = async (url: string) => {
+    if (firecrawlKey) {
+      const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${firecrawlKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ url, formats: ["rawHtml"], proxy: "basic", maxAge: 0 }),
+      });
+      const body = await res.json().catch(() => null);
+      const status = body?.data?.metadata?.statusCode;
+      if (!res.ok || !body?.data?.rawHtml || status >= 400) {
+        throw new Error(`firecrawl ${url} failed ${res.status}/${status}: ${body?.error ?? ""}`);
+      }
+      return body.data.rawHtml as string;
+    }
     const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
     if (!res.ok) throw new Error(`fetch ${url} failed ${res.status}`);
     return res.text();
