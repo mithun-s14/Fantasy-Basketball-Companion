@@ -1,8 +1,9 @@
 import * as cheerio from "cheerio";
 import { createServerSupabaseClient } from "@/lib/supabase";
+import { RAZZ_TO_NFLVERSE, type nextGames } from "./receivers";
 
 // Razzball's RB zone vs gap carries, and what each defense allows on zone vs gap runs.
-// Both pages use Razzball's team codes (ARZ/BLT/CLV/HST), so they join directly.
+// Razzball's own "Next Opponent" column lags a week, so the matchup comes from nflverse's schedule (nextGames).
 export const RUSHERS_URL = "https://football.razzball.com/zonevsgap/";
 export const RUSH_DEFENSE_URL = "https://football.razzball.com/defensezonevsgap/";
 
@@ -45,19 +46,26 @@ export function parseRushers(html: string): RushRow[] {
   }));
 }
 
-/** Team code -> its rush defense (zone/gap yds per game allowed) and next opponent ("BYE" on bye weeks). */
+const nflverse = (razz: string) => RAZZ_TO_NFLVERSE[razz] ?? razz;
+
+/** nflverse team code -> zone/gap rush yds per game that defense allows. */
 export function parseRushDefense(html: string) {
   return new Map(
     cells(html, 13)
       .filter((c) => c[1] !== "NFL Average")
-      .map((c) => [c[1], { zone: num(c[3]), gap: num(c[4]), next: c[8] }] as const),
+      .map((c) => [nflverse(c[1]), { zone: num(c[3]), gap: num(c[4]) }] as const),
   );
 }
 
-export function mergeRushDefense(rows: RushRow[], defense: ReturnType<typeof parseRushDefense>): RushRow[] {
+/** opp is nflverse's code ('@' = away), 'BYE' when the team has no game this week. */
+export function mergeRushDefense(
+  rows: RushRow[],
+  defense: ReturnType<typeof parseRushDefense>,
+  next: ReturnType<typeof nextGames>,
+): RushRow[] {
   return rows.map((r) => {
-    const opp = defense.get(r.team)?.next ?? null;
-    const d = opp ? defense.get(opp) : undefined;
+    const opp = next.get(nflverse(r.team))?.opp ?? (next.size ? "BYE" : null);
+    const d = opp ? defense.get(opp.replace("@", "")) : undefined;
     return { ...r, opp, opp_zone_ypg: d?.zone ?? null, opp_gap_ypg: d?.gap ?? null };
   });
 }

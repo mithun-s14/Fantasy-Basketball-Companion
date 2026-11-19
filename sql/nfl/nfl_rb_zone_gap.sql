@@ -11,7 +11,7 @@ create table if not exists public.nfl_rb_zone_gap (
   gap_att      double precision,
   gap_pct      double precision,
   total_att    double precision,          -- includes "other" (non zone/gap) runs
-  opp          text,                      -- next opponent's Razzball code, or 'BYE'
+  opp          text,                      -- this week's opponent, nflverse code ('@' = away), or 'BYE'
   opp_zone_ypg double precision,          -- zone rush yards per game that opponent allows
   opp_gap_ypg  double precision,          -- gap rush yards per game that opponent allows
   scraped_at   timestamptz not null default now()

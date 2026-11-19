@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
 import { mergeRushDefense, parseRushDefense, parseRushers, RUSH_DEFENSE_URL, RUSHERS_URL } from "./rushing";
-import { buildUsage, DEFENSE_URL, NFLVERSE, normName, parseCsv, parseDefenseAlignment, parseReceivers, RECEIVERS_URL, USAGE_COLUMNS } from "./receivers";
+import { buildUsage, nextGames, DEFENSE_URL, NFLVERSE, normName, parseCsv, parseDefenseAlignment, parseReceivers, RECEIVERS_URL, USAGE_COLUMNS } from "./receivers";
 
 config({ path: ".env.local" });
 
@@ -37,7 +37,8 @@ async function main() {
   const defense = parseDefenseAlignment(await page(DEFENSE_URL));
   if (defense.size < 32) throw new Error(`expected 32 defenses, got ${defense.size}`);
   if (rows.length < 50) throw new Error(`expected a full WR table, got ${rows.length} rows`);
-  const rushers = mergeRushDefense(parseRushers(await page(RUSHERS_URL)), parseRushDefense(await page(RUSH_DEFENSE_URL)));
+  const rushers = parseRushers(await page(RUSHERS_URL));
+  const rushDefense = parseRushDefense(await page(RUSH_DEFENSE_URL));
   if (rushers.length < 50) throw new Error(`expected a full RB zone/gap table, got ${rushers.length} rows`);
 
   // NFL season starts in September; Jan/Feb games still belong to the prior year's season.
@@ -70,7 +71,7 @@ async function main() {
     console.log(`[nfl:receivers] upserted ${data.length} rows into ${table}.`);
   };
   await replace("nfl_receiver_alignment", merged);
-  await replace("nfl_rb_zone_gap", rushers);
+  await replace("nfl_rb_zone_gap", mergeRushDefense(rushers, rushDefense, nextGames(games, season)));
 }
 
 main().catch((err) => {

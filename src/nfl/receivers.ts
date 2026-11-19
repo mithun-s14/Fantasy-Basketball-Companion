@@ -38,7 +38,7 @@ export function parseReceivers(html: string): ReceiverRow[] {
 
 // What each defense allows to WRs from the slot vs out wide (Razzball, PPR PPG), keyed by nflverse team code.
 export const DEFENSE_URL = "https://football.razzball.com/defensive-slot-vs-wide-ppg-allowed/";
-const RAZZ_TO_NFLVERSE: Record<string, string> = { ARZ: "ARI", BLT: "BAL", CLV: "CLE", HST: "HOU" };
+export const RAZZ_TO_NFLVERSE: Record<string, string> = { ARZ: "ARI", BLT: "BAL", CLV: "CLE", HST: "HOU" };
 export function parseDefenseAlignment(html: string): Map<string, { slot: number | null; wide: number | null }> {
   const $ = cheerio.load(html);
   const num = (s: string) => (Number.isFinite(parseFloat(s)) ? parseFloat(s) : null);
@@ -123,6 +123,22 @@ export const normName = (s: string) => {
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 const pct = (x: number | null) => (x == null ? null : x * 100);
 
+/** Team (nflverse code) -> its game in the current week (the earliest week with an unplayed game). Bye teams get none. */
+export function nextGames(games: Rec[], season: number) {
+  const unplayed = games.filter((g) => Number(g.season) === season && g.game_type === "REG" && g.result === "");
+  const week = Math.min(...unplayed.map((g) => Number(g.week)));
+  const next = new Map<string, { opp: string; total: number | null }>();
+  for (const g of unplayed) {
+    if (Number(g.week) !== week) continue;
+    const total = g.total_line === "" ? null : Number(g.total_line);
+    const spread = g.spread_line === "" ? null : Number(g.spread_line); // home team's expected margin
+    const implied = (home: boolean) => (total == null || spread == null ? null : (total + (home ? spread : -spread)) / 2);
+    if (!next.has(g.home_team)) next.set(g.home_team, { opp: g.away_team, total: implied(true) });
+    if (!next.has(g.away_team)) next.set(g.away_team, { opp: `@${g.home_team}`, total: implied(false) });
+  }
+  return next;
+}
+
 /** Per-WR usage keyed by normName, plus the matchup for each player's next unplayed regular-season game. */
 export function buildUsage(stats: Rec[], snaps: Rec[], games: Rec[], season: number) {
   // Razzball lists some players nflverse files as TE (e.g. Jackson Meeks), so match both.
@@ -137,18 +153,7 @@ export function buildUsage(stats: Rec[], snaps: Rec[], games: Rec[], season: num
     allowed.set(r.opponent_team, d);
   }
 
-  // Team -> its game in the current week (the earliest week with an unplayed game). Bye teams get none.
-  const unplayed = games.filter((g) => Number(g.season) === season && g.game_type === "REG" && g.result === "");
-  const week = Math.min(...unplayed.map((g) => Number(g.week)));
-  const next = new Map<string, { opp: string; total: number | null }>();
-  for (const g of unplayed) {
-    if (Number(g.week) !== week) continue;
-    const total = g.total_line === "" ? null : Number(g.total_line);
-    const spread = g.spread_line === "" ? null : Number(g.spread_line); // home team's expected margin
-    const implied = (home: boolean) => (total == null || spread == null ? null : (total + (home ? spread : -spread)) / 2);
-    if (!next.has(g.home_team)) next.set(g.home_team, { opp: g.away_team, total: implied(true) });
-    if (!next.has(g.away_team)) next.set(g.away_team, { opp: `@${g.home_team}`, total: implied(false) });
-  }
+  const next = nextGames(games, season);
 
   const snapPct = new Map<string, number[]>();
   for (const s of snaps) {
