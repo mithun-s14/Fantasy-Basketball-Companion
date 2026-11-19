@@ -15,6 +15,7 @@ import {
   Shield,
   Grid3x3,
   Columns3,
+  Route,
   ListOrdered,
   Plug,
   type LucideIcon,
@@ -76,6 +77,7 @@ const NFL_SECTIONS: Section[] = [
       { label: "D/ST streamer", short: "D/ST", path: "/nfl/dst", Icon: Shield },
       { label: "Coverage schemes", short: "Coverage", path: "/nfl/coverage", Icon: Grid3x3 },
       { label: "Receiver alignment", short: "WR slot", path: "/nfl/receivers", Icon: Columns3 },
+      { label: "RB zone vs gap", short: "RB runs", path: "/nfl/rushing", Icon: Route },
       { label: "MCP access", short: "MCP", path: "/nfl/mcp", Icon: Plug },
     ],
   },
@@ -83,7 +85,7 @@ const NFL_SECTIONS: Section[] = [
 
 const SPORTS = {
   nba: { label: "NBA", home: "/", sections: NBA_SECTIONS, tabs: ["/", "/analyzer", "/matchup", "/roster", "/chat"] },
-  nfl: { label: "NFL", home: "/nfl/kickers", sections: NFL_SECTIONS, tabs: ["/nfl/kickers", "/nfl/dst", "/nfl/coverage", "/nfl/receivers", "/nfl/mcp"] },
+  nfl: { label: "NFL", home: "/nfl/kickers", sections: NFL_SECTIONS, tabs: ["/nfl/kickers", "/nfl/dst", "/nfl/coverage", "/nfl/receivers", "/nfl/rushing", "/nfl/mcp"] },
 };
 
 const ALL_ITEMS = [...NBA_SECTIONS, ...NFL_SECTIONS].flatMap((s) => s.items);
@@ -101,6 +103,7 @@ const TITLES: Record<string, [string, string]> = {
   "/nfl/dst": ["D/ST streamer", "Every D/ST matchup this week, sorted by opponent implied total"],
   "/nfl/coverage": ["Coverage schemes", "Man/zone, middle open/closed, blitz, box and sub package rates by defense"],
   "/nfl/receivers": ["Receiver alignment", "WR fantasy points from the slot vs out wide"],
+  "/nfl/rushing": ["RB zone vs gap", "RB carries by run concept vs this week's run defense"],
   "/nfl/mcp": ["MCP access", "Use this site's NFL data from Claude, ChatGPT or any MCP client"],
 };
 

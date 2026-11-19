@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
+import { mergeRushDefense, parseRushDefense, parseRushers, RUSH_DEFENSE_URL, RUSHERS_URL } from "./rushing";
 import { buildUsage, DEFENSE_URL, NFLVERSE, normName, parseCsv, parseDefenseAlignment, parseReceivers, RECEIVERS_URL, USAGE_COLUMNS } from "./receivers";
 
 config({ path: ".env.local" });
@@ -36,6 +37,8 @@ async function main() {
   const defense = parseDefenseAlignment(await page(DEFENSE_URL));
   if (defense.size < 32) throw new Error(`expected 32 defenses, got ${defense.size}`);
   if (rows.length < 50) throw new Error(`expected a full WR table, got ${rows.length} rows`);
+  const rushers = mergeRushDefense(parseRushers(await page(RUSHERS_URL)), parseRushDefense(await page(RUSH_DEFENSE_URL)));
+  if (rushers.length < 50) throw new Error(`expected a full RB zone/gap table, got ${rushers.length} rows`);
 
   // NFL season starts in September; Jan/Feb games still belong to the prior year's season.
   const now = new Date();
@@ -56,14 +59,18 @@ async function main() {
   const unmatched = merged.filter((r) => r.tgt_pg == null).map((r) => r.player);
   if (unmatched.length) console.warn(`[nfl:receivers] no nflverse match for ${unmatched.length}: ${unmatched.join(", ")}`);
 
-  // Replace the whole table so players who fall off Razzball's list don't linger.
-  const db = createClient(supabaseUrl, supabaseKey).from("nfl_receiver_alignment");
-  const scraped_at = new Date().toISOString();
-  const { error } = await db.upsert(merged.map((r) => ({ ...r, scraped_at })), { onConflict: "player" });
-  if (error) throw error;
-  const { error: delError } = await db.delete().lt("scraped_at", scraped_at);
-  if (delError) throw delError;
-  console.log(`[nfl:receivers] upserted ${rows.length} rows.`);
+  // Replace each whole table so players who fall off Razzball's list don't linger.
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  const replace = async (table: string, data: object[]) => {
+    const scraped_at = new Date().toISOString();
+    const { error } = await supabase.from(table).upsert(data.map((r) => ({ ...r, scraped_at })), { onConflict: "player" });
+    if (error) throw error;
+    const { error: delError } = await supabase.from(table).delete().lt("scraped_at", scraped_at);
+    if (delError) throw delError;
+    console.log(`[nfl:receivers] upserted ${data.length} rows into ${table}.`);
+  };
+  await replace("nfl_receiver_alignment", merged);
+  await replace("nfl_rb_zone_gap", rushers);
 }
 
 main().catch((err) => {
