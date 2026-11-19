@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { SearchInput } from "./SearchInput";
 import { COLUMNS as ALIGN_COLUMNS, loadReceivers, RECEIVERS_URL, USAGE_COLUMNS, type ReceiverKey, type UsageKey } from "@/nfl/receivers";
 
 // Each "Opp ... allowed" alignment column sits right after the player's own PPG for that alignment.
@@ -67,11 +67,9 @@ export default async function ReceiversPage({
             </a>
             {scrapedAt && ` · scraped ${new Date(scrapedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
           </div>
-          <form className="border-b border-border px-4 py-3">
-            <input type="hidden" name="sort" value={sort} />
-            <input type="hidden" name="dir" value={dir} />
-            <Input type="search" name="q" defaultValue={q} placeholder="Search player…" aria-label="Search players" className="sm:w-60" />
-          </form>
+          <div className="border-b border-border px-4 py-3">
+            <SearchInput />
+          </div>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
