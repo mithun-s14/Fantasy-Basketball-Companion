@@ -3,6 +3,8 @@ import { z } from "zod";
 import { BASES, type Basis, LAST_REGULAR_SEASON_WEEK, fetchWeekMatchups, kickerStats, loadKickerStats } from "./kickers";
 import { PRESETS, type Preset, loadDstDoc } from "./dst";
 import { loadCoverage } from "./coverage";
+import { loadReceivers } from "./receivers";
+import { loadRushers } from "./rushing";
 
 const json = (data: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(data) }] });
 const matches = (name: string, query?: string) => !query || name.toLowerCase().includes(query.toLowerCase());
@@ -71,6 +73,41 @@ export function createNflMcpServer() {
       annotations: readOnly,
     },
     async ({ team }) => json((await loadCoverage()).filter((r) => matches(r.team, team))),
+  );
+
+  const playerInput = {
+    player: z.string().optional().describe("Filter by player name substring"),
+    team: z.string().optional().describe("Filter by team abbreviation, e.g. 'DAL'"),
+  };
+  const byPlayer = <T extends { player: string; team: string }>(rows: T[], player?: string, team?: string) =>
+    rows
+      .filter((r) => matches(r.player, player) && (!team || r.team.toUpperCase() === team.toUpperCase()))
+      .sort((a, b) => a.team.localeCompare(b.team) || a.player.localeCompare(b.player));
+
+  server.registerTool(
+    "get_receiver_alignment",
+    {
+      description:
+        "WR fantasy production from the slot vs out wide (Razzball), one row per receiver, alphabetical by team. " +
+        "ppg/slot_ppg/wide_ppg = fantasy points per game overall and by alignment; slot_pct/wide_pct = share of the player's fantasy POINTS (not snaps) from that alignment, percent. " +
+        "Usage (nflverse): snap_pct, tgt_pg, tgt_pct (target share season), tgt_l3_pct (last 3 games), air_pct (air yards share), all percent. " +
+        "This week's matchup: opp (nflverse code, BYE on bye), team_total (Vegas implied points, null until posted), opp_wr_ppg (PPR points/game that defense allows to WRs), opp_slot_ppg/opp_wide_ppg (PPG that defense allows to slot/wide WRs). Nulls mean no match or not scraped.",
+      inputSchema: playerInput,
+      annotations: readOnly,
+    },
+    async ({ player, team }) => json(byPlayer(await loadReceivers(), player, team)),
+  );
+
+  server.registerTool(
+    "get_rb_zone_gap",
+    {
+      description:
+        "RB rush attempts on zone vs gap runs (Razzball), one row per back, alphabetical by team: zone_att/gap_att/total_att, zone_pct/gap_pct (percent of attempts). " +
+        "This week's matchup: opp (nflverse code, BYE on bye), opp_zone_ypg/opp_gap_ypg = rush yards/game that defense allows on zone/gap runs. Nulls mean not scraped.",
+      inputSchema: playerInput,
+      annotations: readOnly,
+    },
+    async ({ player, team }) => json(byPlayer(await loadRushers(), player, team)),
   );
 
   return server;

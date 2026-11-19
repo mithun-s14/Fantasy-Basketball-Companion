@@ -18,12 +18,24 @@ const TOOLS = [
     args: "team (name substring)",
     desc: "Man, zone, middle open/closed, blitz, light/heavy box and sub package rates by defense.",
   },
+  {
+    name: "get_receiver_alignment",
+    args: "player (name substring), team (e.g. DAL)",
+    desc: "WR fantasy PPG from the slot vs out wide, snap and target share, and this week's opponent with what it allows to slot and wide receivers.",
+  },
+  {
+    name: "get_rb_zone_gap",
+    args: "player (name substring), team (e.g. DAL)",
+    desc: "RB zone vs gap rush attempts and this week's opponent's zone/gap rush yards allowed per game.",
+  },
 ];
 
 const PROMPTS = [
   "Which kickers have the best matchups this week?",
   "Compare the D/ST options for BAL and KC under Sleeper scoring.",
   "Which defenses play the most man coverage?",
+  "Which slot receivers face defenses that give up the most to the slot this week?",
+  "Which gap-heavy running backs face a weak gap run defense?",
 ];
 
 const card = "rounded-lg border border-border bg-card p-5";
