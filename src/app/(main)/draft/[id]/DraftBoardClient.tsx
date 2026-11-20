@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ROSTER_POSITIONS, rosterSize, type Category, type LeagueSettings } from "@/lib/league";
-import { rankPlayers, type PoolPlayer, type RankedPlayer } from "@/lib/valuation";
+import { ROSTER_POSITIONS, rosterSize, type Category, type LeagueSettings } from "@/nba/league";
+import { rankPlayers, type PoolPlayer, type RankedPlayer } from "@/nba/valuation";
 import {
   adpFlag,
   categoryProfile,
@@ -21,8 +21,8 @@ import {
   teamOnClock,
   withoutLastPick,
   type DraftPick,
-} from "@/lib/draft";
-import type { DraftPool, UnrankedPlayer } from "@/lib/draft-pool";
+} from "@/nba/draft";
+import type { DraftPool, UnrankedPlayer } from "@/nba/draft-pool";
 import { cn } from "@/lib/utils";
 import { saveDraftRoster, type SaveRosterResult } from "../actions";
 

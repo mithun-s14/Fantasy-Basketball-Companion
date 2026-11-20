@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # ████████████████████████████████████████████████████████████████████████████
 # WARNING: This script creates GCP resources that COST MONEY.
-# Run  ./scripts/gke-down.sh  the moment you are done to stop billing.
+# Run  ./scripts/infra/gke-down.sh  the moment you are done to stop billing.
 # Estimated cost: ~$0.50–1.00/hour while the cluster is running.
 # ████████████████████████████████████████████████████████████████████████████
 #
 # gke-up.sh — Build images, push to Artifact Registry, create GKE Autopilot
 #             cluster, deploy the full stack, and print the external URL.
-# Run from the repo root: ./scripts/gke-up.sh
+# Run from the repo root: ./scripts/infra/gke-up.sh
 set -euo pipefail
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
@@ -245,7 +245,7 @@ else
 fi
 
 echo ""
-echo -e "${RED}  !! REMEMBER TO RUN ./scripts/gke-down.sh WHEN DONE !!${NC}"
+echo -e "${RED}  !! REMEMBER TO RUN ./scripts/infra/gke-down.sh WHEN DONE !!${NC}"
 echo -e "${RED}  !! The cluster costs ~\$0.50–1.00/hour while running. !!${NC}"
 echo ""
 echo "Verify pods:  kubectl get pods -n ${NAMESPACE}"

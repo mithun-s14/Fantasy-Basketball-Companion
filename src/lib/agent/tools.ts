@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "../supabase";
-import { NBA_TEAMS } from "../constants";
+import { NBA_TEAMS } from "@/nba/constants";
 import { getRedis } from "./config";
 import type { PlayerRef } from "./args";
-import type { PlayerStats, RosterPlayer } from "../types";
+import type { PlayerStats, RosterPlayer } from "@/nba/types";
 
 // Every tool returns a short string summary. State stays well inside Jev's
 // 32K context window, so summaries are capped at about 2KB.

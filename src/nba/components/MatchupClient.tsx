@@ -15,16 +15,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DateRangeSelector } from "@/components/DateRangeSelector";
-import { MatchupProjectionTable } from "@/components/MatchupProjectionTable";
-import { computeMatchup } from "@/lib/matchup";
-import { NBA_TEAMS } from "@/lib/constants";
+import { DateRangeSelector } from "@/nba/components/DateRangeSelector";
+import { MatchupProjectionTable } from "@/nba/components/MatchupProjectionTable";
+import { computeMatchup } from "@/nba/matchup";
+import { NBA_TEAMS } from "@/nba/constants";
 import {
   addOpponentPlayer,
   removeOpponentPlayer,
 } from "@/app/(main)/matchup/actions";
-import type { RosterPlayer, OpponentPlayer, PlayerStats } from "@/lib/types";
-import type { MatchupResult } from "@/lib/matchup";
+import type { RosterPlayer, OpponentPlayer, PlayerStats } from "@/nba/types";
+import type { MatchupResult } from "@/nba/matchup";
 
 // --------------------------------------------------------------------------
 // Shared sub-components (same patterns as RosterClient)

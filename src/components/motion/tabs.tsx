@@ -11,7 +11,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { EASE_OUT } from "@/@lib/ease";
+import { EASE_OUT } from "@/lib/ease";
 import { cn } from "@/lib/utils";
 
 type Variant = "pill" | "underline" | "segment";

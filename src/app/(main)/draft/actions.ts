@@ -2,7 +2,7 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { createServerSupabaseClient } from "@/lib/supabase";
-import { settingsErrors, settingsToRow, type LeagueSettings } from "@/lib/league";
+import { settingsErrors, settingsToRow, type LeagueSettings } from "@/nba/league";
 
 /**
  * Saves the signed-in user's league settings. One profile per user for now

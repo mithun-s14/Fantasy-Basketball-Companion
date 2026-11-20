@@ -32,7 +32,7 @@ vi.mock("@/lib/agent/engines", () => ({
   verifyWithFallback: mockVerify,
 }));
 vi.mock("@/lib/agent/log", () => ({ logDecision: mockLogDecision, newRequestId: () => "req-1" }));
-vi.mock("@/lib/nba-players", () => ({
+vi.mock("@/nba/nba-players", () => ({
   getActivePlayers: async () => [{ name: "Jalen Green", team: "Houston Rockets" }],
 }));
 vi.mock("@/lib/agent/tools", () => ({

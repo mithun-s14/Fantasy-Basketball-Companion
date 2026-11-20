@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from "./supabase";
+import { createServerSupabaseClient } from "@/lib/supabase";
 
 interface NBAPlayer {
   name: string;

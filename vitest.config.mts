@@ -7,8 +7,8 @@ export default defineConfig({
   test: {
     environment: "happy-dom",
     globals: true,
-    setupFiles: ["./src/__tests__/setup.ts"],
-    include: ["src/__tests__/**/*.{test,spec}.{ts,tsx}", "src/nfl/**/*.test.ts"],
+    setupFiles: ["./vitest.setup.ts"],
+    include: ["src/**/*.test.{ts,tsx}"],
   },
   resolve: {
     alias: {

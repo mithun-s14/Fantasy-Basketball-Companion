@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { NBA_TEAMS, currentSeason, previousSeason, bbrefSeasonYear, playerNameKey } from "@/lib/constants";
+import { NBA_TEAMS, currentSeason, previousSeason, bbrefSeasonYear, playerNameKey } from "@/nba/constants";
 
 describe("NBA_TEAMS", () => {
   it("has exactly 30 teams", () => {

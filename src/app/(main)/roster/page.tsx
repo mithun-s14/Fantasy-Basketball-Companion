@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { RosterClient } from "@/components/RosterClient";
-import type { RosterPlayer } from "@/lib/types";
+import { RosterClient } from "@/nba/components/RosterClient";
+import type { RosterPlayer } from "@/nba/types";
 
 export default async function RosterPage() {
   const supabase = await createSupabaseServerClient();

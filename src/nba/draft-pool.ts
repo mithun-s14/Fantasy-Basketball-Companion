@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { createServerSupabaseClient } from "./supabase";
+import { createServerSupabaseClient } from "@/lib/supabase";
 import { currentSeason, playerNameKey, previousSeason } from "./constants";
-import { cached } from "./agent/tools";
+import { cached } from "@/lib/agent/tools";
 import type { PoolPlayer } from "./valuation";
 
 const POOL_TTL_SECONDS = 60 * 60; // stats change at most daily

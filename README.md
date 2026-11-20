@@ -26,38 +26,22 @@ A full-stack web app for fantasy basketball players. Analyze NBA schedules, mana
 
 ```
 src/
-├── app/
-│   ├── api/
-│   │   ├── chat/route.ts       # POST — streams Gemini AI responses
-│   │   ├── games/route.ts      # GET  — game counts for a date range
-│   │   └── players/route.ts    # GET  — player autocomplete search
-│   ├── analyzer/page.tsx       # Schedule Analyzer page
-│   ├── auth/
-│   │   ├── actions.ts          # Server Actions: login, signup, logout
-│   │   └── page.tsx            # Login / sign-up page
-│   ├── chat/page.tsx           # AI Coach chat page
-│   ├── roster/
-│   │   ├── actions.ts          # Server Actions: addPlayer, removePlayer
-│   │   └── page.tsx            # Roster page (protected)
-│   ├── layout.tsx              # Root layout — mounts global Navbar
-│   └── page.tsx                # Landing page
-├── components/
-│   ├── ui/                     # shadcn/ui primitives (do not edit directly)
-│   ├── AuthButton.tsx          # Login link or email + logout button
-│   ├── Navbar.tsx              # Global nav (server component, reads auth)
-│   ├── RosterClient.tsx        # Roster add/remove UI
-│   ├── ScheduleAnalyzer.tsx    # Schedule picker + results table
-│   └── TeamScheduleTable.tsx   # Color-coded game count table
-├── lib/
-│   ├── constants.ts            # NBA_TEAMS array (all 30 teams)
-│   ├── nba-players.ts          # getActivePlayers() / searchPlayers() via Supabase
-│   ├── supabase.ts             # Service role client (server-only, for /api/games)
-│   ├── supabase-server.ts      # SSR client (cookie-based session)
-│   └── types.ts                # Shared TypeScript interfaces
-├── middleware.ts               # Protects /roster, redirects auth'd users from /auth
-└── scripts/
-    ├── scrape.ts               # Scrapes Basketball-Reference for game data
-    └── seed-players.ts         # Seeds nba_players table from NBA Stats API
+├── app/                # Next.js routes: pages under (main)/, API under api/, auth/
+├── components/         # Shared UI: AppShell (nav + NBA/NFL switch), AuthButton, PageHeader, ThemeToggle
+│   ├── motion/         # Animated tabs
+│   └── ui/             # shadcn/ui primitives (do not edit directly)
+├── lib/                # Shared infra: Supabase clients, rate limiter, metrics, utils, csv
+│   └── agent/          # AI coach agent loop, engines, tools
+├── nba/                # NBA domain: constants, types, draft, valuation, matchup, players
+│   ├── components/     # NBA UI: ScheduleAnalyzer, MatchupClient, RosterClient, ...
+│   └── scripts/        # NBA scrapers/seeders (npm run scrape, seed-players, scrape-stats, load-adp)
+├── nfl/                # NFL domain logic + scrapers (kept separate from NBA)
+├── scripts/            # Agent dev tools (flags, agent:ping, eval:routing)
+└── middleware.ts
+scripts/infra/          # Local k8s / GKE up & down scripts
+sql/                    # Hand-run table definitions (sql/nfl/ for NFL)
+nfl/dst-streamer/       # Python D/ST streamer
+tests/e2e/              # Playwright
 ```
 
 ## Available Scripts
@@ -236,21 +220,20 @@ npm run test:watch      # Re-run on file changes
 npm run test:coverage   # Run with coverage report (outputs to coverage/)
 ```
 
-Tests live in `src/__tests__/` and run in a **happy-dom** environment (no real browser needed). Mock data is passed directly as props, so no database or network calls.
+Tests sit next to the code they cover as `*.test.ts(x)` and run in a **happy-dom** environment (no real browser needed). Mock data is passed directly as props, so no database or network calls.
 
 | File | What it covers |
 |------|---------------|
-| `unit/constants.test.ts` | NBA team constants |
-| `unit/games-api.test.ts` | `/api/games` route handler logic |
-| `unit/agent-config.test.ts` | Flag resolution order, the 30s cache, and the Jev cutoff guard |
-| `unit/agent-engines.test.ts` | All three engines against a mock evaluation model, threshold fallback, verification |
-| `unit/agent-loop.test.ts` | Step cap, timeout, repeated tools, `ask_user`, shadow logging |
-| `unit/agent-tools.test.ts` | Roster, recent performance, and matchup summaries plus their caching |
-| `unit/agent-args.test.ts` | Player resolution from names, initials, and the roster |
-| `unit/agent-chat-route.test.ts` | `AGENT_MODE` on and off, SSE framing, `agent_warning` |
+| `nba/constants.test.ts` | NBA team constants |
+| `app/api/games/route.test.ts` | `/api/games` route handler logic |
+| `lib/agent/config.test.ts` | Flag resolution order, the 30s cache, and the Jev cutoff guard |
+| `lib/agent/engines.test.ts` | All three engines against a mock evaluation model, threshold fallback, verification |
+| `lib/agent/loop.test.ts` | Step cap, timeout, repeated tools, `ask_user`, shadow logging |
+| `lib/agent/tools.test.ts` | Roster, recent performance, and matchup summaries plus their caching |
+| `lib/agent/args.test.ts` | Player resolution from names, initials, and the roster |
+| `app/api/chat/route.agent.test.ts` | `AGENT_MODE` on and off, SSE framing, `agent_warning` |
 | `components/AuthButton.test.tsx` | Auth button render states |
-| `components/MobileNav.test.tsx` | Mobile navigation component |
-| `components/TeamScheduleTable.test.tsx` | Table sorting, filtering, and badge colours |
+| `nba/components/TeamScheduleTable.test.tsx` | Table sorting, filtering, and badge colours |
 
 ### End-to-End Tests — Playwright
 

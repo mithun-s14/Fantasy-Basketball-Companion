@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { computeMatchup } from "@/lib/matchup";
-import type { RosterPlayer, PlayerStats } from "@/lib/types";
+import { computeMatchup } from "@/nba/matchup";
+import type { RosterPlayer, PlayerStats } from "@/nba/types";
 
 function makePlayer(name: string, team: string): RosterPlayer {
   return { id: "1", player_name: name, nba_team: team, created_at: "" };

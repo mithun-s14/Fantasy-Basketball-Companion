@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/@components/motion/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/motion/tabs";
 
 type Theme = "light" | "dark";
 

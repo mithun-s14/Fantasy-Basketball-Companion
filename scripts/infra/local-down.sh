@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # local-down.sh — Delete the local kind cluster and all resources inside it.
-# Run from the repo root: ./scripts/local-down.sh
+# Run from the repo root: ./scripts/infra/local-down.sh
 set -euo pipefail
 
 CLUSTER_NAME="fantasy-basketball"

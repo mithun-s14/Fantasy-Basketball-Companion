@@ -1,4 +1,4 @@
-import type { MatchupResult } from "@/lib/matchup";
+import type { MatchupResult } from "@/nba/matchup";
 
 function formatStat(category: string, value: number): string {
   if (category === "fg_pct" || category === "ft_pct") {

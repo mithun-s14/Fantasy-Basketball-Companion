@@ -25,7 +25,7 @@ import {
   getRosterCached,
 } from "@/lib/agent/tools";
 import { resetFlagCache } from "@/lib/agent/config";
-import type { PlayerStats } from "@/lib/types";
+import type { PlayerStats } from "@/nba/types";
 
 const GREEN: PlayerStats = {
   id: "1",

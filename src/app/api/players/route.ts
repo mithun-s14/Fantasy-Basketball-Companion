@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getActivePlayers, searchPlayers } from "@/lib/nba-players";
+import { getActivePlayers, searchPlayers } from "@/nba/nba-players";
 
 export async function GET(request: NextRequest) {
   const search = request.nextUrl.searchParams.get("search")?.trim() ?? "";

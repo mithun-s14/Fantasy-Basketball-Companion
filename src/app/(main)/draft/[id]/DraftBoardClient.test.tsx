@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, within, waitFor } from "@testing-library/react";
 import { DraftBoardClient } from "@/app/(main)/draft/[id]/DraftBoardClient";
-import { DEFAULT_SETTINGS } from "@/lib/league";
-import type { PoolPlayer } from "@/lib/valuation";
+import { DEFAULT_SETTINGS } from "@/nba/league";
+import type { PoolPlayer } from "@/nba/valuation";
 
 vi.mock("next/link", () => ({
   default: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a>,

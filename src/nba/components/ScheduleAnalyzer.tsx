@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DateRangeSelector } from "@/components/DateRangeSelector";
-import { TeamFilter } from "@/components/TeamFilter";
-import { TeamScheduleTable } from "@/components/TeamScheduleTable";
-import { NBA_TEAMS } from "@/lib/constants";
+import { DateRangeSelector } from "@/nba/components/DateRangeSelector";
+import { TeamFilter } from "@/nba/components/TeamFilter";
+import { TeamScheduleTable } from "@/nba/components/TeamScheduleTable";
+import { NBA_TEAMS } from "@/nba/constants";
 import { Loader2 } from "lucide-react";
 import { PageHeader, StatTile } from "@/components/PageHeader";
 import { format, startOfWeek, endOfWeek } from "date-fns";

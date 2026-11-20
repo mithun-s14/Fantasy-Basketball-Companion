@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { rankPlayers, availability, assignTiers, type PoolPlayer } from "@/lib/valuation";
-import type { Category } from "@/lib/league";
+import { rankPlayers, availability, assignTiers, type PoolPlayer } from "@/nba/valuation";
+import type { Category } from "@/nba/league";
 
 function player(name: string, overrides: Partial<PoolPlayer> = {}): PoolPlayer {
   return {

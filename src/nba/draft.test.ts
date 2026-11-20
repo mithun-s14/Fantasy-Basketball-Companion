@@ -12,9 +12,9 @@ import {
   roundOf,
   teamOnClock,
   withoutLastPick,
-} from "@/lib/draft";
-import { DEFAULT_SETTINGS } from "@/lib/league";
-import type { PoolPlayer, RankedPlayer } from "@/lib/valuation";
+} from "@/nba/draft";
+import { DEFAULT_SETTINGS } from "@/nba/league";
+import type { PoolPlayer, RankedPlayer } from "@/nba/valuation";
 
 describe("snake order", () => {
   it("gives slot 1 picks 1, 24, 25, 48 in a 12-team draft", () => {

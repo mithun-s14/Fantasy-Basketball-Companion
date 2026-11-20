@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { getDraftPool, upcomingDraftSeason } from "@/lib/draft-pool";
-import { DEFAULT_SETTINGS, rowToSettings, type LeagueProfileRow } from "@/lib/league";
+import { getDraftPool, upcomingDraftSeason } from "@/nba/draft-pool";
+import { DEFAULT_SETTINGS, rowToSettings, type LeagueProfileRow } from "@/nba/league";
 import { DraftRankingsClient } from "./DraftRankingsClient";
 
 // Public: anyone gets rankings for the default league; signed-in users get

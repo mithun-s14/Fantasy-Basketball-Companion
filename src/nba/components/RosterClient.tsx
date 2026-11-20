@@ -15,8 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { addPlayer, removePlayer } from "@/app/(main)/roster/actions";
-import { NBA_TEAMS } from "@/lib/constants";
-import type { RosterPlayer } from "@/lib/types";
+import { NBA_TEAMS } from "@/nba/constants";
+import type { RosterPlayer } from "@/nba/types";
 
 interface PlayerSuggestion {
   name: string;

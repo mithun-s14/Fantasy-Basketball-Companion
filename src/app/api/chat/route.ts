@@ -8,7 +8,7 @@ import { getConfig, refreshFlags } from "@/lib/agent/config";
 import { runAgentLoop } from "@/lib/agent/loop";
 import { verifyWithFallback } from "@/lib/agent/engines";
 import { logDecision, newRequestId } from "@/lib/agent/log";
-import { getActivePlayers } from "@/lib/nba-players";
+import { getActivePlayers } from "@/nba/nba-players";
 
 interface Message {
   role: "user" | "assistant";

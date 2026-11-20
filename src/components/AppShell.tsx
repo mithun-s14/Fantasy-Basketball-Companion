@@ -23,7 +23,7 @@ import {
 import { AuthButton } from "@/components/AuthButton";
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Tabs, TabsList, TabsTrigger } from "@/@components/motion/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/motion/tabs";
 import { cn } from "@/lib/utils";
 
 interface Props {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import type { Category } from "@/lib/league";
+import type { Category } from "@/nba/league";
 
 /**
  * Start a draft from the user's saved league profile (DB-1), or return the

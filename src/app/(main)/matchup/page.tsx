@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { MatchupClient } from "@/components/MatchupClient";
-import type { RosterPlayer, OpponentPlayer, PlayerStats } from "@/lib/types";
+import { MatchupClient } from "@/nba/components/MatchupClient";
+import type { RosterPlayer, OpponentPlayer, PlayerStats } from "@/nba/types";
 
 export default async function MatchupPage() {
   const supabase = await createSupabaseServerClient();

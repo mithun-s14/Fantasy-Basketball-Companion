@@ -103,7 +103,7 @@ brew install kind kubectl helm
 cp .env.example .env
 
 # Build images, create cluster, deploy everything
-./scripts/local-up.sh
+./scripts/infra/local-up.sh
 ```
 
 The script (~3 minutes on first run):
@@ -138,7 +138,7 @@ sudo sh -c 'echo "127.0.0.1 fantasy-basketball.local" >> /etc/hosts'
 ### Tear down
 
 ```bash
-./scripts/local-down.sh
+./scripts/infra/local-down.sh
 ```
 
 ---
@@ -209,7 +209,7 @@ GCP_REGION=us-central1
 ### Deploy
 
 ```bash
-./scripts/gke-up.sh
+./scripts/infra/gke-up.sh
 ```
 
 The script (~8 minutes on first run):
@@ -237,7 +237,7 @@ To use a domain name, point an A record at the external IP and update
 ### !! Tear down when done !!
 
 ```bash
-./scripts/gke-down.sh
+./scripts/infra/gke-down.sh
 ```
 
 This deletes the cluster and Artifact Registry repo. GCP billing stops within

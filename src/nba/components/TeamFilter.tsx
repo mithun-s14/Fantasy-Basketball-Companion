@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { NBA_TEAMS } from "@/lib/constants";
+import { NBA_TEAMS } from "@/nba/constants";
 import { ChevronDown } from "lucide-react";
 
 interface TeamFilterProps {

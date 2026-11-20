@@ -1,8 +1,8 @@
 "use server";
 
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { NBA_TEAMS } from "@/lib/constants";
-import { getActivePlayers } from "@/lib/nba-players";
+import { NBA_TEAMS } from "@/nba/constants";
+import { getActivePlayers } from "@/nba/nba-players";
 
 const PLAYER_NAME_REGEX = /^[\p{L}]+([ \-'][\p{L}]+)*$/u;
 const UUID_REGEX =

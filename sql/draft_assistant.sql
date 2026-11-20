@@ -89,7 +89,7 @@ create policy "draft_picks owner" on public.draft_picks
   with check (exists (select 1 from public.drafts d where d.id = draft_id and d.user_id = auth.uid()));
 
 -- ---------------------------------------------------------------------------
--- player_adp (filled by src/scripts/load-adp.ts)
+-- player_adp (filled by src/nba/scripts/load-adp.ts)
 -- ---------------------------------------------------------------------------
 create table if not exists public.player_adp (
   player_name text not null,

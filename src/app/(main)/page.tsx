@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { createServerSupabaseClient } from "@/lib/supabase";
-import { NBA_TEAMS } from "@/lib/constants";
+import { NBA_TEAMS } from "@/nba/constants";
 import { gameTierClass, getWeekRange } from "@/lib/utils";
 import { HomepageFeatureCards } from "@/components/HomepageFeatureCards";
 import { PageHeader, Panel, StatTile } from "@/components/PageHeader";

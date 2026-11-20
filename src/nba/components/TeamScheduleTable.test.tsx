@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { TeamScheduleTable } from "@/components/TeamScheduleTable";
+import { TeamScheduleTable } from "@/nba/components/TeamScheduleTable";
 
 const start = new Date("2026-01-01");
 const end = new Date("2026-01-07");

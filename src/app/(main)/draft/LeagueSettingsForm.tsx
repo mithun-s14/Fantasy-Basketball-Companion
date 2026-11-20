@@ -14,7 +14,7 @@ import {
   settingsErrors,
   type Category,
   type LeagueSettings,
-} from "@/lib/league";
+} from "@/nba/league";
 import { saveLeagueProfile } from "./actions";
 
 interface Props {

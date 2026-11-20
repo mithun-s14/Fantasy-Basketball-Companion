@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { DEFAULT_SETTINGS, rosterSize, settingsErrors, type LeagueSettings } from "@/lib/league";
+import { DEFAULT_SETTINGS, rosterSize, settingsErrors, type LeagueSettings } from "@/nba/league";
 
 const withChanges = (changes: Partial<LeagueSettings>) => ({ ...DEFAULT_SETTINGS, ...changes });
 

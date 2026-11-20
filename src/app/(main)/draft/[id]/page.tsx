@@ -1,8 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { getDraftPool, upcomingDraftSeason } from "@/lib/draft-pool";
-import { rowToSettings, type Category, type LeagueProfileRow } from "@/lib/league";
-import type { DraftPick } from "@/lib/draft";
+import { getDraftPool, upcomingDraftSeason } from "@/nba/draft-pool";
+import { rowToSettings, type Category, type LeagueProfileRow } from "@/nba/league";
+import type { DraftPick } from "@/nba/draft";
 import { DraftBoardClient } from "./DraftBoardClient";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

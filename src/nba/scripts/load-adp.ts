@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
-import { currentSeason, bbrefSeasonYear, playerNameKey } from "../lib/constants";
+import { currentSeason, bbrefSeasonYear, playerNameKey } from "../constants";
 
 config({ path: ".env.local" });
 

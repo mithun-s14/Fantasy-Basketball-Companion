@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # local-up.sh — Build images, create a kind cluster, and deploy the full stack locally.
-# Run from the repo root: ./scripts/local-up.sh
+# Run from the repo root: ./scripts/infra/local-up.sh
 set -euo pipefail
 
 CLUSTER_NAME="fantasy-basketball"
@@ -194,4 +194,4 @@ echo "5. Tail logs for any service:"
 echo "     kubectl logs -n ${NAMESPACE} -l app=web -f"
 echo "     kubectl logs -n ${NAMESPACE} -l app=ai-service -f"
 echo ""
-echo "Tear down with:  ./scripts/local-down.sh"
+echo "Tear down with:  ./scripts/infra/local-down.sh"

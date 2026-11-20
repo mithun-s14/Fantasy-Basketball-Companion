@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { MatchupProjectionTable } from "@/components/MatchupProjectionTable";
-import type { MatchupResult } from "@/lib/matchup";
+import { MatchupProjectionTable } from "@/nba/components/MatchupProjectionTable";
+import type { MatchupResult } from "@/nba/matchup";
 
 function makeResult(overrides: Partial<MatchupResult> = {}): MatchupResult {
   return {

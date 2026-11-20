@@ -16,7 +16,7 @@
 #   - Local files in this repo
 # ████████████████████████████████████████████████████████████████████████████
 #
-# Run from the repo root: ./scripts/gke-down.sh
+# Run from the repo root: ./scripts/infra/gke-down.sh
 set -euo pipefail
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; NC='\033[0m'
