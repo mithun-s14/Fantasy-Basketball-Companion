@@ -70,7 +70,7 @@ async function fetchPositions(season: string): Promise<Map<string, Set<string>>>
 async function seedPlayers() {
   // Usage: npm run seed-players [-- 2025-26]. Defaults to the current season.
   const season = process.argv[2] ?? currentSeason();
-  if (!/^\d{4}-\d{2}$/.test(season)) throw new Error(`Season must look like 2025-26, got "${season}"`);
+  if (!/^\d{4}-\d{2}$/.test(season)) throw new Error(`Season must look like 2026-27, got "${season}"`);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
